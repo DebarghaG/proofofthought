@@ -1,3 +1,5 @@
+## How `ProofOfThought` Works
+
 `ProofOfThought` is a groundbreaking initiative designed to solve one of the
 most significant challenges in modern artificial intelligence: the tendency of
 Large Language Models (LLMs) to "hallucinate" or generate plausible but
