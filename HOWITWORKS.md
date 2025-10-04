@@ -22,7 +22,10 @@ A user starts by posing a question in natural language to the `ProofOfThought`
 class, which is the main high-level API for the system.
 
 ```python
-// From README.md
+from openai import OpenAI
+from z3dsl.reasoning import ProofOfThought
+
+client = OpenAI()
 pot = ProofOfThought(llm_client=client)
 result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
 ```
