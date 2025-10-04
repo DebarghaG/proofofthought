@@ -1,20 +1,20 @@
 ## How `ProofOfThought` Works
 
-`ProofOfThought` is a groundbreaking initiative designed to solve one of the
-most significant challenges in modern artificial intelligence: the tendency of
-Large Language Models (LLMs) to "hallucinate" or generate plausible but
-logically flawed answers. Its core innovation lies in creating a powerful
-hybrid reasoning system that combines the flexible, human-like understanding of
-LLMs with the rigorous, verifiable certainty of a formal theorem prover.
-Instead of simply trusting an LLM's direct answer, this project tasks the LLM
-with a more structured goal: to act as a programmer that translates a user's
-question into a symbolic logic program. This program is then executed by the Z3
-theorem prover, a trusted engine that guarantees the final `True` or `False`
-result is not just a guess, but a conclusion derived from logically consistent
-facts and rules. The most inventive aspect is its automated self-correction
-loop; if the generated logic program fails, the system feeds the error back to
-the LLM, enabling it to learn from its mistakes and refine its reasoning until
-it produces a program that is both syntactically correct and logically sound.
+`ProofOfThought` solves one of the most significant challenges in modern
+artificial intelligence: the tendency of Large Language Models (LLMs) to
+"hallucinate" or generate plausible but *logically flawed* answers. Its core
+innovation lies in creating a powerful hybrid reasoning system that combines
+the flexible, human-like understanding of LLMs with the rigorous, verifiable
+certainty of a formal theorem prover.  Instead of simply trusting an LLM's
+direct answer, this project tasks the LLM with a more structured goal: to act
+as a programmer that translates a user's question into a symbolic logic
+program. This program is then executed by the Z3 theorem prover, a trusted
+engine that guarantees the final `True` or `False` result is not just a guess,
+but a conclusion derived from logically consistent facts and rules. The most
+inventive aspect is its automated self-correction loop; if the generated logic
+program fails, the system feeds the error back to the LLM, enabling it to learn
+from its mistakes and refine its reasoning until it produces a program that is
+both syntactically correct and logically sound.
 
 Here's how it works:
 
