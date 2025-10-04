@@ -1,12 +1,25 @@
-ProofOfThought uses a Large Language Model (LLM) to translate natural
-language questions into formal logic programs, which are then solved by the Z3
-theorem prover to determine a final `True` or `False` answer.
+`ProofOfThought` is a groundbreaking initiative designed to solve one of the
+most significant challenges in modern artificial intelligence: the tendency of
+Large Language Models (LLMs) to "hallucinate" or generate plausible but
+logically flawed answers. Its core innovation lies in creating a powerful
+hybrid reasoning system that combines the flexible, human-like understanding of
+LLMs with the rigorous, verifiable certainty of a formal theorem prover.
+Instead of simply trusting an LLM's direct answer, this project tasks the LLM
+with a more structured goal: to act as a programmer that translates a user's
+question into a symbolic logic program. This program is then executed by the Z3
+theorem prover, a trusted engine that guarantees the final `True` or `False`
+result is not just a guess, but a conclusion derived from logically consistent
+facts and rules. The most inventive aspect is its automated self-correction
+loop; if the generated logic program fails, the system feeds the error back to
+the LLM, enabling it to learn from its mistakes and refine its reasoning until
+it produces a program that is both syntactically correct and logically sound.
 
-Here is a step-by-step breakdown of how the project functions:
+Here's how it works:
 
 ### 1. High-Level User Query
 
-A user starts by posing a question in natural language to the `ProofOfThought` class, which is the main high-level API for the system.
+A user starts by posing a question in natural language to the `ProofOfThought`
+class, which is the main high-level API for the system.
 
 ```python
 // From README.md
@@ -16,7 +29,7 @@ result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
 
 ### 2. Program Generation via LLM
 
-Instead of answering the question directly, the system uses an LLM (like GPT-4o) to act as a programmer.
+Instead of answering the question directly, the system uses an LLM (e.g. `GPT-5`) to act as a programmer.
 
 *   **Prompting**: The user's question is embedded into a highly detailed prompt template. This prompt instructs the LLM on how to decompose the question and convert it into a JSON-based Domain-Specific Language (DSL) that represents the problem's logic.
 *   **Logical Decomposition**: The LLM breaks down the question. For "Would Nancy Pelosi publicly denounce abortion?", it reasons that:
@@ -25,7 +38,7 @@ Instead of answering the question directly, the system uses an LLM (like GPT-4o)
     3.  A general rule is that people do not publicly denounce things they support.
 *   **JSON Program Creation**: The LLM translates this reasoning into a JSON program. This program defines sorts (types like `Person`), constants (`nancy_pelosi`), functions (`supports`), a knowledge base (facts and rules), and a single verification condition to test the original question.
 
-```json
+```javascript
 // Example generated JSON from the project's documentation
 {
   "sorts": [...],
