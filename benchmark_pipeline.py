@@ -18,6 +18,7 @@ from sklearn.metrics import (
 )
 
 from z3dsl.interpreter import Z3JSONInterpreter
+from z3dsl.reasoning.program_generator import Z3ProgramGenerator
 
 
 def calculate_metrics(y_true: list[Any], y_pred: list[Any]) -> dict[str, Any]:
@@ -125,6 +126,7 @@ if not api_key:
     )
 
 client = OpenAI(api_key=api_key)
+program_generator = Z3ProgramGenerator(llm_client=client, model="gpt-4o")
 
 # Load the StrategyQA dataset
 with open("strategyqa_train.json") as f:
@@ -844,89 +846,69 @@ for idx, question_data in enumerate(data[:max_questions]):
         num_attempts += 1
         try:
             if num_attempts == 1:
-                # First attempt
-                messages = [
-                    {"role": "user", "content": [{"type": "text", "text": initial_prompt_content}]}
-                ]
+                generation = program_generator.generate(
+                    question_text,
+                    temperature=0.1,
+                    max_tokens=2048,
+                )
             else:
-                # Subsequent attempts
-                messages = [
-                    {
-                        "role": "assistant",
-                        "content": [{"type": "text", "text": previous_response or ""}],
-                    },
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": f"There was an error processing your response:\n{error_trace}\nPlease fix the JSON accordingly.",
-                            }
-                            # {"role": "user", "content": [{ "type" : "text", "text" : initial_prompt_content}]},
-                        ],
-                    },
-                ]
+                generation = program_generator.generate_with_feedback(
+                    question_text,
+                    error_trace or "",
+                    previous_response or "",
+                    temperature=0.1,
+                    max_tokens=2048,
+                )
 
-            # Make the OpenAI API call
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=messages,
-                temperature=0.1,
-                max_tokens=2048,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
-                response_format={"type": "text"},
-            )
+            response_data = generation.raw_response
+            previous_response = response_data
 
-            response_data = response.choices[0].message.content
-
-            # Save the response
             response_path = os.path.join(response_dir, f"{qid}_response_attempt{num_attempts}.json")
             with open(response_path, "w") as f:
                 json.dump({"response_content": response_data}, f, indent=4)
 
-            markdown_content = response_data
-            previous_response = markdown_content
+            if not generation.json_program:
+                error_trace = generation.error or "Failed to generate structured program"
+                logger.warning(
+                    "Generation failed for question %s on attempt %s: %s",
+                    qid,
+                    num_attempts,
+                    error_trace,
+                )
+                continue
 
-            extracted_json = extract_json_from_markdown(markdown_content or "")
-            if extracted_json:
-                with open(output_json_path, "w") as f:
-                    json.dump(extracted_json, f, indent=4)
-                try:
-                    predicted_answer, interpreter_output = run_z3_interpreter(output_json_path)
+            with open(output_json_path, "w") as f:
+                json.dump(generation.json_program, f, indent=4)
 
-                    logger.info(f"Interpreter Output:\n{interpreter_output}")
+            try:
+                predicted_answer, interpreter_output = run_z3_interpreter(output_json_path)
 
-                    if predicted_answer is not None:
-                        logger.info(f"Answer Computed : ({predicted_answer}, {actual_answer})")
-                        if predicted_answer == actual_answer:
-                            correct_answers += 1
-                            logger.info(
-                                f"Question {qid} answered correctly on attempt {num_attempts}"
-                            )
-                        else:
-                            wrong_answers += 1
-                            logger.info(
-                                f"Question {qid} answered incorrectly on attempt {num_attempts}"
-                            )
-                        success = True
+                logger.info(f"Interpreter Output:\n{interpreter_output}")
+
+                if predicted_answer is not None:
+                    logger.info(f"Answer Computed : ({predicted_answer}, {actual_answer})")
+                    if predicted_answer == actual_answer:
+                        correct_answers += 1
+                        logger.info(f"Question {qid} answered correctly on attempt {num_attempts}")
                     else:
-                        logger.warning(
-                            f"Could not determine the answer for question {qid} on attempt {num_attempts}"
-                        )
-                        error_trace = f"Ambiguous output: SAT and UNSAT occurrences don't clearly indicate an answer.\nFull output:\n{interpreter_output}"
-                        success = False
-
-                except Exception as e:
-                    error_trace = f"Error running interpreter: {str(e)}\nFull traceback:\n{''.join(traceback.format_exception(type(e), e, e.__traceback__))}"
-                    logger.error(
-                        f"Error running interpreter for question {qid} on attempt {num_attempts}:\n{error_trace}"
+                        wrong_answers += 1
+                        logger.info(f"Question {qid} answered incorrectly on attempt {num_attempts}")
+                    success = True
+                else:
+                    logger.warning(
+                        f"Could not determine the answer for question {qid} on attempt {num_attempts}"
+                    )
+                    error_trace = (
+                        "Ambiguous output: SAT and UNSAT occurrences don't clearly indicate an answer."
+                        f"\nFull output:\n{interpreter_output}"
                     )
                     success = False
-            else:
-                error_trace = "Failed to extract JSON from the response."
-                logger.error(f"Failed to extract JSON for question {qid} on attempt {num_attempts}")
+
+            except Exception as e:
+                error_trace = f"Error running interpreter: {str(e)}\nFull traceback:\n{''.join(traceback.format_exception(type(e), e, e.__traceback__))}"
+                logger.error(
+                    f"Error running interpreter for question {qid} on attempt {num_attempts}:\n{error_trace}"
+                )
                 success = False
 
         except Exception as e:
