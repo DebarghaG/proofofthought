@@ -34,12 +34,26 @@ print(f"Accuracy: {result.metrics.accuracy:.2%}")
 pip install z3-solver openai scikit-learn numpy
 ```
 
+## Backend Selection
+
+ProofOfThought supports two execution backends:
+
+```python
+# SMT2 backend (default) - Standard SMT-LIB 2.0 via Z3 CLI
+pot = ProofOfThought(llm_client=client, backend="smt2")
+
+# JSON backend - Custom DSL via Python Z3 API
+pot = ProofOfThought(llm_client=client, backend="json")
+```
+
+See [BACKENDS.md](BACKENDS.md) for details on choosing a backend.
+
 ## Architecture
 
 The system has two layers:
 
 1. **High-level API** (`z3dsl.reasoning`) - Simple Python interface for reasoning tasks
-2. **Low-level DSL** (`z3dsl`) - JSON-based Z3 theorem prover interface
+2. **Low-level execution** (`z3dsl.backends`) - JSON DSL or SMT2 backend for Z3
 
 Most users should use the high-level API.
 

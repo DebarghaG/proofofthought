@@ -1,3 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proofofthought"
+version = "1.0.0"
+description = "LLM-based reasoning using Z3 theorem proving"
+readme = "README.md"
+authors = [
+    {name = "Debargha Ganguly", email = "debargha@case.edu"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["llm", "reasoning", "z3", "theorem-proving", "smt", "ai"]
+requires-python = ">=3.12"
+dependencies = [
+    "z3-solver>=4.15.0",
+    "openai>=2.0.0",
+    "scikit-learn>=1.7.0",
+    "numpy>=2.3.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.9.0",
+    "ruff>=0.13.0",
+    "mypy>=1.18.0",
+    "pre-commit>=4.3.0",
+    "pytest>=8.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/debarghaG/proofofthought"
+Documentation = "https://github.com/debarghaG/proofofthought#readme"
+Repository = "https://github.com/debarghaG/proofofthought"
+"Bug Tracker" = "https://github.com/debarghaG/proofofthought/issues"
+
 [tool.black]
 line-length = 100
 target-version = ["py312"]

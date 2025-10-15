@@ -6,12 +6,16 @@ import os
 import tempfile
 import traceback
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from z3dsl.reasoning.program_generator import Z3ProgramGenerator
-from z3dsl.reasoning.verifier import Z3Verifier
+
+if TYPE_CHECKING:
+    from z3dsl.backends.abstract import Backend
 
 logger = logging.getLogger(__name__)
+
+BackendType = Literal["json", "smt2"]
 
 
 @dataclass
@@ -49,23 +53,42 @@ class ProofOfThought:
         self,
         llm_client: Any,
         model: str = "gpt-5",
+        backend: BackendType = "smt2",
         max_attempts: int = 3,
         verify_timeout: int = 10000,
         optimize_timeout: int = 100000,
         cache_dir: str | None = None,
+        z3_path: str = "z3",
     ) -> None:
         """Initialize ProofOfThought.
 
         Args:
             llm_client: LLM client (OpenAI, AzureOpenAI, Anthropic, etc.)
             model: LLM model/deployment name (default: "gpt-5")
+            backend: Execution backend ("json" or "smt2", default: "smt2")
             max_attempts: Maximum retry attempts for program generation
             verify_timeout: Z3 verification timeout in milliseconds
             optimize_timeout: Z3 optimization timeout in milliseconds
             cache_dir: Directory to cache generated programs (None = temp dir)
+            z3_path: Path to Z3 executable (for SMT2 backend)
         """
-        self.generator = Z3ProgramGenerator(llm_client=llm_client, model=model)
-        self.verifier = Z3Verifier(verify_timeout=verify_timeout, optimize_timeout=optimize_timeout)
+        self.backend_type = backend
+        self.generator = Z3ProgramGenerator(llm_client=llm_client, model=model, backend=backend)
+
+        # Initialize appropriate backend (import here to avoid circular imports)
+        if backend == "json":
+            from z3dsl.backends.json_backend import JSONBackend
+
+            backend_instance: Backend = JSONBackend(
+                verify_timeout=verify_timeout, optimize_timeout=optimize_timeout
+            )
+        else:  # smt2
+            from z3dsl.backends.smt2_backend import SMT2Backend
+
+            backend_instance = SMT2Backend(verify_timeout=verify_timeout, z3_path=z3_path)
+
+        self.backend = backend_instance
+
         self.max_attempts = max_attempts
         self.cache_dir = cache_dir or tempfile.gettempdir()
 
@@ -117,31 +140,38 @@ class ProofOfThought:
                         max_tokens=max_tokens,
                     )
 
-                if not gen_result.success or gen_result.json_program is None:
-                    error_trace = gen_result.error or "Failed to generate JSON program"
+                if not gen_result.success or gen_result.program is None:
+                    error_trace = (
+                        gen_result.error or f"Failed to generate {self.backend_type} program"
+                    )
                     previous_response = gen_result.raw_response
                     logger.warning(f"Generation failed: {error_trace}")
                     continue
 
                 # Save program to temporary file
+                file_extension = self.backend.get_file_extension()
                 if program_path is None:
                     temp_file = tempfile.NamedTemporaryFile(
                         mode="w",
-                        suffix=".json",
+                        suffix=file_extension,
                         dir=self.cache_dir,
                         delete=not save_program,
                     )
-                    json_path = temp_file.name
+                    program_file_path = temp_file.name
                 else:
-                    json_path = program_path
+                    program_file_path = program_path
 
-                with open(json_path, "w") as f:
-                    json.dump(gen_result.json_program, f, indent=2)
+                # Write program to file (format depends on backend)
+                with open(program_file_path, "w") as f:
+                    if self.backend_type == "json":
+                        json.dump(gen_result.program, f, indent=2)
+                    else:  # smt2
+                        f.write(gen_result.program)  # type: ignore
 
-                logger.info(f"Generated program saved to: {json_path}")
+                logger.info(f"Generated program saved to: {program_file_path}")
 
-                # Execute Z3 verification
-                verify_result = self.verifier.verify(json_path)
+                # Execute via backend
+                verify_result = self.backend.execute(program_file_path)
 
                 if not verify_result.success:
                     error_trace = verify_result.error or "Z3 verification failed"
@@ -167,7 +197,7 @@ class ProofOfThought:
                 return QueryResult(
                     question=question,
                     answer=verify_result.answer,
-                    json_program=gen_result.json_program,
+                    json_program=gen_result.json_program,  # For backward compatibility
                     sat_count=verify_result.sat_count,
                     unsat_count=verify_result.unsat_count,
                     output=verify_result.output,

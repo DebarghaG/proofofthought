@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from concurrent.futures import as_completed
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -57,16 +58,90 @@ class EvaluationPipeline:
         self,
         proof_of_thought: ProofOfThought,
         output_dir: str = "evaluation_results",
+        num_workers: int = 1,
     ) -> None:
         """Initialize evaluation pipeline.
 
         Args:
             proof_of_thought: ProofOfThought instance
             output_dir: Directory to save evaluation results
+            num_workers: Number of parallel workers (default: 1, set to >1 for multiprocessing)
         """
         self.pot = proof_of_thought
         self.output_dir = output_dir
+        self.num_workers = num_workers
         os.makedirs(output_dir, exist_ok=True)
+
+    def _process_sample(
+        self,
+        sample: dict[str, Any],
+        idx: int,
+        total: int,
+        question_field: str,
+        answer_field: str,
+        id_field: str | None,
+        skip_existing: bool,
+    ) -> tuple[dict[str, Any], QueryResult | None]:
+        """Process a single sample (used for parallel processing).
+
+        Args:
+            sample: Sample data
+            idx: Sample index
+            total: Total number of samples
+            question_field: Field name for question
+            answer_field: Field name for answer
+            id_field: Field name for sample ID
+            skip_existing: Whether to skip existing results
+
+        Returns:
+            Tuple of (result_data, QueryResult)
+        """
+        # Extract fields
+        question = sample[question_field]
+        ground_truth = sample[answer_field]
+        sample_id = sample.get(id_field) if id_field else f"sample_{idx}"
+
+        logger.info(f"[{idx+1}/{total}] Processing: {sample_id}")
+
+        # Check if already processed
+        result_path = os.path.join(self.output_dir, f"{sample_id}_result.json")
+        if skip_existing and os.path.exists(result_path):
+            logger.info(f"Skipping {sample_id} (already processed)")
+            try:
+                with open(result_path) as f:
+                    cached = json.load(f)
+                    return cached, None
+            except Exception as e:
+                logger.warning(f"Failed to load cached result: {e}")
+
+        # Query the system (get correct file extension from backend)
+        file_ext = self.pot.backend.get_file_extension()
+        result = self.pot.query(
+            question=question,
+            save_program=True,
+            program_path=os.path.join(self.output_dir, f"{sample_id}_program{file_ext}"),
+        )
+
+        # Create result data
+        result_data = {
+            "sample_id": sample_id,
+            "question": question,
+            "ground_truth": ground_truth,
+            "answer": result.answer,
+            "success": result.success,
+            "num_attempts": result.num_attempts,
+            "sat_count": result.sat_count,
+            "unsat_count": result.unsat_count,
+            "error": result.error,
+        }
+
+        # Save result
+        with open(result_path, "w") as f:
+            json.dump(result_data, f, indent=2)
+
+        logger.info(f"Completed {sample_id}: {result.answer} (success={result.success})")
+
+        return result_data, result
 
     def evaluate(
         self,
@@ -102,7 +177,7 @@ class EvaluationPipeline:
         if max_samples:
             dataset_list = dataset_list[:max_samples]
 
-        logger.info(f"Evaluating {len(dataset_list)} samples")
+        logger.info(f"Evaluating {len(dataset_list)} samples with {self.num_workers} workers")
 
         results = []
         y_true = []
@@ -111,83 +186,103 @@ class EvaluationPipeline:
         wrong = 0
         failed = 0
 
-        for idx, sample in enumerate(dataset_list):
-            # Extract fields
-            question = sample[question_field]
-            ground_truth = sample[answer_field]
-            sample_id = sample.get(id_field) if id_field else f"sample_{idx}"
+        if self.num_workers == 1:
+            # Sequential processing
+            for idx, sample in enumerate(dataset_list):
+                result_data, result = self._process_sample(
+                    sample,
+                    idx,
+                    len(dataset_list),
+                    question_field,
+                    answer_field,
+                    id_field,
+                    skip_existing,
+                )
 
-            logger.info(f"[{idx+1}/{len(dataset)}] Processing: {sample_id}")
-            logger.info(f"Question: {question}")
-            logger.info(f"Ground truth: {ground_truth}")
+                ground_truth = result_data["ground_truth"]
 
-            # Check if already processed
-            result_path = os.path.join(self.output_dir, f"{sample_id}_result.json")
-            if skip_existing and os.path.exists(result_path):
-                logger.info(f"Skipping {sample_id} (already processed)")
-                try:
-                    with open(result_path) as f:
-                        cached = json.load(f)
-                        if cached.get("success"):
+                # Update metrics from cached or new result
+                if result_data.get("success"):
+                    y_true.append(int(ground_truth))
+                    y_pred.append(int(result_data["answer"]))
+                    if result_data["answer"] == ground_truth:
+                        correct += 1
+                        logger.info("✓ Correct answer")
+                    else:
+                        wrong += 1
+                        logger.info("✗ Wrong answer")
+                else:
+                    failed += 1
+                    logger.warning(f"✗ Failed: {result_data.get('error')}")
+
+                if result:
+                    results.append(result)
+
+                # Log current statistics
+                total_answered = correct + wrong
+                if total_answered > 0:
+                    accuracy = correct / total_answered
+                    logger.info(
+                        f"Current stats: {correct}/{total_answered} correct ({accuracy:.2%})"
+                    )
+        else:
+            # Parallel processing with ProcessPoolExecutor
+            # Note: This won't work with the current approach because ProofOfThought can't be pickled
+            # We need to use threading instead
+            from concurrent.futures import ThreadPoolExecutor
+
+            logger.info("Using parallel processing with threading")
+
+            with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+                # Submit all tasks
+                futures = {
+                    executor.submit(
+                        self._process_sample,
+                        sample,
+                        idx,
+                        len(dataset_list),
+                        question_field,
+                        answer_field,
+                        id_field,
+                        skip_existing,
+                    ): idx
+                    for idx, sample in enumerate(dataset_list)
+                }
+
+                # Collect results as they complete
+                completed = 0
+                for future in as_completed(futures):
+                    completed += 1
+                    try:
+                        result_data, result = future.result()
+                        ground_truth = result_data["ground_truth"]
+
+                        # Update metrics
+                        if result_data.get("success"):
                             y_true.append(int(ground_truth))
-                            y_pred.append(int(cached["answer"]))
-                            if cached["answer"] == ground_truth:
+                            y_pred.append(int(result_data["answer"]))
+                            if result_data["answer"] == ground_truth:
                                 correct += 1
                             else:
                                 wrong += 1
                         else:
                             failed += 1
-                except Exception as e:
-                    logger.warning(f"Failed to load cached result: {e}")
-                continue
 
-            # Query the system
-            result = self.pot.query(
-                question=question,
-                save_program=True,
-                program_path=os.path.join(self.output_dir, f"{sample_id}_program.json"),
-            )
+                        if result:
+                            results.append(result)
 
-            # Save result
-            with open(result_path, "w") as f:
-                json.dump(
-                    {
-                        "sample_id": sample_id,
-                        "question": question,
-                        "ground_truth": ground_truth,
-                        "answer": result.answer,
-                        "success": result.success,
-                        "num_attempts": result.num_attempts,
-                        "sat_count": result.sat_count,
-                        "unsat_count": result.unsat_count,
-                        "error": result.error,
-                    },
-                    f,
-                    indent=2,
-                )
+                    except Exception as e:
+                        logger.error(f"Task failed: {e}")
+                        failed += 1
 
-            results.append(result)
-
-            # Update metrics
-            if result.success and result.answer is not None:
-                y_true.append(int(ground_truth))
-                y_pred.append(int(result.answer))
-
-                if result.answer == ground_truth:
-                    correct += 1
-                    logger.info("✓ Correct answer")
-                else:
-                    wrong += 1
-                    logger.info("✗ Wrong answer")
-            else:
-                failed += 1
-                logger.warning(f"✗ Failed to get answer: {result.error}")
-
-            # Log current statistics
-            total_answered = correct + wrong
-            if total_answered > 0:
-                accuracy = correct / total_answered
-                logger.info(f"Current stats: {correct}/{total_answered} correct ({accuracy:.2%})")
+                    # Log progress
+                    logger.info(f"Progress: {completed}/{len(dataset_list)} samples completed")
+                    total_answered = correct + wrong
+                    if total_answered > 0:
+                        accuracy = correct / total_answered
+                        logger.info(
+                            f"Current stats: {correct}/{total_answered} correct ({accuracy:.2%})"
+                        )
 
         # Calculate final metrics
         metrics = self._calculate_metrics(y_true, y_pred, correct, wrong, failed)
@@ -196,7 +291,7 @@ class EvaluationPipeline:
         logger.info("=" * 80)
         logger.info("FINAL EVALUATION RESULTS")
         logger.info("=" * 80)
-        logger.info(f"Total samples: {len(dataset)}")
+        logger.info(f"Total samples: {len(dataset_list)}")
         logger.info(f"Correct: {correct}")
         logger.info(f"Wrong: {wrong}")
         logger.info(f"Failed: {failed}")
