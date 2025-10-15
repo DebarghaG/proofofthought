@@ -1,4 +1,7 @@
 outputs/*
+output/*
+examples/folio_v2_train.jsonl
+examples/folio_v2_train_processed.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
