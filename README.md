@@ -128,6 +128,8 @@ from utils.azure_config import get_client_config
 
 ## Running Experiments
 
+You can use this repository as a strong baseline for LLM+Solver methods. This code is generally benchmarked with GPT-5 on the first 100 samples of 5 datasets, as an indicator of whether we broke something during development. These numbers are not the best, and you can certainly get better numbers with better prompt engineering with this same tooling. Please feel free to put in a PR if you get better numbers with modified prompts.
+
 To run all benchmarks with both backends and generate results:
 
 ```bash
@@ -159,13 +161,32 @@ This will:
 | CONDITIONALQA | JSON | 100 | 76.00% | 0.9180 | 0.8750 | 0.8960 | 89.00% |
 | STRATEGYQA | JSON | 100 | 68.00% | 0.7500 | 0.7895 | 0.7692 | 86.00% |
 
-## Notes
-
-- **Accuracy**: Percentage of correct predictions
-- **Precision**: True positives / (True positives + False positives)
-- **Recall**: True positives / (True positives + False negatives)
-- **F1 Score**: Harmonic mean of precision and recall
-- **Success Rate**: Percentage of queries that completed without errors
 
 
 <!-- BENCHMARK_RESULTS_END -->
+
+# Citations
+
+Please consider citing our work if you find this useful.
+
+```
+@inproceedings{
+ganguly2024proof,
+title={{PROOF} {OF} {THOUGHT} : Neurosymbolic Program Synthesis allows Robust and Interpretable Reasoning},
+author={Debargha Ganguly and Srinivasan Iyengar and Vipin Chaudhary and Shivkumar Kalyanaraman},
+booktitle={The First Workshop on System-2 Reasoning at Scale, NeurIPS'24},
+year={2024},
+url={https://openreview.net/forum?id=Pxx3r14j3U}
+}
+```
+
+```
+@inproceedings{
+ganguly2025grammars,
+title={Grammars of Formal Uncertainty: When to Trust {LLM}s in Automated Reasoning Tasks},
+author={Debargha Ganguly and Vikash Singh and Sreehari Sankar and Biyao Zhang and Xuecen Zhang and Srinivasan Iyengar and Xiaotian Han and Amit Sharma and Shivkumar Kalyanaraman and Vipin Chaudhary},
+booktitle={The Thirty-ninth Annual Conference on Neural Information Processing Systems},
+year={2025},
+url={https://openreview.net/forum?id=QfKpJ00t2L}
+}
+```
