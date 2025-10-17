@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Debargha Ganguly" /><link rel="canonical" href="https://debarghaG.github.io/proofofthought/postprocessors/" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Postprocessing Techniques - ProofOfThought</title>
+    <title>Postprocessors - ProofOfThought</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Postprocessing Techniques";
+        var mkdocs_page_name = "Postprocessors";
         var mkdocs_page_input_path = "postprocessors.md";
         var mkdocs_page_url = "/proofofthought/postprocessors/";
       </script>
@@ -74,6 +74,72 @@
                 <li class="toctree-l1"><a class="reference internal" href="../benchmarks/">Benchmarks</a>
                 </li>
               </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Postprocessors</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#available-techniques">Available Techniques</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#multiple-postprocessors">Multiple Postprocessors</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#per-query-control">Per-Query Control</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#postprocessor-details">Postprocessor Details</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-self-refine">1. Self-Refine</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-self-consistency">2. Self-Consistency</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-decomposed-prompting">3. Decomposed Prompting</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-least-to-most-prompting">4. Least-to-Most Prompting</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#using-postprocessor-instances">Using Postprocessor Instances</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#registry-access">Registry Access</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#creating-multiple-postprocessors">Creating Multiple Postprocessors</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#backend-compatibility">Backend Compatibility</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#performance-considerations">Performance Considerations</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#llm-call-costs">LLM Call Costs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#benchmarking-with-postprocessors">Benchmarking with Postprocessors</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#api-reference">API Reference</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#proofofthought-parameters">ProofOfThought Parameters</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#query-parameters">Query Parameters</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#future-extensions">Future Extensions</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
       </div>
     </div>
     </nav>
@@ -88,7 +154,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Postprocessing Techniques</li>
+      <li class="breadcrumb-item active">Postprocessors</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/debarghaG/proofofthought/edit/main/docs/postprocessors.md">Edit on debarghaG/proofofthought</a>
     </li>
@@ -380,6 +446,9 @@
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../benchmarks/" class="btn btn-neutral float-left" title="Benchmarks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
 
   <hr/>
 
@@ -405,6 +474,8 @@
           <a href="https://github.com/debarghaG/proofofthought" class="fa fa-code-fork" style="color: #fcfcfc"> debarghaG/proofofthought</a>
         </span>
     
+    
+      <span><a href="../benchmarks/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
   </span>
