@@ -2,276 +2,256 @@
 
 ## ProofOfThought
 
-Main API for Z3-based reasoning.
-
-```python
-from z3adapter.reasoning import ProofOfThought
-```
+`z3adapter.reasoning.proof_of_thought.ProofOfThought`
 
 ### Constructor
 
 ```python
-ProofOfThought(
-    llm_client,
-    model="gpt-5",
-    backend="smt2",
-    max_attempts=3,
-    verify_timeout=10000,
-    optimize_timeout=100000,
-    cache_dir=None,
-    z3_path="z3"
-)
+def __init__(
+    self,
+    llm_client: Any,
+    model: str = "gpt-5",
+    backend: Literal["json", "smt2"] = "smt2",
+    max_attempts: int = 3,
+    verify_timeout: int = 10000,
+    optimize_timeout: int = 100000,
+    cache_dir: str | None = None,
+    z3_path: str = "z3",
+) -> None
 ```
 
 **Parameters:**
 
-- `llm_client` - OpenAI, AzureOpenAI, or compatible LLM client
-- `model` (str) - Model/deployment name (default: "gpt-5")
-- `backend` (str) - Execution backend: "smt2" or "json" (default: "smt2")
-- `max_attempts` (int) - Max retries for program generation (default: 3)
-- `verify_timeout` (int) - Z3 verification timeout in ms (default: 10000)
-- `optimize_timeout` (int) - Z3 optimization timeout in ms (default: 100000)
-- `cache_dir` (str|None) - Directory for caching programs (default: temp dir)
-- `z3_path` (str) - Path to Z3 executable for SMT2 backend (default: "z3")
+- `llm_client`: OpenAI/AzureOpenAI client instance
+- `model`: Deployment/model name (default: `"gpt-5"`)
+- `backend`: `"json"` or `"smt2"` (default: `"smt2"`)
+- `max_attempts`: Retry limit for generation (default: `3`)
+- `verify_timeout`: Z3 timeout in milliseconds (default: `10000`)
+- `optimize_timeout`: Optimization timeout in ms, JSON only (default: `100000`)
+- `cache_dir`: Program cache directory (default: `tempfile.gettempdir()`)
+- `z3_path`: Z3 executable path for SMT2 (default: `"z3"`)
 
 ### query()
 
-Ask a reasoning question.
-
 ```python
-result = pot.query(
-    question,
-    max_attempts=None,
-    save_program=False
-)
+def query(
+    self,
+    question: str,
+    temperature: float = 0.1,
+    max_tokens: int = 16384,
+    save_program: bool = False,
+    program_path: str | None = None,
+) -> QueryResult
 ```
 
 **Parameters:**
 
-- `question` (str) - Natural language question
-- `max_attempts` (int|None) - Override max attempts for this query
-- `save_program` (bool) - Save generated program to disk (default: False)
+- `question`: Natural language question
+- `temperature`: LLM temperature (default: `0.1`, ignored for GPT-5 which only supports `1.0`)
+- `max_tokens`: Max completion tokens (default: `16384`)
+- `save_program`: Save generated program to disk (default: `False`)
+- `program_path`: Custom save path (default: auto-generated in `cache_dir`)
 
 **Returns:** `QueryResult`
+
+**Implementation:** Retry loop with error feedback
+
+```python
+for attempt in range(1, max_attempts + 1):
+    if attempt == 1:
+        gen_result = self.generator.generate(question, temperature, max_tokens)
+    else:
+        gen_result = self.generator.generate_with_feedback(
+            question, error_trace, previous_response, temperature, max_tokens
+        )
+    # ... execute and check result
+```
+
+## QueryResult
 
 ```python
 @dataclass
 class QueryResult:
-    question: str           # Original question
-    answer: bool | None     # True, False, or None if error
-    json_program: dict | None  # Generated program (if JSON backend)
-    sat_count: int          # Number of SAT results
-    unsat_count: int        # Number of UNSAT results
-    output: str             # Raw Z3 output
-    success: bool           # Did query complete?
-    num_attempts: int       # Attempts taken
-    error: str | None       # Error message if failed
-```
-
-**Example:**
-
-```python
-result = pot.query("Can fish breathe underwater?")
-print(result.answer)  # True
-print(f"Took {result.num_attempts} attempts")
+    question: str                        # Input question
+    answer: bool | None                  # True (SAT), False (UNSAT), None (ambiguous/error)
+    json_program: dict[str, Any] | None  # Generated program if JSON backend
+    sat_count: int                       # SAT occurrences in output
+    unsat_count: int                     # UNSAT occurrences
+    output: str                          # Raw Z3 output
+    success: bool                        # Execution completed
+    num_attempts: int                    # Generation attempts used
+    error: str | None                    # Error message if failed
 ```
 
 ## EvaluationPipeline
 
-Batch evaluation on datasets.
-
-```python
-from z3adapter.reasoning import EvaluationPipeline
-```
+`z3adapter.reasoning.evaluation.EvaluationPipeline`
 
 ### Constructor
 
 ```python
-EvaluationPipeline(
-    proof_of_thought,
-    output_dir="results/"
-)
+def __init__(
+    self,
+    proof_of_thought: ProofOfThought,
+    output_dir: str = "evaluation_results",
+    num_workers: int = 1,
+) -> None
 ```
 
 **Parameters:**
 
-- `proof_of_thought` (ProofOfThought) - Configured ProofOfThought instance
-- `output_dir` (str) - Directory for saving results (default: "results/")
+- `proof_of_thought`: Configured ProofOfThought instance
+- `output_dir`: Results directory (default: `"evaluation_results"`)
+- `num_workers`: Parallel workers (default: `1`, uses `ThreadPoolExecutor` if `> 1`)
 
 ### evaluate()
 
-Run evaluation on a dataset.
-
 ```python
-result = evaluator.evaluate(
-    dataset,
-    question_field="question",
-    answer_field="answer",
-    max_samples=None,
-    save_results=True
-)
+def evaluate(
+    self,
+    dataset: list[dict[str, Any]] | str,
+    question_field: str = "question",
+    answer_field: str = "answer",
+    id_field: str | None = None,
+    max_samples: int | None = None,
+    skip_existing: bool = True,
+) -> EvaluationResult
 ```
 
 **Parameters:**
 
-- `dataset` (str) - Path to JSON dataset
-- `question_field` (str) - JSON field containing questions (default: "question")
-- `answer_field` (str) - JSON field containing answers (default: "answer")
-- `max_samples` (int|None) - Limit number of samples (default: all)
-- `save_results` (bool) - Save detailed results to disk (default: True)
+- `dataset`: JSON file path or list of dicts
+- `question_field`: Field name for question text (default: `"question"`)
+- `answer_field`: Field name for ground truth (default: `"answer"`)
+- `id_field`: Field for sample ID (default: `None`, auto-generates `sample_{idx}`)
+- `max_samples`: Limit samples (default: `None`, all)
+- `skip_existing`: Skip cached results (default: `True`)
 
 **Returns:** `EvaluationResult`
 
-```python
-@dataclass
-class EvaluationResult:
-    metrics: EvaluationMetrics
-    predictions: list
-    dataset_name: str
-    timestamp: str
-```
+**Caching:** Saves `{sample_id}_result.json` and `{sample_id}_program{ext}` to `output_dir`
 
-**EvaluationMetrics:**
+## EvaluationMetrics
 
 ```python
 @dataclass
 class EvaluationMetrics:
-    accuracy: float       # Percentage correct
-    precision: float      # True positives / (TP + FP)
-    recall: float         # True positives / (TP + FN)
-    f1: float            # Harmonic mean of precision/recall
-    success_rate: float  # Percentage of queries that completed
-    total_samples: int
-    correct: int
-    incorrect: int
-    failed: int
+    accuracy: float                # sklearn.metrics.accuracy_score
+    precision: float               # sklearn.metrics.precision_score (zero_division=0)
+    recall: float                  # sklearn.metrics.recall_score (zero_division=0)
+    f1_score: float                # 2 * (P * R) / (P + R)
+    specificity: float             # TN / (TN + FP)
+    false_positive_rate: float     # FP / (FP + TN)
+    false_negative_rate: float     # FN / (FN + TP)
+    tp: int                        # True positives
+    fp: int                        # False positives
+    tn: int                        # True negatives
+    fn: int                        # False negatives
+    total_samples: int             # Correct + wrong + failed
+    correct_answers: int           # answer == ground_truth
+    wrong_answers: int             # answer != ground_truth
+    failed_answers: int            # success == False
 ```
 
-**Example:**
+Computed via `sklearn.metrics.confusion_matrix` for binary classification.
+
+## Backend
+
+`z3adapter.backends.abstract.Backend`
+
+Abstract interface:
 
 ```python
-from z3adapter.reasoning import ProofOfThought, EvaluationPipeline
+class Backend(ABC):
+    @abstractmethod
+    def execute(self, program_path: str) -> VerificationResult:
+        pass
 
-pot = ProofOfThought(llm_client=client)
-evaluator = EvaluationPipeline(proof_of_thought=pot)
+    @abstractmethod
+    def get_file_extension(self) -> str:
+        pass
 
-result = evaluator.evaluate(
-    dataset="data/strategyQA_train.json",
-    max_samples=100
+    @abstractmethod
+    def get_prompt_template(self) -> str:
+        pass
+
+    def determine_answer(self, sat_count: int, unsat_count: int) -> bool | None:
+        if sat_count > 0 and unsat_count == 0:
+            return True
+        elif unsat_count > 0 and sat_count == 0:
+            return False
+        else:
+            return None
+```
+
+Implementations: `SMT2Backend`, `JSONBackend`
+
+## VerificationResult
+
+```python
+@dataclass
+class VerificationResult:
+    answer: bool | None  # True (SAT), False (UNSAT), None (ambiguous/error)
+    sat_count: int
+    unsat_count: int
+    output: str          # Raw execution output
+    success: bool        # Execution completed without exception
+    error: str | None    # Error message if failed
+```
+
+## Z3ProgramGenerator
+
+`z3adapter.reasoning.program_generator.Z3ProgramGenerator`
+
+### generate()
+
+```python
+def generate(
+    self,
+    question: str,
+    temperature: float = 0.1,
+    max_tokens: int = 16384,
+) -> GenerationResult
+```
+
+**LLM API Call:**
+
+```python
+response = self.llm_client.chat.completions.create(
+    model=self.model,
+    messages=[{"role": "user", "content": prompt}],
+    max_completion_tokens=max_tokens,
 )
-
-print(f"Accuracy: {result.metrics.accuracy:.2%}")
-print(f"F1 Score: {result.metrics.f1:.4f}")
 ```
 
-## Data Classes
+Note: `temperature` parameter not passed (GPT-5 constraint).
 
-### QueryResult
+### generate_with_feedback()
 
-Returned by `ProofOfThought.query()`.
-
-**Fields:**
-
-- `question` (str) - The input question
-- `answer` (bool|None) - Reasoning result (True/False/None)
-- `json_program` (dict|None) - Generated program if using JSON backend
-- `sat_count` (int) - Number of SAT (satisfiable) results
-- `unsat_count` (int) - Number of UNSAT (unsatisfiable) results
-- `output` (str) - Raw Z3 output
-- `success` (bool) - Whether execution succeeded
-- `num_attempts` (int) - Generation attempts used
-- `error` (str|None) - Error message if failed
-
-### VerificationResult
-
-Low-level result from backend execution.
+Multi-turn conversation with error feedback:
 
 ```python
-from z3adapter.backends.abstract import VerificationResult
+messages=[
+    {"role": "user", "content": prompt},
+    {"role": "assistant", "content": previous_response},
+    {"role": "user", "content": feedback_message},
+]
 ```
 
-**Fields:**
+## Utility: Azure Config
 
-- `answer` (bool|None) - True (SAT), False (UNSAT), None (error)
-- `sat_count` (int) - Count of SAT results
-- `unsat_count` (int) - Count of UNSAT results
-- `output` (str) - Raw execution output
-- `success` (bool) - Execution completed
-- `error` (str|None) - Error message
+`utils.azure_config.get_client_config()`
 
-## Azure OpenAI Helper
-
-Utility for Azure OpenAI configuration.
-
-```python
-from utils.azure_config import get_client_config
-```
-
-### get_client_config()
-
-Returns configured Azure OpenAI client and settings.
-
-```python
-config = get_client_config()
-```
-
-**Returns:** `dict`
-
+Returns:
 ```python
 {
-    "llm_client": AzureOpenAI(...),  # Configured client
-    "model": "gpt-5"                 # Deployment name
+    "llm_client": AzureOpenAI(...),
+    "model": str  # Deployment name from env
 }
 ```
 
-**Environment variables required:**
-
-```bash
-AZURE_OPENAI_API_KEY=...
-AZURE_OPENAI_ENDPOINT=https://....openai.azure.com/
-AZURE_OPENAI_API_VERSION=2024-08-01-preview
-AZURE_GPT5_DEPLOYMENT_NAME=gpt-5
-```
-
-**Example:**
-
-```python
-from utils.azure_config import get_client_config
-from z3adapter.reasoning import ProofOfThought
-
-config = get_client_config()
-pot = ProofOfThought(
-    llm_client=config["llm_client"],
-    model=config["model"]
-)
-```
-
-## Low-Level Components
-
-Most users won't need these—use `ProofOfThought` instead.
-
-### Z3ProgramGenerator
-
-Generates Z3 programs from natural language.
-
-```python
-from z3adapter.reasoning import Z3ProgramGenerator
-```
-
-### Z3Verifier
-
-Executes and verifies Z3 programs.
-
-```python
-from z3adapter.reasoning import Z3Verifier
-```
-
-### Backends
-
-Backend implementations.
-
-```python
-from z3adapter.backends import JSONBackend, SMT2Backend
-```
-
-See [Backends](backends.md) for details.
+Required environment variables:
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_API_VERSION`
+- `AZURE_GPT5_DEPLOYMENT_NAME` or `AZURE_GPT4O_DEPLOYMENT_NAME`

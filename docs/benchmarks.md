@@ -1,6 +1,24 @@
 # Benchmarks
 
-ProofOfThought has been evaluated on 5 logical reasoning datasets.
+Evaluation on 5 logical reasoning datasets using Azure GPT-5.
+
+## Methodology
+
+**Model:** Azure GPT-5 deployment
+**Configuration:**
+- `max_attempts=3` (retry with error feedback)
+- `verify_timeout=10000ms`
+- `optimize_timeout=100000ms` (JSON backend only)
+- `num_workers=10` (ThreadPoolExecutor for parallel processing)
+
+**Metrics:** `sklearn.metrics`
+- Accuracy: `accuracy_score(y_true, y_pred)`
+- Precision: `precision_score(y_true, y_pred, zero_division=0)`
+- Recall: `recall_score(y_true, y_pred, zero_division=0)`
+- F1: `2 * (precision * recall) / (precision + recall)`
+- Success Rate: `(total - failed) / total`
+
+**Execution:** `experiments_pipeline.py` runs all benchmarks sequentially, modifying `BACKEND` variable in each `benchmark/bench_*.py` script via regex substitution.
 
 ## Results
 
@@ -19,134 +37,138 @@ ProofOfThought has been evaluated on 5 logical reasoning datasets.
 | ConditionalQA | JSON | 100 | 76.00% | 0.9180 | 0.8750 | 0.8960 | 89.00% |
 | StrategyQA | JSON | 100 | 68.00% | 0.7500 | 0.7895 | 0.7692 | 86.00% |
 
-## Datasets
+## Dataset Characteristics
 
 ### ProntoQA
 
-Synthetic first-order logic problems with clear provable answers.
+Synthetic first-order logic with deterministic inference.
 
 **Example:**
-
 ```
-Question: "Stella is a lion. All lions are brown. Is Stella brown?"
+Facts: "Stella is a lion. All lions are brown."
+Question: "Is Stella brown?"
 Answer: True
 ```
 
-**Performance:** Near-perfect accuracy with both backends. This is the easiest dataset.
+**Performance:**
+- SMT2: 100% (100/100)
+- JSON: 99% (99/100)
+
+Both backends near-perfect. Simplest dataset.
 
 ### FOLIO
 
-First-order logic inference problems derived from Wikipedia.
+First-order logic from Wikipedia articles.
 
-**Example:**
+**Characteristics:** Complex nested quantifiers, longer inference chains.
 
-```
-Question: "All cats are mammals. Fluffy is a cat. Is Fluffy a mammal?"
-Answer: True
-```
+**Performance:**
+- SMT2: 69% (69/100)
+- JSON: 76% (76/100)
 
-**Performance:** Most challenging dataset. SMT2 gets 69%, JSON gets 76%. The higher accuracy with JSON suggests LLMs struggle with SMT2 syntax for complex logic.
+JSON outperforms SMT2 (+7%). Most challenging dataset. Lower success rate for JSON (94% vs 99%) indicates generation difficulties.
 
 ### ProofWriter
 
-Deductive reasoning over facts and rules.
+Deductive reasoning over explicit facts and rules.
 
 **Example:**
-
 ```
 Facts: "The bear is red. If something is red, then it is kind."
 Question: "Is the bear kind?"
 Answer: True
 ```
 
-**Performance:** Near-perfect with SMT2 (99%), very good with JSON (96%).
+**Performance:**
+- SMT2: 98.96% (95/96)
+- JSON: 95.83% (92/96)
+
+High accuracy for both. SMT2 slight edge (+3%).
 
 ### ConditionalQA
 
-Reasoning with conditional statements.
+Conditional reasoning with if-then statements.
 
-**Example:**
+**Performance:**
+- SMT2: 83% (83/100)
+- JSON: 76% (76/100)
 
-```
-Question: "If it rains, the ground is wet. It is raining. Is the ground wet?"
-Answer: True
-```
-
-**Performance:** SMT2 achieves 83%, JSON achieves 76%. Both backends handle conditionals well.
+SMT2 better accuracy (+7%) and higher success rate (100% vs 89%).
 
 ### StrategyQA
 
-Multi-hop reasoning requiring implicit knowledge.
+Multi-hop reasoning requiring implicit world knowledge.
 
 **Example:**
-
 ```
 Question: "Would a vegetarian eat a burger made of plants?"
-Answer: True
+Answer: True (requires knowing: vegetarians avoid meat, plant burgers have no meat)
 ```
 
-**Performance:** SMT2 gets 84%, JSON gets 68%. This dataset requires more complex reasoning chains.
+**Performance:**
+- SMT2: 84% (84/100)
+- JSON: 68% (68/100)
 
-## Metrics Explained
+Largest gap (+16% for SMT2). Both achieve 100%/86% success rates respectively.
 
-- **Accuracy**: Percentage of correct predictions
-- **Precision**: Of all positive predictions, how many were correct?
-  - `True Positives / (True Positives + False Positives)`
-- **Recall**: Of all actual positives, how many did we catch?
-  - `True Positives / (True Positives + False Negatives)`
-- **F1 Score**: Harmonic mean of precision and recall
-  - `2 × (Precision × Recall) / (Precision + Recall)`
-- **Success Rate**: Percentage of queries that completed without errors
+## Analysis
 
-## Backend Comparison
+### Accuracy Summary
 
-### SMT2 Backend
+**SMT2:** 86.8% average across datasets
+**JSON:** 82.8% average across datasets
 
-**Strengths:**
-- Better on ProofWriter (99% vs 96%)
-- Better on ConditionalQA (83% vs 76%)
-- Better on StrategyQA (84% vs 68%)
-- Higher overall accuracy on 4/5 benchmarks
+SMT2 superior on 4/5 datasets (FOLIO exception where JSON +7%).
 
-**Weaknesses:**
-- Slightly worse on FOLIO (69% vs 76%)
-- More generation errors (lower success rate on some datasets)
+### Success Rate Summary
 
-### JSON Backend
+**SMT2:** 99.4% average (range: 98.96-100%)
+**JSON:** 92.8% average (range: 86-100%)
 
-**Strengths:**
-- Better on FOLIO (76% vs 69%)
-- More reliable generation (higher success rates)
-- Better error messages for debugging
+SMT2 more reliable program generation and execution. JSON success rate variance higher, indicating LLM generation issues on some datasets.
 
-**Weaknesses:**
-- Lower accuracy on StrategyQA (68% vs 84%)
-- Lower accuracy on ConditionalQA (76% vs 83%)
+### Failure Modes
 
-## Running Your Own Benchmarks
+**SMT2 failures:**
+- JSON extraction from markdown: regex mismatch
+- Z3 subprocess timeout (rare with 10s limit)
+- Invalid SMT-LIB syntax (caught by Z3 parser)
 
-### Full suite
+**JSON failures:**
+- JSON parsing errors post-extraction
+- Invalid sort references (e.g., undefined `Person` sort)
+- Expression evaluation errors in `ExpressionParser.parse_expression()`
+- Z3 Python API exceptions
+
+## Reproducing Results
+
+### Full benchmark suite
 
 ```bash
 python experiments_pipeline.py
 ```
 
-This runs all 5 benchmarks with both backends and updates the README.
+Generates:
+- `results/benchmark_results.json` - Raw metrics
+- `results/benchmark_results.md` - Markdown table
+- Updates `README.md` between `<!-- BENCHMARK_RESULTS_START/END -->` markers
 
 ### Single benchmark
+
+```bash
+python benchmark/bench_strategyqa.py
+```
+
+Modify `BACKEND` variable in script (`smt2` or `json`).
+
+### Custom evaluation
 
 ```python
 from utils.azure_config import get_client_config
 from z3adapter.reasoning import ProofOfThought, EvaluationPipeline
 
 config = get_client_config()
-
-pot = ProofOfThought(
-    llm_client=config["llm_client"],
-    model=config["model"],
-    backend="smt2"
-)
-
+pot = ProofOfThought(llm_client=config["llm_client"], backend="smt2")
 evaluator = EvaluationPipeline(proof_of_thought=pot)
 
 result = evaluator.evaluate(
@@ -155,47 +177,30 @@ result = evaluator.evaluate(
 )
 
 print(f"Accuracy: {result.metrics.accuracy:.2%}")
+print(f"Precision: {result.metrics.precision:.4f}")
+print(f"Recall: {result.metrics.recall:.4f}")
+print(f"F1: {result.metrics.f1_score:.4f}")
 ```
 
-### Custom datasets
+## Dataset Sources
 
-See [Examples](examples.md#dataset-format) for dataset format requirements.
+- **ProntoQA:** `data/prontoqa_test.json`
+- **FOLIO:** `data/folio_test.json`
+- **ProofWriter:** `data/proof_writer_test.json`
+- **ConditionalQA:** `data/conditionalQA_test.json`
+- **StrategyQA:** `data/strategyQA_train.json`
 
-## Performance Notes
+Format: JSON arrays with `question` and `answer` fields (boolean).
 
-**Generation time:** 2-5 seconds per query on average with GPT-5.
+## Implementation Notes
 
-**Success rate:** SMT2 achieves 99-100% success rate. JSON achieves 86-100% success rate.
+**Parallel Processing:**
+Benchmark scripts use `num_workers=10` with `ThreadPoolExecutor` (not `ProcessPoolExecutor` due to ProofOfThought unpicklability).
 
-**Timeouts:** Default timeouts (10s verify, 100s optimize) work well for these datasets.
+**Caching:**
+`skip_existing=True` enables resumption. Results cached as:
+- `output/{backend}_evaluation_{dataset}/{sample_id}_result.json`
+- `output/{backend}_programs_{dataset}/{sample_id}_program.{ext}`
 
-## Why the differences?
-
-Backend performance varies because:
-
-1. **LLM generation reliability**: JSON is more structured, easier for LLMs to generate correctly
-2. **Syntax complexity**: SMT2 requires precise S-expression syntax
-3. **Error recovery**: JSON provides better error messages, leading to better retries
-4. **Dataset characteristics**: Some logical patterns are easier in one DSL vs the other
-
-**Recommendation:** Start with SMT2 (default). Switch to JSON if you see low success rates.
-
-## Reproducing Results
-
-All results are from:
-
-- **Model:** GPT-5 (Azure deployment)
-- **Max attempts:** 3
-- **Verify timeout:** 10000ms
-- **Optimize timeout:** 100000ms
-- **Sample size:** 100 per dataset (96 for ProofWriter)
-
-To reproduce:
-
-```bash
-# Set up Azure config in .env
-# Then run experiments
-python experiments_pipeline.py
-```
-
-Results are saved to `results/` with timestamp and full metrics.
+**Timeout Handling:**
+`experiments_pipeline.py` sets 1-hour subprocess timeout per benchmark. Individual Z3 calls timeout at 10s (verify) or 100s (optimize).

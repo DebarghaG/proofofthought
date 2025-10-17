@@ -1,112 +1,69 @@
 # Examples
 
-All examples are in the `examples/` directory. Run them from the project root:
+All examples in `examples/`. Run from project root:
 
 ```bash
-cd /path/to/proofofthought
-python examples/simple_usage.py
+python examples/{script}.py
 ```
 
-## Basic Usage
+## Basic Query
 
-### Single query
+`examples/simple_usage.py`
 
 ```python
 from openai import OpenAI
 from z3adapter.reasoning import ProofOfThought
 
-# Set up client
-client = OpenAI(api_key="...")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 pot = ProofOfThought(llm_client=client, model="gpt-4o")
 
-# Ask a question
 result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-
-# Check the answer
 print(result.answer)  # False
-print(f"Successful: {result.success}")
-print(f"Attempts: {result.num_attempts}")
 ```
 
-File: `examples/simple_usage.py`
+## Azure OpenAI
 
-### Azure OpenAI
+`examples/azure_simple_example.py`
 
 ```python
 from utils.azure_config import get_client_config
 from z3adapter.reasoning import ProofOfThought
 
-# Get Azure config from environment
 config = get_client_config()
+pot = ProofOfThought(llm_client=config["llm_client"], model=config["model"])
 
-# Initialize with Azure client
-pot = ProofOfThought(
-    llm_client=config["llm_client"],
-    model=config["model"]
-)
-
-# Use normally
 result = pot.query("Can fish breathe underwater?")
 print(result.answer)  # True
 ```
 
-File: `examples/azure_simple_example.py`
-
-Required `.env` variables:
-
-```bash
-AZURE_OPENAI_API_KEY=...
-AZURE_OPENAI_ENDPOINT=https://....openai.azure.com/
-AZURE_OPENAI_API_VERSION=2024-08-01-preview
-AZURE_GPT5_DEPLOYMENT_NAME=gpt-5
-```
-
 ## Backend Comparison
 
-### Test both backends
+`examples/backend_comparison.py`
 
 ```python
-from utils.azure_config import get_client_config
-from z3adapter.reasoning import ProofOfThought
-
 config = get_client_config()
 question = "Can fish breathe underwater?"
 
-# JSON backend
-pot_json = ProofOfThought(
-    llm_client=config["llm_client"],
-    backend="json"
-)
-result_json = pot_json.query(question)
+pot_json = ProofOfThought(llm_client=config["llm_client"], backend="json")
+pot_smt2 = ProofOfThought(llm_client=config["llm_client"], backend="smt2")
 
-# SMT2 backend
-pot_smt2 = ProofOfThought(
-    llm_client=config["llm_client"],
-    backend="smt2"
-)
+result_json = pot_json.query(question)
 result_smt2 = pot_smt2.query(question)
 
-print(f"JSON backend: {result_json.answer}")
-print(f"SMT2 backend: {result_smt2.answer}")
+print(f"JSON: {result_json.answer}")
+print(f"SMT2: {result_smt2.answer}")
 ```
-
-File: `examples/backend_comparison.py`
 
 ## Batch Evaluation
 
-### Evaluate on a dataset
+`examples/batch_evaluation.py`
 
 ```python
-from z3adapter.reasoning import ProofOfThought, EvaluationPipeline
+from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
 
-# Set up evaluator
 pot = ProofOfThought(llm_client=client)
-evaluator = EvaluationPipeline(
-    proof_of_thought=pot,
-    output_dir="results/"
-)
+evaluator = EvaluationPipeline(proof_of_thought=pot, output_dir="results/")
 
-# Run evaluation
 result = evaluator.evaluate(
     dataset="data/strategyQA_train.json",
     question_field="question",
@@ -114,22 +71,15 @@ result = evaluator.evaluate(
     max_samples=100
 )
 
-# Print metrics
 print(f"Accuracy: {result.metrics.accuracy:.2%}")
-print(f"Precision: {result.metrics.precision:.4f}")
-print(f"Recall: {result.metrics.recall:.4f}")
-print(f"F1 Score: {result.metrics.f1:.4f}")
-print(f"Success Rate: {result.metrics.success_rate:.2%}")
+print(f"F1 Score: {result.metrics.f1_score:.4f}")
 ```
 
-File: `examples/batch_evaluation.py`
+## Azure + SMT2 Evaluation
 
-### With Azure and SMT2 backend
+`examples/batch_evaluation_smt2_azure.py`
 
 ```python
-from utils.azure_config import get_client_config
-from z3adapter.reasoning import ProofOfThought, EvaluationPipeline
-
 config = get_client_config()
 
 pot = ProofOfThought(
@@ -139,89 +89,69 @@ pot = ProofOfThought(
 )
 
 evaluator = EvaluationPipeline(proof_of_thought=pot)
-result = evaluator.evaluate(
-    dataset="data/strategyQA_train.json",
-    max_samples=50
-)
-
-print(f"Accuracy: {result.metrics.accuracy:.2%}")
+result = evaluator.evaluate("data/strategyQA_train.json", max_samples=50)
 ```
 
-File: `examples/batch_evaluation_smt2_azure.py`
+## Full Benchmark Suite
 
-## Running Experiments
+`experiments_pipeline.py`
 
-### Full benchmark suite
-
-Run all 5 benchmarks with both backends:
+Runs all 5 benchmarks (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA) with both backends:
 
 ```bash
 python experiments_pipeline.py
 ```
 
-This evaluates:
+Implementation:
+- Modifies `benchmark/bench_*.py` files to set backend via regex
+- Runs each script as subprocess with 1-hour timeout
+- Collects metrics from `output/{backend}_evaluation_{benchmark}/` directories
+- Generates markdown table and updates README.md
 
-- ProntoQA (100 samples)
-- FOLIO (100 samples)
-- ProofWriter (96 samples)
-- ConditionalQA (100 samples)
-- StrategyQA (100 samples)
-
-Results are saved to `results/` and the README is auto-updated.
-
-File: `experiments_pipeline.py`
-
-## Advanced Usage
-
-### Save generated programs
-
+Configuration (`experiments_pipeline.py:29-41`):
 ```python
-result = pot.query(
-    "Can fish breathe underwater?",
-    save_program=True
-)
-
-# Programs saved to cache_dir with .json or .smt2 extension
-print(f"Program saved: {result.json_program}")
+BENCHMARKS = {
+    "prontoqa": "benchmark/bench_prontoqa.py",
+    "folio": "benchmark/bench_folio.py",
+    "proofwriter": "benchmark/bench_proofwriter.py",
+    "conditionalqa": "benchmark/bench_conditionalqa.py",
+    "strategyqa": "benchmark/bench_strategyqa.py",
+}
+BACKENDS = ["smt2", "json"]
 ```
 
-### Custom timeouts
+## Benchmark Script Structure
+
+`benchmark/bench_strategyqa.py` (representative):
 
 ```python
+config = get_client_config()
+
 pot = ProofOfThought(
-    llm_client=client,
-    verify_timeout=5000,      # 5 seconds
-    optimize_timeout=50000,   # 50 seconds
-    max_attempts=5
+    llm_client=config["llm_client"],
+    model=config["model"],
+    backend=BACKEND,  # Modified by experiments_pipeline.py
+    max_attempts=3,
+    cache_dir=f"output/{BACKEND}_programs_strategyqa",
 )
-```
 
-### Custom Z3 path
-
-```python
-pot = ProofOfThought(
-    llm_client=client,
-    backend="smt2",
-    z3_path="/usr/local/bin/z3"
+evaluator = EvaluationPipeline(
+    proof_of_thought=pot,
+    output_dir=f"output/{BACKEND}_evaluation_strategyqa",
+    num_workers=10,  # ThreadPoolExecutor for parallel processing
 )
-```
 
-### Override max attempts per query
-
-```python
-# Default max_attempts=3
-pot = ProofOfThought(llm_client=client)
-
-# Override for specific query
-result = pot.query(
-    "Complex question...",
-    max_attempts=10
+result = evaluator.evaluate(
+    dataset="data/strategyQA_train.json",
+    id_field="qid",
+    max_samples=100,
+    skip_existing=True,  # Resume interrupted runs
 )
 ```
 
 ## Dataset Format
 
-Evaluation expects JSON with question/answer fields:
+JSON array of objects:
 
 ```json
 [
@@ -236,67 +166,34 @@ Evaluation expects JSON with question/answer fields:
 ]
 ```
 
-Custom field names:
+Optional ID field:
+```json
+{"qid": "sample_123", "question": "...", "answer": true}
+```
+
+Custom field names via `question_field`, `answer_field`, `id_field` parameters.
+
+## Saving Programs
 
 ```python
-result = evaluator.evaluate(
-    dataset="custom_dataset.json",
-    question_field="query",
-    answer_field="label",
-    max_samples=100
+result = pot.query(
+    "Can fish breathe underwater?",
+    save_program=True,
+    program_path="output/my_program.smt2"
 )
 ```
 
-## Testing Strategy
+Default path: `{cache_dir}/{auto_generated}{ext}`
 
-Want to test on a specific dataset? See `examples/test_strategyqa.py`:
-
-```python
-from utils.azure_config import get_client_config
-from z3adapter.reasoning import ProofOfThought, EvaluationPipeline
-
-config = get_client_config()
-
-# JSON backend
-pot_json = ProofOfThought(
-    llm_client=config["llm_client"],
-    model=config["model"],
-    backend="json"
-)
-
-evaluator = EvaluationPipeline(proof_of_thought=pot_json)
-result = evaluator.evaluate(
-    dataset="data/strategyQA_train.json",
-    max_samples=100
-)
-
-print(f"StrategyQA JSON Backend Accuracy: {result.metrics.accuracy:.2%}")
-```
-
-## Troubleshooting
-
-**Examples fail with import errors?**
-
-Make sure you're running from the project root, not from `examples/`:
-
-```bash
-# Wrong
-cd examples
-python simple_usage.py  # ❌ Import error
-
-# Right
-cd /path/to/proofofthought
-python examples/simple_usage.py  # ✓ Works
-```
-
-**Azure config not found?**
-
-Check your `.env` file has all required Azure variables. See [Installation](installation.md).
-
-**Z3 not found?**
-
-Either install Z3 CLI or use JSON backend:
+## Advanced Configuration
 
 ```python
-pot = ProofOfThought(llm_client=client, backend="json")
+pot = ProofOfThought(
+    llm_client=client,
+    model="gpt-5",
+    backend="smt2",
+    max_attempts=5,           # More retries
+    verify_timeout=20000,     # 20s timeout
+    z3_path="/custom/z3"      # Custom Z3 binary
+)
 ```
