@@ -1,8 +1,10 @@
 # Backends
 
-Two execution backends for Z3: SMT-LIB 2.0 (standard) and JSON DSL (custom).
+ProofOfThought supports two execution backends for Z3: the standard SMT-LIB 2.0 format and a custom JSON DSL.
 
 ## SMT2Backend
+
+The SMT2 backend leverages Z3's standard command-line interface.
 
 **Implementation:** `z3adapter/backends/smt2_backend.py`
 
@@ -12,9 +14,11 @@ Two execution backends for Z3: SMT-LIB 2.0 (standard) and JSON DSL (custom).
 subprocess.run([z3_path, f"-T:{timeout_seconds}", program_path])
 ```
 
-- Z3 CLI subprocess with timeout flag
-- Hard timeout: `timeout_seconds + 10`
-- Output captured from stdout + stderr
+The execution process involves:
+
+- Running Z3 as a CLI subprocess with a timeout flag
+- Applying a hard timeout of `timeout_seconds + 10` to prevent hanging
+- Capturing output from both stdout and stderr
 
 ### Result Parsing
 
@@ -23,16 +27,19 @@ sat_pattern = r"(?<!un)\bsat\b"      # Negative lookbehind to exclude "unsat"
 unsat_pattern = r"\bunsat\b"
 ```
 
-Counts occurrences in Z3 output. Answer logic:
+The parser counts occurrences in Z3 output and applies the following answer logic:
+
 - `sat_count > 0, unsat_count == 0` → `True`
 - `unsat_count > 0, sat_count == 0` → `False`
 - Otherwise → `None`
 
 ### Prompt Template
 
-Source: `z3adapter/reasoning/smt2_prompt_template.py`
+The prompt template guides LLM program generation.
 
-Instructions for generating SMT-LIB 2.0 programs. Key requirements:
+**Source:** `z3adapter/reasoning/smt2_prompt_template.py`
+
+The template provides instructions for generating SMT-LIB 2.0 programs with these key requirements:
 - All commands as S-expressions: `(command args...)`
 - Declare sorts before use
 - Single `(check-sat)` per program
@@ -42,7 +49,9 @@ Instructions for generating SMT-LIB 2.0 programs. Key requirements:
 
 `.smt2`
 
-##JSON Backend
+## JSON Backend
+
+The JSON backend uses Z3's Python API for direct programmatic access.
 
 **Implementation:** `z3adapter/backends/json_backend.py`
 
@@ -56,23 +65,25 @@ sat_count, unsat_count = interpreter.get_verification_counts()
 
 ### Z3JSONInterpreter Pipeline
 
+The interpreter processes JSON programs through three main stages:
+
 **Step 1: SortManager** (`z3adapter/dsl/sorts.py`)
 
-Topologically sorts type definitions to handle dependencies. Creates Z3 sorts:
+First, the system topologically sorts type definitions to handle dependencies, then creates Z3 sorts:
 
 - Built-in: `BoolSort()`, `IntSort()`, `RealSort()` (pre-defined)
 - Custom: `DeclareSort(name)`, `EnumSort(name, values)`, `BitVecSort(n)`, `ArraySort(domain, range)`
 
-Example ArraySort dependency:
+For example, an ArraySort creates dependencies:
 ```json
 {"name": "IntArray", "type": "ArraySort(IntSort, IntSort)"}
 ```
 
-Requires `IntSort` already defined (built-in) before creating `IntArray`.
+This requires `IntSort` to be defined first (fortunately, it's built-in) before creating `IntArray`.
 
 **Step 2: ExpressionParser** (`z3adapter/dsl/expressions.py`)
 
-Parses logical expressions from strings via restricted `eval()`:
+Next, the parser evaluates logical expressions from strings using a restricted `eval()`:
 
 ```python
 safe_globals = {**Z3_OPERATORS, **functions}
@@ -80,7 +91,7 @@ context = {**functions, **constants, **variables, **quantified_vars}
 ExpressionValidator.safe_eval(expr_str, safe_globals, context)
 ```
 
-Whitelisted operators:
+Only whitelisted operators are permitted:
 ```python
 Z3_OPERATORS = {
     "And", "Or", "Not", "Implies", "If", "Distinct",
@@ -90,7 +101,7 @@ Z3_OPERATORS = {
 
 **Step 3: Verifier** (`z3adapter/verification/verifier.py`)
 
-For each verification condition:
+Finally, the verifier tests each verification condition:
 ```python
 result = solver.check(condition)  # Adds condition as hypothesis to KB
 if result == sat:
@@ -100,15 +111,18 @@ elif result == unsat:
 ```
 
 **Verification Semantics:**
-- `solver.check(φ)` asks: "Is KB ∧ φ satisfiable?"
-- SAT: φ is consistent with KB (possible)
-- UNSAT: φ contradicts KB (impossible)
+When calling `solver.check(φ)`, the system asks: "Is KB ∧ φ satisfiable?"
+
+- **SAT**: φ is consistent with the knowledge base (possible scenario)
+- **UNSAT**: φ contradicts the knowledge base (impossible scenario)
 
 ### Prompt Template
 
-Source: `z3adapter/reasoning/prompt_template.py`
+The JSON prompt template is more comprehensive than its SMT2 counterpart.
 
-Comprehensive 546-line specification of JSON DSL. Key sections:
+**Source:** `z3adapter/reasoning/prompt_template.py`
+
+This 546-line specification of the JSON DSL includes these key sections:
 
 **Sorts:**
 ```json
@@ -137,25 +151,25 @@ Free variables for quantifier binding:
 ```
 
 **Verifications:**
-Three types:
+The DSL supports three types of verifications:
 
-1. Simple constraint:
+1. **Simple constraint:**
 ```json
 {"name": "test", "constraint": "supports_abortion(nancy)"}
 ```
 
-2. Existential:
+2. **Existential:**
 ```json
 {"name": "test", "exists": [{"name": "x", "sort": "Int"}], "constraint": "x > 0"}
 ```
 
-3. Universal:
+3. **Universal:**
 ```json
 {"name": "test", "forall": [{"name": "x", "sort": "Int"}],
  "implies": {"antecedent": "x > 0", "consequent": "x >= 1"}}
 ```
 
-**Critical constraint:** Single verification per question (avoid ambiguous results from testing both φ and ¬φ).
+**Critical constraint:** The prompt enforces a single verification per question to avoid ambiguous results from testing both φ and ¬φ.
 
 ### File Extension
 
@@ -163,7 +177,9 @@ Three types:
 
 ## Benchmark Performance
 
-Results from `experiments_pipeline.py` (100 samples per dataset, GPT-5, `max_attempts=3`):
+Performance comparison across datasets reveals notable differences between the backends.
+
+**Results from** `experiments_pipeline.py` (100 samples per dataset, GPT-5, `max_attempts=3`):
 
 | Dataset | SMT2 Accuracy | JSON Accuracy | SMT2 Success | JSON Success |
 |---------|---------------|---------------|--------------|--------------|
@@ -173,26 +189,30 @@ Results from `experiments_pipeline.py` (100 samples per dataset, GPT-5, `max_att
 | ConditionalQA | 83% | 76% | 100% | 89% |
 | StrategyQA | 84% | 68% | 100% | 86% |
 
-**Success Rate** = percentage of queries completing without error (generation + execution).
+**Success Rate** represents the percentage of queries that complete without error (including both generation and execution).
 
-SMT2 higher accuracy on 4/5 datasets. JSON higher success rate variance (86-100% vs 99-100%).
+Overall, SMT2 achieves higher accuracy on 4 out of 5 datasets, while JSON shows greater success rate variance (86-100% compared to SMT2's 99-100%).
 
 ## Implementation Differences
 
+The backends differ in several implementation details.
+
 ### Program Generation
 
-**SMT2:** Extract from markdown via:
+**SMT2:** Extracts programs from markdown via:
 ```python
 pattern = r"```smt2\s*([\s\S]*?)\s*```"
 ```
 
-**JSON:** Extract and parse via:
+**JSON:** Extracts and parses via:
 ```python
 pattern = r"```json\s*(\{[\s\S]*?\})\s*```"
 json.loads(match.group(1))
 ```
 
 ### Error Handling
+
+Error handling varies significantly between backends.
 
 **SMT2:**
 - Subprocess timeout → `TimeoutExpired`
@@ -207,17 +227,21 @@ json.loads(match.group(1))
 
 ### Timeout Configuration
 
+Timeout handling differs between the two backends.
+
 **SMT2:**
-- Single timeout parameter: `verify_timeout` (ms)
-- Converted to seconds for Z3 CLI: `verify_timeout // 1000`
-- Hard subprocess timeout: `timeout_seconds + 10`
+- Uses a single timeout parameter: `verify_timeout` (ms)
+- Converts to seconds for Z3 CLI: `verify_timeout // 1000`
+- Applies a hard subprocess timeout: `timeout_seconds + 10`
 
 **JSON:**
-- Two timeouts: `verify_timeout` (ms), `optimize_timeout` (ms)
-- Set via `solver.set("timeout", verify_timeout)` in Verifier
-- Applies per `solver.check()` call
+- Uses two separate timeouts: `verify_timeout` (ms) and `optimize_timeout` (ms)
+- Sets timeout via `solver.set("timeout", verify_timeout)` in Verifier
+- Timeout applies per individual `solver.check()` call
 
 ## Backend Selection Code
+
+The system selects backends at runtime based on configuration:
 
 ```python
 if backend == "json":
@@ -228,9 +252,11 @@ else:  # smt2
     backend_instance = SMT2Backend(verify_timeout, z3_path)
 ```
 
-File: `z3adapter/reasoning/proof_of_thought.py:78-90`
+**File:** `z3adapter/reasoning/proof_of_thought.py:78-90`
 
 ## Prompt Selection
+
+The appropriate prompt template is chosen based on the selected backend:
 
 ```python
 if self.backend == "json":
@@ -239,6 +265,6 @@ else:  # smt2
     prompt = build_smt2_prompt(question)
 ```
 
-File: `z3adapter/reasoning/program_generator.py:78-81`
+**File:** `z3adapter/reasoning/program_generator.py:78-81`
 
-Prompts include few-shot examples and format specifications. SMT2 prompt emphasizes S-expression syntax. JSON prompt details variable scoping and quantifier semantics.
+Both prompts include few-shot examples and format specifications. The SMT2 prompt emphasizes S-expression syntax, while the JSON prompt provides detailed guidance on variable scoping and quantifier semantics.

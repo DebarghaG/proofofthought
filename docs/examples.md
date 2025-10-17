@@ -1,6 +1,8 @@
 # Examples
 
-All examples in `examples/`. Run from project root:
+This page demonstrates common usage patterns through example scripts.
+
+All examples are located in the `examples/` directory and should be run from the project root:
 
 ```bash
 python examples/{script}.py
@@ -8,7 +10,9 @@ python examples/{script}.py
 
 ## Basic Query
 
-`examples/simple_usage.py`
+The simplest way to use ProofOfThought is through a single query.
+
+**File:** `examples/simple_usage.py`
 
 ```python
 from openai import OpenAI
@@ -23,7 +27,9 @@ print(result.answer)  # False
 
 ## Azure OpenAI
 
-`examples/azure_simple_example.py`
+For Azure OpenAI deployments, use the provided configuration utility.
+
+**File:** `examples/azure_simple_example.py`
 
 ```python
 from utils.azure_config import get_client_config
@@ -38,7 +44,9 @@ print(result.answer)  # True
 
 ## Backend Comparison
 
-`examples/backend_comparison.py`
+You can compare how the two backends perform on the same question.
+
+**File:** `examples/backend_comparison.py`
 
 ```python
 config = get_client_config()
@@ -56,7 +64,9 @@ print(f"SMT2: {result_smt2.answer}")
 
 ## Batch Evaluation
 
-`examples/batch_evaluation.py`
+For evaluating multiple questions from a dataset, use the evaluation pipeline.
+
+**File:** `examples/batch_evaluation.py`
 
 ```python
 from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
@@ -77,7 +87,9 @@ print(f"F1 Score: {result.metrics.f1_score:.4f}")
 
 ## Azure + SMT2 Evaluation
 
-`examples/batch_evaluation_smt2_azure.py`
+This example combines Azure OpenAI with the SMT2 backend for batch evaluation.
+
+**File:** `examples/batch_evaluation_smt2_azure.py`
 
 ```python
 config = get_client_config()
@@ -94,21 +106,24 @@ result = evaluator.evaluate("data/strategyQA_train.json", max_samples=50)
 
 ## Full Benchmark Suite
 
-`experiments_pipeline.py`
+For comprehensive benchmarking, the experiments pipeline runs all datasets with both backends.
 
-Runs all 5 benchmarks (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA) with both backends:
+**File:** `experiments_pipeline.py`
+
+This script runs all 5 benchmarks (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA) with both backends:
 
 ```bash
 python experiments_pipeline.py
 ```
 
-Implementation:
-- Modifies `benchmark/bench_*.py` files to set backend via regex
-- Runs each script as subprocess with 1-hour timeout
-- Collects metrics from `output/{backend}_evaluation_{benchmark}/` directories
-- Generates markdown table and updates README.md
+**Implementation details:**
 
-Configuration (`experiments_pipeline.py:29-41`):
+- Modifies `benchmark/bench_*.py` files to set the backend via regex substitution
+- Runs each benchmark script as a subprocess with a 1-hour timeout
+- Collects metrics from `output/{backend}_evaluation_{benchmark}/` directories
+- Generates a markdown table and updates README.md with results
+
+**Configuration** (`experiments_pipeline.py:29-41`):
 ```python
 BENCHMARKS = {
     "prontoqa": "benchmark/bench_prontoqa.py",
@@ -122,7 +137,9 @@ BACKENDS = ["smt2", "json"]
 
 ## Benchmark Script Structure
 
-`benchmark/bench_strategyqa.py` (representative):
+Individual benchmark scripts follow a common pattern, illustrated here with StrategyQA.
+
+**File:** `benchmark/bench_strategyqa.py`
 
 ```python
 config = get_client_config()
@@ -151,7 +168,7 @@ result = evaluator.evaluate(
 
 ## Dataset Format
 
-JSON array of objects:
+Datasets should be formatted as JSON arrays of objects:
 
 ```json
 [
@@ -166,14 +183,17 @@ JSON array of objects:
 ]
 ```
 
-Optional ID field:
+You can optionally include an ID field:
+
 ```json
 {"qid": "sample_123", "question": "...", "answer": true}
 ```
 
-Custom field names via `question_field`, `answer_field`, `id_field` parameters.
+Use the `question_field`, `answer_field`, and `id_field` parameters to specify custom field names.
 
 ## Saving Programs
+
+To save generated programs to disk for inspection:
 
 ```python
 result = pot.query(
@@ -183,9 +203,11 @@ result = pot.query(
 )
 ```
 
-Default path: `{cache_dir}/{auto_generated}{ext}`
+If you don't specify a path, the default is: `{cache_dir}/{auto_generated}{ext}`
 
 ## Advanced Configuration
+
+For more control over the reasoning process, you can customize various parameters:
 
 ```python
 pot = ProofOfThought(

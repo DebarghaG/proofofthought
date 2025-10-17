@@ -1,18 +1,22 @@
 # DSL Specification
 
-Technical details of the JSON DSL implementation.
+This page provides technical details of the JSON DSL implementation.
 
 ## Rules vs Verifications
 
-**Critical distinction:** Rules modify the solver state. Verifications query the solver state.
+Understanding the distinction between rules and verifications is critical to using the DSL correctly.
+
+**Key difference:** Rules modify the solver state, while verifications query it.
 
 ### Rules
+
+Rules define axioms that permanently affect the solver's knowledge base.
 
 **Implementation:** `z3adapter/dsl/expressions.py:159-204`
 
 **Operation:** `solver.add(assertion)`
 
-Rules are **permanently asserted** into the solver's knowledge base during step 6 of interpretation.
+Rules are permanently asserted into the solver's knowledge base during step 6 of the interpretation pipeline.
 
 ```python
 # Line 189: Implication rule
@@ -36,15 +40,17 @@ else:
 }
 ```
 
-**Effect:** Defines axioms. Every subsequent verification will inherit this constraint.
+**Effect:** This defines an axiom that every subsequent verification will inherit.
 
 ### Verifications
+
+Verifications test conditions without modifying the knowledge base.
 
 **Implementation:** `z3adapter/verification/verifier.py:84-127`
 
 **Operation:** `solver.check(condition)`
 
-Verifications **test conditions** against the existing knowledge base without modifying it.
+Verifications test conditions against the existing knowledge base without modifying it.
 
 ```python
 # Line 113
@@ -56,10 +62,10 @@ elif result == unsat:
     self.unsat_count += 1
 ```
 
-**Semantics:** Checks if `KB ∧ condition` is satisfiable.
+**Semantics:** The check determines if `KB ∧ condition` is satisfiable.
 
-- **SAT**: condition is consistent with KB
-- **UNSAT**: condition contradicts KB
+- **SAT**: The condition is consistent with the knowledge base
+- **UNSAT**: The condition contradicts the knowledge base
 
 **Structure:**
 ```json
@@ -69,9 +75,11 @@ elif result == unsat:
 }
 ```
 
-**Effect:** Returns SAT/UNSAT but does NOT add to KB.
+**Effect:** Returns SAT/UNSAT result but does NOT add the condition to the knowledge base.
 
 ### Example
+
+Here's a complete example showing the interaction between rules and verifications:
 
 ```json
 {
@@ -95,34 +103,37 @@ elif result == unsat:
 
 ## Variable Scoping
 
+The DSL supports both free and quantified variables with careful scoping rules.
+
 **Implementation:** `z3adapter/dsl/expressions.py:69-107`
 
 ### Free Variables
 
-Declared in global `"variables"` section. Available throughout program.
+Free variables are declared in the global `"variables"` section and remain available throughout the program.
 
 ```json
 "variables": [{"name": "x", "sort": "Int"}]
 ```
 
-Added to evaluation context (line 91):
+These are added to the evaluation context at line 91:
+
 ```python
 context.update(self.variables)
 ```
 
 ### Quantified Variables
 
-Bound by `ForAll` or `Exists` quantifiers. Temporarily shadow free variables within quantified scope.
+Quantified variables are bound by `ForAll` or `Exists` operators and temporarily shadow free variables within their scope.
 
 ```json
 "knowledge_base": ["ForAll([x], x > 0)"]
 ```
 
-Here `x` must exist in context (from `"variables"`) to be bound by `ForAll`.
+In this example, `x` must already exist in the context (from `"variables"`) to be bound by the `ForAll` operator.
 
 ### Shadowing
 
-Code checks for shadowing (lines 100-106):
+The implementation includes shadowing checks at lines 100-106:
 ```python
 for v in quantified_vars:
     var_name = v.decl().name()
@@ -131,9 +142,11 @@ for v in quantified_vars:
     context[var_name] = v
 ```
 
-Variables bound by quantifiers override free variables in local scope.
+When shadowing occurs, variables bound by quantifiers take precedence over free variables within their local scope.
 
 ## Answer Determination
+
+The system determines the final answer based on verification counts.
 
 **Implementation:** `z3adapter/backends/abstract.py:52-67`
 
@@ -147,11 +160,12 @@ def determine_answer(self, sat_count: int, unsat_count: int) -> bool | None:
         return None  # Ambiguous
 ```
 
-**Ambiguous results** (`None`) occur when:
-- `sat_count > 0 and unsat_count > 0` — multiple verifications with conflicting results
-- `sat_count == 0 and unsat_count == 0` — no verifications or all unknown
+**Ambiguous results** (returning `None`) occur in two cases:
 
-**Handling:** `proof_of_thought.py:183-191` treats `None` as error and retries with feedback:
+- `sat_count > 0 and unsat_count > 0` — multiple verifications produced conflicting results
+- `sat_count == 0 and unsat_count == 0` — no verifications ran or all returned unknown
+
+**Handling:** The system treats `None` as an error and retries with feedback (see `proof_of_thought.py:183-191`):
 ```python
 if verify_result.answer is None:
     error_trace = (
@@ -161,17 +175,19 @@ if verify_result.answer is None:
     continue  # Retry with error feedback
 ```
 
-**Best practice:** Single verification per program (enforced by prompt template line 416).
+**Best practice:** Use a single verification per program to avoid ambiguous results. This is enforced by the prompt template at line 416.
 
 ## Security Model
+
+The DSL includes multiple security layers to prevent code injection attacks.
 
 **Implementation:** `z3adapter/security/validator.py`
 
 ### AST Validation
 
-Before `eval()`, parses to AST and checks for dangerous constructs (lines 21-42):
+Before executing `eval()`, the system parses expressions to an AST and checks for dangerous constructs (lines 21-42).
 
-**Blocked:**
+**Blocked constructs:**
 - Dunder attributes: `__import__`, `__class__`, etc. (line 24)
 - Imports: `import`, `from ... import` (line 29)
 - Function/class definitions (line 32)
@@ -179,16 +195,20 @@ Before `eval()`, parses to AST and checks for dangerous constructs (lines 21-42)
 
 ### Restricted Evaluation
 
+The evaluation environment is carefully sandboxed:
+
 ```python
 # Line 66
 eval(code, {"__builtins__": {}}, {**safe_globals, **context})
 ```
 
-- **No builtins**: `__builtins__: {}` prevents access to `open`, `print`, etc.
-- **Whitelisted globals**: Only Z3 operators and user-defined functions
-- **Local context**: Constants, variables, quantified vars
+Three layers of protection:
 
-**Whitelisted operators** (`expressions.py:33-47`):
+- **No builtins**: Setting `__builtins__: {}` prevents access to `open`, `print`, and other dangerous functions
+- **Whitelisted globals**: Only Z3 operators and user-defined functions are available
+- **Local context**: Limited to constants, variables, and quantified variables
+
+**Whitelisted operators** (from `expressions.py:33-47`):
 ```python
 Z3_OPERATORS = {
     "And", "Or", "Not", "Implies", "If", "Distinct",
@@ -198,13 +218,15 @@ Z3_OPERATORS = {
 
 ## Sort Dependency Resolution
 
+Complex types may depend on other types, requiring careful ordering during creation.
+
 **Implementation:** `z3adapter/dsl/sorts.py:36-97`
 
-Uses **Kahn's algorithm** for topological sorting.
+The system uses **Kahn's algorithm** for topological sorting of type definitions.
 
 ### Dependency Extraction
 
-ArraySort creates dependencies (lines 59-62):
+ArraySort declarations create dependencies that must be resolved (lines 59-62):
 ```python
 if sort_type.startswith("ArraySort("):
     domain_range = sort_type[len("ArraySort(") : -1]
@@ -212,19 +234,22 @@ if sort_type.startswith("ArraySort("):
     deps.extend(parts)
 ```
 
-Example:
+For example:
+
 ```json
 {"name": "MyArray", "type": "ArraySort(IntSort, Person)"}
 ```
-Depends on: `IntSort` (built-in, skip), `Person` (must be defined first).
+
+This depends on: `IntSort` (built-in, can skip) and `Person` (must be defined first).
 
 ### Topological Sort
 
-Kahn's algorithm (lines 66-87):
-1. Calculate in-degree (dependency count) for each sort
+Kahn's algorithm processes types in dependency order (lines 66-87):
+
+1. Calculate the in-degree (dependency count) for each sort
 2. Process sorts with zero dependencies first
-3. Reduce in-degree of dependents
-4. Detect cycles if not all sorts processed (lines 90-92)
+3. Reduce the in-degree of dependent sorts as their dependencies are satisfied
+4. Detect cycles if not all sorts can be processed (lines 90-92)
 
 **Circular dependency detection:**
 ```python
@@ -235,6 +260,8 @@ if len(sorted_names) != len(dependencies):
 
 ## Optimizer Independence
 
+The optimizer operates independently from the main solver.
+
 **Implementation:** `z3adapter/optimization/optimizer.py:29-39`
 
 ```python
@@ -242,13 +269,13 @@ def __init__(self, ...):
     self.optimizer = Optimize()  # Separate instance
 ```
 
-**Critical:** `Optimize()` is **separate from `Solver()`**. Does NOT share constraints.
+**Critical detail:** The `Optimize()` instance is completely separate from the main `Solver()` and does NOT share constraints.
 
-From docstring (line 38-39):
+As stated in the docstring (line 38-39):
 > The optimizer is separate from the solver and doesn't share constraints.
 > This is intentional to allow independent optimization problems.
 
-Optimizer has its own variables and constraints (lines 49-69). Can reference global constants via extended context (line 60-61):
+The optimizer maintains its own variables and constraints (lines 49-69). However, it can reference global constants through an extended context (line 60-61):
 ```python
 base_context = self.expression_parser.build_context()
 opt_context = {**base_context, **optimization_vars}
@@ -256,9 +283,11 @@ opt_context = {**base_context, **optimization_vars}
 
 ## Execution Pipeline
 
+The interpreter follows a carefully ordered execution sequence.
+
 **Implementation:** `z3adapter/interpreter.py:135-197`
 
-8-step execution sequence:
+**8-step execution sequence:**
 
 ```python
 # Step 1: Create sorts
@@ -291,13 +320,15 @@ self.verifier.add_verifications(self.config["verifications"])
 self.perform_actions()
 ```
 
-**Symbol loading:** Line 172 calls `mark_symbols_loaded()` to enable context caching (lines 78-84 in `expressions.py`). After this, `build_context()` returns cached dict instead of rebuilding.
+**Symbol loading optimization:** At line 172, calling `mark_symbols_loaded()` enables context caching (see lines 78-84 in `expressions.py`). After this point, `build_context()` returns a cached dictionary instead of rebuilding it on each call.
 
 ## Retry Mechanism
 
+The system can automatically retry failed program generation with error feedback.
+
 **Implementation:** `z3adapter/reasoning/proof_of_thought.py:123-191`
 
-Retry loop with error feedback:
+**Retry loop with error feedback:**
 
 ```python
 for attempt in range(1, self.max_attempts + 1):
@@ -309,7 +340,7 @@ for attempt in range(1, self.max_attempts + 1):
         )
 ```
 
-**Failure modes triggering retry:**
+**Failure modes that trigger retry:**
 
 1. **Generation failure** (lines 143-149):
    ```python
@@ -332,7 +363,7 @@ for attempt in range(1, self.max_attempts + 1):
        continue
    ```
 
-**Error feedback:** Multi-turn conversation (`program_generator.py:130-174`):
+**Error feedback mechanism:** Uses multi-turn conversation (see `program_generator.py:130-174`):
 ```python
 messages=[
     {"role": "user", "content": prompt},
@@ -343,6 +374,8 @@ messages=[
 
 ## Solver Semantics
 
+The solver's `check` method has two distinct modes of operation.
+
 **Implementation:** `z3adapter/solvers/z3_solver.py:20-24`
 
 ```python
@@ -352,44 +385,50 @@ def check(self, condition: Any = None) -> Any:
     return self.solver.check()               # Check all assertions
 ```
 
-**Two modes:**
+**Two modes of operation:**
 
-1. **`solver.check()`**: Checks satisfiability of all `solver.add()` assertions
-2. **`solver.check(φ)`**: Checks satisfiability of `assertions ∧ φ` **without adding φ**
+1. **`solver.check()`**: Checks the satisfiability of all assertions added via `solver.add()`
+2. **`solver.check(φ)`**: Checks the satisfiability of `assertions ∧ φ` **without permanently adding φ**
 
-Verifications use mode 2 (`verifier.py:113`):
+Verifications use mode 2 (see `verifier.py:113`):
 ```python
 result = solver.check(condition)
 ```
 
-This is **temporary** — `condition` is NOT added to solver permanently.
+This is a **temporary** check — the `condition` is NOT permanently added to the solver.
 
 **Contrast with rules:**
-- Rules: `solver.add(φ)` → permanent
-- Verifications: `solver.check(φ)` → temporary test
+
+- **Rules**: `solver.add(φ)` → permanently modifies solver state
+- **Verifications**: `solver.check(φ)` → temporary test without modification
 
 ## Built-in Sorts
 
-**Implementation:** `z3adapter/dsl/sorts.py:31-34`
+The DSL includes three pre-initialized built-in sorts.
 
-Three built-in sorts pre-initialized:
+**Implementation:** `z3adapter/dsl/sorts.py:31-34`
 ```python
 def _initialize_builtin_sorts(self) -> None:
     built_in_sorts = {"BoolSort": BoolSort(), "IntSort": IntSort(), "RealSort": RealSort()}
     self.sorts.update(built_in_sorts)
 ```
 
-**Important:** Reference as `"BoolSort"`, `"IntSort"`, `"RealSort"` in JSON (not `"Bool"`, `"Int"`, `"Real"`).
+**Important:** Always reference these as `"BoolSort"`, `"IntSort"`, and `"RealSort"` in JSON (not `"Bool"`, `"Int"`, or `"Real"`).
 
-Do NOT declare in `"sorts"` section — already available.
+These sorts are already available and should NOT be declared in the `"sorts"` section.
 
 ## Prompt Template Constraints
 
+The prompt template enforces several important constraints on DSL programs.
+
 **Implementation:** `z3adapter/reasoning/prompt_template.py`
 
-Key constraints enforced by prompt (extracted from code):
+**Key constraints** (extracted from code):
 
-**Line 228:** Rules with `"implies"` MUST have non-empty `"forall"` field
+### Line 228: Implication Rules
+
+Rules with `"implies"` MUST have non-empty `"forall"` field:
+
 ```python
 # expressions.py:184-186
 if "implies" in rule:
@@ -397,18 +436,27 @@ if "implies" in rule:
         raise ValueError("Implication rules require quantified variables")
 ```
 
-**Line 298:** Empty quantifier lists forbidden
+### Line 298: Quantifier Lists
+
+Empty quantifier lists are forbidden:
+
 ```python
 # verifier.py:42-43, 55-56
 if not exists_vars:
     raise ValueError(f"Empty 'exists' list in verification")
 ```
 
-**Line 416:** Single verification per program (avoid ambiguous results)
+### Line 416: Single Verification
+
+Use a single verification per program to avoid ambiguous results:
+
 ```python
 # Directly impacts determine_answer() — mixed SAT/UNSAT returns None
 ```
 
-**Line 531:** Output format requirement
-- Must wrap JSON in markdown code block: ` ```json ... ``` `
-- Regex extraction: `r"```json\s*(\{[\s\S]*?\})\s*```"` (`program_generator.py:224`)
+### Line 531: Output Format
+
+LLM output requirements:
+
+- Must wrap JSON in a markdown code block: ` ```json ... ``` `
+- Extracted via regex: `r"```json\s*(\{[\s\S]*?\})\s*```"` (see `program_generator.py:224`)

@@ -2,58 +2,62 @@
 
 ## Dependencies
 
-Python 3.12+ required (`pyproject.toml` specifies `requires-python = ">=3.12"`).
+ProofOfThought requires Python 3.12 or higher (as specified in `pyproject.toml`).
 
-### Core
+### Core Dependencies
+
+Install the core dependencies using:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Installs:
+This installs the following packages:
 
-- `z3-solver>=4.15.0` - Z3 Python API (JSONBackend) + CLI binary (SMT2Backend)
-- `openai>=2.0.0` - LLM client (supports Azure OpenAI via same interface)
-- `scikit-learn>=1.7.0` - Evaluation metrics (`confusion_matrix`, `accuracy_score`, etc.)
-- `numpy>=2.3.0` - Numerical operations
-- `python-dotenv>=1.1.0` - Environment variable management
+- `z3-solver>=4.15.0` - Provides both the Z3 Python API (for JSONBackend) and CLI binary (for SMT2Backend)
+- `openai>=2.0.0` - LLM client with support for both OpenAI and Azure OpenAI
+- `scikit-learn>=1.7.0` - Used for evaluation metrics like `confusion_matrix` and `accuracy_score`
+- `numpy>=2.3.0` - Required for numerical operations
+- `python-dotenv>=1.1.0` - Manages environment variables from `.env` files
 
-### Development (Optional)
+### Development Dependencies (Optional)
+
+For development work, install additional tools:
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-Additional tools:
+This includes:
 
 - `black>=25.9.0` - Code formatter
-- `ruff>=0.13.0` - Linter
-- `mypy>=1.18.0` - Type checker
-- `pytest>=8.0.0` - Test runner
-- `pre-commit>=4.3.0` - Git hooks
+- `ruff>=0.13.0` - Fast Python linter
+- `mypy>=1.18.0` - Static type checker
+- `pytest>=8.0.0` - Testing framework
+- `pre-commit>=4.3.0` - Git hook manager
 
-## Z3 Verification
+## Z3 Verification Setup
 
 ### JSON Backend
 
-No additional setup. `z3-solver` package includes Python API.
+The JSON backend requires no additional setup beyond installing `z3-solver`, which includes the Python API.
 
 ### SMT2 Backend
 
-Requires Z3 CLI in PATH:
+The SMT2 backend requires the Z3 CLI to be available in your PATH:
 
 ```bash
 z3 --version
 ```
 
-If missing, `z3-solver` package includes CLI in `site-packages`. Locate via:
+If Z3 is not found, note that the `z3-solver` package includes a CLI binary in `site-packages`. You can locate it with:
 
 ```bash
 python -c "import z3; print(z3.__file__)"
-# CLI typically at: .../site-packages/z3/bin/z3
+# The CLI is typically located at: .../site-packages/z3/bin/z3
 ```
 
-macOS/Linux: Add to PATH or specify in code:
+On macOS/Linux, you can either add it to your PATH or specify the path in your code:
 ```python
 ProofOfThought(..., z3_path="/path/to/z3")
 ```
@@ -62,14 +66,15 @@ ProofOfThought(..., z3_path="/path/to/z3")
 
 ### OpenAI
 
-`.env`:
+For OpenAI access, create a `.env` file with:
+
 ```bash
 OPENAI_API_KEY=sk-...
 ```
 
 ### Azure OpenAI
 
-`.env`:
+For Azure OpenAI deployments, configure these variables in `.env`:
 ```bash
 AZURE_OPENAI_API_KEY=...
 AZURE_OPENAI_ENDPOINT=https://....openai.azure.com/
@@ -78,7 +83,8 @@ AZURE_GPT5_DEPLOYMENT_NAME=gpt-5
 AZURE_GPT4O_DEPLOYMENT_NAME=gpt-4o
 ```
 
-Usage:
+Then use it in your code:
+
 ```python
 from utils.azure_config import get_client_config
 
@@ -88,11 +94,14 @@ pot = ProofOfThought(llm_client=config["llm_client"], model=config["model"])
 
 ## Verification
 
+To verify your installation is working correctly:
+
 ```bash
 python examples/simple_usage.py
 ```
 
-Expected output structure:
+You should see output similar to:
+
 ```
 Question: Would Nancy Pelosi publicly denounce abortion?
 Answer: False
@@ -102,37 +111,41 @@ Attempts: 1
 
 ## Troubleshooting
 
-**Z3 CLI not found (SMT2 backend)**
+Common issues and their solutions:
 
-Error:
+### Z3 CLI not found (SMT2 backend)
+
+**Error:**
 ```
 FileNotFoundError: Z3 executable not found: 'z3'
 ```
 
-Solutions:
-1. Use JSON backend: `ProofOfThought(backend="json")`
-2. Specify Z3 path: `ProofOfThought(z3_path="/path/to/z3")`
-3. Add to PATH: `export PATH=$PATH:/path/to/z3/bin`
+**Solutions:**
 
-**Import errors when running examples**
+1. Switch to JSON backend: `ProofOfThought(backend="json")`
+2. Specify the Z3 path explicitly: `ProofOfThought(z3_path="/path/to/z3")`
+3. Add Z3 to your PATH: `export PATH=$PATH:/path/to/z3/bin`
 
-Wrong:
+### Import errors when running examples
+
+**Incorrect approach:**
 ```bash
 cd examples
 python simple_usage.py  # ❌ ModuleNotFoundError
 ```
 
-Correct:
+**Correct approach:**
+
 ```bash
 cd /path/to/proofofthought
 python examples/simple_usage.py  # ✓
 ```
 
-Reason: `examples/*.py` use `sys.path.insert(0, str(Path(__file__).parent.parent))` to find `z3adapter` and `utils` modules from project root.
+**Reason:** The example scripts use `sys.path.insert(0, str(Path(__file__).parent.parent))` to locate the `z3adapter` and `utils` modules from the project root.
 
-**Azure authentication errors**
+### Azure authentication errors
 
-Verify `.env` variables are set and endpoint URL is correct. Test via:
+First, verify that all `.env` variables are properly set and that your endpoint URL is correct. You can test the configuration with:
 ```python
 from utils.azure_config import get_client_config
 config = get_client_config()  # Should not raise
@@ -140,10 +153,10 @@ config = get_client_config()  # Should not raise
 
 ## Version Constraints
 
-From `pyproject.toml` and `requirements.txt`:
+The following version constraints are defined in `pyproject.toml` and `requirements.txt`:
 
-- Python: `>=3.12`
-- Z3: `>=4.15.0` (tested with `4.15.3.0`)
-- OpenAI: `>=2.0.0` (tested with `2.0.1`)
-- scikit-learn: `>=1.7.0` (tested with `1.7.2`)
-- NumPy: `>=2.3.0` (tested with `2.3.3`)
+- **Python:** `>=3.12`
+- **Z3:** `>=4.15.0` (tested with `4.15.3.0`)
+- **OpenAI:** `>=2.0.0` (tested with `2.0.1`)
+- **scikit-learn:** `>=1.7.0` (tested with `1.7.2`)
+- **NumPy:** `>=2.3.0` (tested with `2.3.3`)

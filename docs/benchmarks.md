@@ -1,26 +1,32 @@
 # Benchmarks
 
-Evaluation on 5 logical reasoning datasets using Azure GPT-5.
+This page presents evaluation results on 5 logical reasoning datasets using Azure GPT-5.
 
 ## Methodology
 
+The evaluation follows a consistent methodology across all datasets.
+
 **Model:** Azure GPT-5 deployment
+
 **Configuration:**
 - `max_attempts=3` (retry with error feedback)
 - `verify_timeout=10000ms`
 - `optimize_timeout=100000ms` (JSON backend only)
 - `num_workers=10` (ThreadPoolExecutor for parallel processing)
 
-**Metrics:** `sklearn.metrics`
-- Accuracy: `accuracy_score(y_true, y_pred)`
-- Precision: `precision_score(y_true, y_pred, zero_division=0)`
-- Recall: `recall_score(y_true, y_pred, zero_division=0)`
-- F1: `2 * (precision * recall) / (precision + recall)`
-- Success Rate: `(total - failed) / total`
+**Metrics** (computed via `sklearn.metrics`):
 
-**Execution:** `experiments_pipeline.py` runs all benchmarks sequentially, modifying `BACKEND` variable in each `benchmark/bench_*.py` script via regex substitution.
+- **Accuracy:** `accuracy_score(y_true, y_pred)`
+- **Precision:** `precision_score(y_true, y_pred, zero_division=0)`
+- **Recall:** `recall_score(y_true, y_pred, zero_division=0)`
+- **F1:** `2 * (precision * recall) / (precision + recall)`
+- **Success Rate:** `(total - failed) / total`
+
+**Execution:** The `experiments_pipeline.py` script runs all benchmarks sequentially, modifying the `BACKEND` variable in each `benchmark/bench_*.py` script via regex substitution.
 
 ## Results
+
+Results from the most recent benchmark run.
 
 **Last Updated:** 2025-10-16 18:14:07
 
@@ -39,9 +45,11 @@ Evaluation on 5 logical reasoning datasets using Azure GPT-5.
 
 ## Dataset Characteristics
 
+Each dataset tests different aspects of logical reasoning.
+
 ### ProntoQA
 
-Synthetic first-order logic with deterministic inference.
+ProntoQA features synthetic first-order logic problems with deterministic inference.
 
 **Example:**
 ```
@@ -51,26 +59,28 @@ Answer: True
 ```
 
 **Performance:**
+
 - SMT2: 100% (100/100)
 - JSON: 99% (99/100)
 
-Both backends near-perfect. Simplest dataset.
+Both backends achieve near-perfect results, making this the simplest dataset in the benchmark suite.
 
 ### FOLIO
 
-First-order logic from Wikipedia articles.
+FOLIO presents first-order logic problems derived from Wikipedia articles.
 
-**Characteristics:** Complex nested quantifiers, longer inference chains.
+**Characteristics:** Features complex nested quantifiers and longer inference chains.
 
 **Performance:**
+
 - SMT2: 69% (69/100)
 - JSON: 76% (76/100)
 
-JSON outperforms SMT2 (+7%). Most challenging dataset. Lower success rate for JSON (94% vs 99%) indicates generation difficulties.
+JSON outperforms SMT2 by 7% on this dataset, which is the most challenging in the suite. However, JSON's lower success rate (94% vs 99%) indicates greater difficulty in program generation.
 
 ### ProofWriter
 
-Deductive reasoning over explicit facts and rules.
+ProofWriter tests deductive reasoning over explicit facts and rules.
 
 **Example:**
 ```
@@ -80,24 +90,26 @@ Answer: True
 ```
 
 **Performance:**
+
 - SMT2: 98.96% (95/96)
 - JSON: 95.83% (92/96)
 
-High accuracy for both. SMT2 slight edge (+3%).
+Both backends achieve high accuracy on this dataset, with SMT2 holding a slight 3% edge.
 
 ### ConditionalQA
 
-Conditional reasoning with if-then statements.
+ConditionalQA focuses on conditional reasoning with if-then statements.
 
 **Performance:**
+
 - SMT2: 83% (83/100)
 - JSON: 76% (76/100)
 
-SMT2 better accuracy (+7%) and higher success rate (100% vs 89%).
+SMT2 demonstrates better accuracy (+7%) and also achieves a higher success rate (100% vs 89%).
 
 ### StrategyQA
 
-Multi-hop reasoning requiring implicit world knowledge.
+StrategyQA tests multi-hop reasoning that requires implicit world knowledge.
 
 **Example:**
 ```
@@ -106,36 +118,45 @@ Answer: True (requires knowing: vegetarians avoid meat, plant burgers have no me
 ```
 
 **Performance:**
+
 - SMT2: 84% (84/100)
 - JSON: 68% (68/100)
 
-Largest gap (+16% for SMT2). Both achieve 100%/86% success rates respectively.
+This dataset shows the largest performance gap, with SMT2 leading by 16%. Both backends achieve good success rates of 100% and 86% respectively.
 
 ## Analysis
 
 ### Accuracy Summary
 
-**SMT2:** 86.8% average across datasets
-**JSON:** 82.8% average across datasets
+Aggregating results across all datasets:
 
-SMT2 superior on 4/5 datasets (FOLIO exception where JSON +7%).
+- **SMT2:** 86.8% average accuracy
+- **JSON:** 82.8% average accuracy
+
+SMT2 proves superior on 4 out of 5 datasets, with FOLIO being the exception where JSON leads by 7%.
 
 ### Success Rate Summary
 
-**SMT2:** 99.4% average (range: 98.96-100%)
-**JSON:** 92.8% average (range: 86-100%)
+The success rate measures program generation and execution reliability:
 
-SMT2 more reliable program generation and execution. JSON success rate variance higher, indicating LLM generation issues on some datasets.
+- **SMT2:** 99.4% average (range: 98.96-100%)
+- **JSON:** 92.8% average (range: 86-100%)
+
+SMT2 demonstrates more reliable program generation and execution overall. JSON's higher success rate variance indicates LLM generation challenges on certain datasets.
 
 ### Failure Modes
 
+Understanding failure modes helps identify areas for improvement.
+
 **SMT2 failures:**
-- JSON extraction from markdown: regex mismatch
+
+- Program extraction from markdown: regex mismatch
 - Z3 subprocess timeout (rare with 10s limit)
 - Invalid SMT-LIB syntax (caught by Z3 parser)
 
 **JSON failures:**
-- JSON parsing errors post-extraction
+
+- JSON parsing errors after extraction
 - Invalid sort references (e.g., undefined `Person` sort)
 - Expression evaluation errors in `ExpressionParser.parse_expression()`
 - Z3 Python API exceptions
@@ -144,24 +165,31 @@ SMT2 more reliable program generation and execution. JSON success rate variance 
 
 ### Full benchmark suite
 
+To run the complete benchmark suite:
+
 ```bash
 python experiments_pipeline.py
 ```
 
-Generates:
-- `results/benchmark_results.json` - Raw metrics
-- `results/benchmark_results.md` - Markdown table
+This generates:
+
+- `results/benchmark_results.json` - Raw metrics data
+- `results/benchmark_results.md` - Formatted markdown table
 - Updates `README.md` between `<!-- BENCHMARK_RESULTS_START/END -->` markers
 
 ### Single benchmark
+
+To run just one benchmark:
 
 ```bash
 python benchmark/bench_strategyqa.py
 ```
 
-Modify `BACKEND` variable in script (`smt2` or `json`).
+You'll need to modify the `BACKEND` variable in the script to either `smt2` or `json`.
 
 ### Custom evaluation
+
+For custom evaluation on your own dataset:
 
 ```python
 from utils.azure_config import get_client_config
@@ -184,23 +212,29 @@ print(f"F1: {result.metrics.f1_score:.4f}")
 
 ## Dataset Sources
 
+The benchmark datasets are located in the `data/` directory:
+
 - **ProntoQA:** `data/prontoqa_test.json`
 - **FOLIO:** `data/folio_test.json`
 - **ProofWriter:** `data/proof_writer_test.json`
 - **ConditionalQA:** `data/conditionalQA_test.json`
 - **StrategyQA:** `data/strategyQA_train.json`
 
-Format: JSON arrays with `question` and `answer` fields (boolean).
+All datasets follow the same format: JSON arrays with `question` and `answer` fields (boolean values).
 
 ## Implementation Notes
 
-**Parallel Processing:**
-Benchmark scripts use `num_workers=10` with `ThreadPoolExecutor` (not `ProcessPoolExecutor` due to ProofOfThought unpicklability).
+### Parallel Processing
 
-**Caching:**
-`skip_existing=True` enables resumption. Results cached as:
+Benchmark scripts use `num_workers=10` with `ThreadPoolExecutor` for parallel processing. Note that `ProcessPoolExecutor` cannot be used due to ProofOfThought being unpicklable.
+
+### Caching
+
+Setting `skip_existing=True` enables resumption of interrupted runs. Results are cached as:
+
 - `output/{backend}_evaluation_{dataset}/{sample_id}_result.json`
 - `output/{backend}_programs_{dataset}/{sample_id}_program.{ext}`
 
-**Timeout Handling:**
-`experiments_pipeline.py` sets 1-hour subprocess timeout per benchmark. Individual Z3 calls timeout at 10s (verify) or 100s (optimize).
+### Timeout Handling
+
+The `experiments_pipeline.py` script sets a 1-hour subprocess timeout for each benchmark. Individual Z3 verification calls timeout at 10 seconds, while optimization calls timeout at 100 seconds.

@@ -1,8 +1,12 @@
 # API Reference
 
+This reference documents the public API for ProofOfThought.
+
 ## ProofOfThought
 
-`z3adapter.reasoning.proof_of_thought.ProofOfThought`
+The main entry point for the reasoning system.
+
+**Location:** `z3adapter.reasoning.proof_of_thought.ProofOfThought`
 
 ### Constructor
 
@@ -54,7 +58,9 @@ def query(
 
 **Returns:** `QueryResult`
 
-**Implementation:** Retry loop with error feedback
+**Implementation details:**
+
+The method implements a retry loop with error feedback:
 
 ```python
 for attempt in range(1, max_attempts + 1):
@@ -68,6 +74,8 @@ for attempt in range(1, max_attempts + 1):
 ```
 
 ## QueryResult
+
+Contains the results of a reasoning query.
 
 ```python
 @dataclass
@@ -85,7 +93,9 @@ class QueryResult:
 
 ## EvaluationPipeline
 
-`z3adapter.reasoning.evaluation.EvaluationPipeline`
+Facilitates batch evaluation of reasoning questions on datasets.
+
+**Location:** `z3adapter.reasoning.evaluation.EvaluationPipeline`
 
 ### Constructor
 
@@ -129,9 +139,13 @@ def evaluate(
 
 **Returns:** `EvaluationResult`
 
-**Caching:** Saves `{sample_id}_result.json` and `{sample_id}_program{ext}` to `output_dir`
+**Caching behavior:**
+
+Results are cached by saving `{sample_id}_result.json` and `{sample_id}_program{ext}` files to `output_dir`.
 
 ## EvaluationMetrics
+
+Provides comprehensive metrics for evaluation results.
 
 ```python
 @dataclass
@@ -153,13 +167,15 @@ class EvaluationMetrics:
     failed_answers: int            # success == False
 ```
 
-Computed via `sklearn.metrics.confusion_matrix` for binary classification.
+Metrics are computed using `sklearn.metrics.confusion_matrix` for binary classification.
 
 ## Backend
 
-`z3adapter.backends.abstract.Backend`
+Defines the abstract interface for execution backends.
 
-Abstract interface:
+**Location:** `z3adapter.backends.abstract.Backend`
+
+### Interface Methods
 
 ```python
 class Backend(ABC):
@@ -184,9 +200,11 @@ class Backend(ABC):
             return None
 ```
 
-Implementations: `SMT2Backend`, `JSONBackend`
+Concrete implementations are provided by `SMT2Backend` and `JSONBackend`.
 
 ## VerificationResult
+
+Encapsulates the results of Z3 verification execution.
 
 ```python
 @dataclass
@@ -201,7 +219,9 @@ class VerificationResult:
 
 ## Z3ProgramGenerator
 
-`z3adapter.reasoning.program_generator.Z3ProgramGenerator`
+Handles LLM-based program generation with error recovery.
+
+**Location:** `z3adapter.reasoning.program_generator.Z3ProgramGenerator`
 
 ### generate()
 
@@ -224,11 +244,11 @@ response = self.llm_client.chat.completions.create(
 )
 ```
 
-Note: `temperature` parameter not passed (GPT-5 constraint).
+Note that the `temperature` parameter is not passed to the API due to GPT-5 constraints.
 
 ### generate_with_feedback()
 
-Multi-turn conversation with error feedback:
+Enables multi-turn conversation with error feedback:
 
 ```python
 messages=[
@@ -240,9 +260,11 @@ messages=[
 
 ## Utility: Azure Config
 
-`utils.azure_config.get_client_config()`
+Provides convenient configuration for Azure OpenAI deployments.
 
-Returns:
+**Location:** `utils.azure_config.get_client_config()`
+
+**Returns:**
 ```python
 {
     "llm_client": AzureOpenAI(...),
@@ -250,7 +272,8 @@ Returns:
 }
 ```
 
-Required environment variables:
+**Required environment variables:**
+
 - `AZURE_OPENAI_API_KEY`
 - `AZURE_OPENAI_ENDPOINT`
 - `AZURE_OPENAI_API_VERSION`
