@@ -1,6 +1,13 @@
 # ProofOfThought
 
-LLM-based reasoning using Z3 theorem proving.
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Z3](https://img.shields.io/badge/Z3-4.15+-green.svg)](https://github.com/Z3Prover/z3)
+[![OpenAI](https://img.shields.io/badge/OpenAI-Compatible-412991.svg)](https://platform.openai.com/)
+[![Azure](https://img.shields.io/badge/Azure-GPT--4o/GPT--5-0078D4.svg)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+LLM-based reasoning using Z3 theorem proving with multiple backend support (SMT2 and JSON).
 
 ## Quick Start
 
@@ -18,11 +25,13 @@ print(result.answer)  # False
 ## Batch Evaluation
 
 ```python
-from z3adapter.reasoning import EvaluationPipeline
+from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
 
-evaluator = EvaluationPipeline(pot, output_dir="results/")
+evaluator = EvaluationPipeline(proof_of_thought=pot, output_dir="results/")
 result = evaluator.evaluate(
-    dataset="strategyqa_train.json",
+    dataset="data/strategyQA_train.json",
+    question_field="question",
+    answer_field="answer",
     max_samples=10
 )
 print(f"Accuracy: {result.metrics.accuracy:.2%}")
@@ -31,8 +40,16 @@ print(f"Accuracy: {result.metrics.accuracy:.2%}")
 ## Installation
 
 ```bash
-pip install z3-solver openai scikit-learn numpy
+pip install -r requirements.txt
 ```
+
+## Features
+
+- **Dual Backend Support**: Choose between SMT2 (default) or JSON execution backends
+- **Azure OpenAI Integration**: Native support for Azure GPT-4o and GPT-5 models
+- **Comprehensive Benchmarks**: Evaluated on 5 reasoning datasets (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA)
+- **High-level API**: Simple Python interface for reasoning tasks
+- **Batch Evaluation Pipeline**: Built-in tools for dataset evaluation and metrics
 
 ## Backend Selection
 
@@ -60,6 +77,19 @@ Most users should use the high-level API.
 ## Examples
 
 See `examples/` directory for complete examples including Azure OpenAI support.
+
+**Note:** Examples should be run from the project root directory:
+
+```bash
+cd /path/to/proofofthought
+python examples/simple_usage.py
+```
+
+For Azure examples that use `azure_config`, the helper module is located at `utils/azure_config.py`. When running from the project root with `PYTHONPATH` set correctly, examples can import it directly:
+
+```python
+from utils.azure_config import get_client_config
+```
 
 ## Running Experiments
 
