@@ -48,3 +48,6 @@ typing_extensions==4.15.0
 tzdata==2025.2
 virtualenv==20.34.0
 z3-solver==4.15.3.0
+mkdocs==1.6.1
+mkdocs-material==9.5.49
+pymdown-extensions==10.14
