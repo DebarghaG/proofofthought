@@ -57,8 +57,6 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#core-dependencies">Core Dependencies</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#development-dependencies-optional">Development Dependencies (Optional)</a>
-    </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#z3-verification-setup">Z3 Verification Setup</a>
@@ -146,27 +144,6 @@
 <div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </code></pre></div>
 
-<p>This installs the following packages:</p>
-<ul>
-<li><code>z3-solver&gt;=4.15.0</code> - Provides both the Z3 Python API (for JSONBackend) and CLI binary (for SMT2Backend)</li>
-<li><code>openai&gt;=2.0.0</code> - LLM client with support for both OpenAI and Azure OpenAI</li>
-<li><code>scikit-learn&gt;=1.7.0</code> - Used for evaluation metrics like <code>confusion_matrix</code> and <code>accuracy_score</code></li>
-<li><code>numpy&gt;=2.3.0</code> - Required for numerical operations</li>
-<li><code>python-dotenv&gt;=1.1.0</code> - Manages environment variables from <code>.env</code> files</li>
-</ul>
-<h3 id="development-dependencies-optional">Development Dependencies (Optional)<a class="headerlink" href="#development-dependencies-optional" title="Permanent link">&para;</a></h3>
-<p>For development work, install additional tools:</p>
-<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</code></pre></div>
-
-<p>This includes:</p>
-<ul>
-<li><code>black&gt;=25.9.0</code> - Code formatter</li>
-<li><code>ruff&gt;=0.13.0</code> - Fast Python linter</li>
-<li><code>mypy&gt;=1.18.0</code> - Static type checker</li>
-<li><code>pytest&gt;=8.0.0</code> - Testing framework</li>
-<li><code>pre-commit&gt;=4.3.0</code> - Git hook manager</li>
-</ul>
 <h2 id="z3-verification-setup">Z3 Verification Setup<a class="headerlink" href="#z3-verification-setup" title="Permanent link">&para;</a></h2>
 <h3 id="json-backend">JSON Backend<a class="headerlink" href="#json-backend" title="Permanent link">&para;</a></h3>
 <p>The JSON backend requires no additional setup beyond installing <code>z3-solver</code>, which includes the Python API.</p>

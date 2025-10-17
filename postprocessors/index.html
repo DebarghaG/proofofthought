@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Debargha Ganguly" /><link rel="canonical" href="https://debarghaG.github.io/proofofthought/postprocessors/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Postprocessing Techniques - ProofOfThought</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Postprocessing Techniques";
+        var mkdocs_page_input_path = "postprocessors.md";
+        var mkdocs_page_url = "/proofofthought/postprocessors/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ProofOfThought
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../dsl-specification/">DSL Specification</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../api-reference/">API Reference</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../backends/">Backends</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">Examples</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmarks/">Benchmarks</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ProofOfThought</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Postprocessing Techniques</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/debarghaG/proofofthought/edit/main/docs/postprocessors.md">Edit on debarghaG/proofofthought</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="postprocessing-techniques">Postprocessing Techniques<a class="headerlink" href="#postprocessing-techniques" title="Permanent link">&para;</a></h1>
+<p>This page describes the postprocessing techniques available to enhance reasoning quality and reliability. All postprocessors should work seamlessly with both JSON and SMT2 backends.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Postprocessors apply advanced prompting techniques to improve the quality of reasoning results. They work by taking an initial answer and applying various strategies to verify, refine, or enhance it.</p>
+<h3 id="available-techniques">Available Techniques<a class="headerlink" href="#available-techniques" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Self-Refine</strong> - Iterative refinement through self-critique</li>
+<li><strong>Self-Consistency</strong> - Majority voting across multiple reasoning paths</li>
+<li><strong>Decomposed Prompting</strong> - Breaking complex questions into sub-questions</li>
+<li><strong>Least-to-Most Prompting</strong> - Progressive problem solving from simple to complex</li>
+</ol>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+
+<span class="c1"># Enable Self-Refine postprocessor</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>
+<span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;Your complex reasoning question here&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="multiple-postprocessors">Multiple Postprocessors<a class="headerlink" href="#multiple-postprocessors" title="Permanent link">&para;</a></h3>
+<p>Postprocessors can be chained together:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">,</span> <span class="s2">&quot;self_consistency&quot;</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+        <span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3 id="per-query-control">Per-Query Control<a class="headerlink" href="#per-query-control" title="Permanent link">&para;</a></h3>
+<p>Disable postprocessing for specific queries:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Postprocessors configured but disabled for this query</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">enable_postprocessing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="postprocessor-details">Postprocessor Details<a class="headerlink" href="#postprocessor-details" title="Permanent link">&para;</a></h2>
+<h3 id="1-self-refine">1. Self-Refine<a class="headerlink" href="#1-self-refine" title="Permanent link">&para;</a></h3>
+<p><strong>Based on:</strong> "Self-Refine: Iterative Refinement with Self-Feedback" (Madaan et al., 2023)</p>
+<p><strong>How it works:</strong>
+1. Generates initial solution
+2. LLM critiques its own solution
+3. Uses feedback to refine the solution
+4. Repeats until convergence or max iterations</p>
+<p><strong>Configuration:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span>  <span class="c1"># Number of refinement iterations (default: 2)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Best for:</strong> Questions where the initial solution might have subtle logical errors that can be caught through self-critique.</p>
+<p><strong>Example:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}}</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3 id="2-self-consistency">2. Self-Consistency<a class="headerlink" href="#2-self-consistency" title="Permanent link">&para;</a></h3>
+<p><strong>Based on:</strong> "Self-Consistency Improves Chain of Thought Reasoning in Language Models" (Wang et al., 2022)</p>
+<p><strong>How it works:</strong>
+1. Generates multiple independent reasoning paths (with higher temperature)
+2. Collects answers from all paths
+3. Selects most consistent answer via majority voting</p>
+<p><strong>Configuration:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Number of independent samples (default: 5)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Best for:</strong> Reducing variance and improving reliability on questions where random errors might occur in single attempts.</p>
+<p><strong>Example:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_consistency&quot;</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">}}</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3 id="3-decomposed-prompting">3. Decomposed Prompting<a class="headerlink" href="#3-decomposed-prompting" title="Permanent link">&para;</a></h3>
+<p><strong>Based on:</strong> "Decomposed Prompting: A Modular Approach for Solving Complex Tasks" (Khot et al., 2022)</p>
+<p><strong>How it works:</strong>
+1. Breaks complex question into simpler sub-questions
+2. Solves each sub-question independently
+3. Combines sub-answers to solve main question</p>
+<p><strong>Configuration:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;decomposed&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;max_subquestions&quot;</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Maximum sub-questions to generate (default: 5)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Best for:</strong> Multi-hop reasoning or questions requiring several logical steps.</p>
+<p><strong>Example:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;decomposed&quot;</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;decomposed&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;max_subquestions&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}}</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3 id="4-least-to-most-prompting">4. Least-to-Most Prompting<a class="headerlink" href="#4-least-to-most-prompting" title="Permanent link">&para;</a></h3>
+<p><strong>Based on:</strong> "Least-to-Most Prompting Enables Complex Reasoning in Large Language Models" (Zhou et al., 2022)</p>
+<p><strong>How it works:</strong>
+1. Decomposes problem into progressive sub-problems (least to most complex)
+2. Solves them sequentially
+3. Uses solutions from simpler problems to inform complex ones</p>
+<p><strong>Configuration:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">&quot;least_to_most&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;max_steps&quot;</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Maximum progressive steps (default: 5)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Best for:</strong> Problems with natural dependencies where simpler sub-problems build up to the main question.</p>
+<p><strong>Example:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;least_to_most&quot;</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;least_to_most&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;max_steps&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}}</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h2 id="advanced-usage">Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permanent link">&para;</a></h2>
+<h3 id="using-postprocessor-instances">Using Postprocessor Instances<a class="headerlink" href="#using-postprocessor-instances" title="Permanent link">&para;</a></h3>
+<p>For more control, create postprocessor instances directly:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.postprocessors</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelfRefine</span><span class="p">,</span> <span class="n">SelfConsistency</span>
+
+<span class="n">custom_refine</span> <span class="o">=</span> <span class="n">SelfRefine</span><span class="p">(</span><span class="n">num_iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;CustomRefine&quot;</span><span class="p">)</span>
+<span class="n">custom_consistency</span> <span class="o">=</span> <span class="n">SelfConsistency</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;CustomConsistency&quot;</span><span class="p">)</span>
+
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="n">custom_refine</span><span class="p">,</span> <span class="n">custom_consistency</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3 id="registry-access">Registry Access<a class="headerlink" href="#registry-access" title="Permanent link">&para;</a></h3>
+<p>Query available postprocessors and their defaults:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.postprocessors</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostprocessorRegistry</span>
+
+<span class="c1"># List all available</span>
+<span class="n">available</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">list_available</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">available</span><span class="p">)</span>  <span class="c1"># [&#39;self_refine&#39;, &#39;self_consistency&#39;, &#39;decomposed&#39;, &#39;least_to_most&#39;]</span>
+
+<span class="c1"># Get default configuration</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get_default_config</span><span class="p">(</span><span class="s1">&#39;self_refine&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># {&#39;num_iterations&#39;: 2}</span>
+
+<span class="c1"># Create postprocessor</span>
+<span class="n">postprocessor</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;self_refine&#39;</span><span class="p">,</span> <span class="n">num_iterations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="creating-multiple-postprocessors">Creating Multiple Postprocessors<a class="headerlink" href="#creating-multiple-postprocessors" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">postprocessors</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get_multiple</span><span class="p">(</span>
+    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">,</span> <span class="s2">&quot;self_consistency&quot;</span><span class="p">],</span>
+    <span class="n">configs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+        <span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">postprocessors</span><span class="o">=</span><span class="n">postprocessors</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="backend-compatibility">Backend Compatibility<a class="headerlink" href="#backend-compatibility" title="Permanent link">&para;</a></h2>
+<p>All postprocessors are <strong>backend-agnostic</strong> and work with:
+- <strong>JSON backend</strong> (<code>backend="json"</code>)
+- <strong>SMT2 backend</strong> (<code>backend="smt2"</code>)</p>
+<p>Example with both backends:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># JSON backend with postprocessing</span>
+<span class="n">pot_json</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># SMT2 backend with postprocessing</span>
+<span class="n">pot_smt2</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h2 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h2>
+<h3 id="llm-call-costs">LLM Call Costs<a class="headerlink" href="#llm-call-costs" title="Permanent link">&para;</a></h3>
+<p>Postprocessors make additional LLM calls:</p>
+<table>
+<thead>
+<tr>
+<th>Postprocessor</th>
+<th>Additional Calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Self-Refine</td>
+<td><code>2 * num_iterations</code></td>
+</tr>
+<tr>
+<td>Self-Consistency</td>
+<td><code>num_samples - 1</code></td>
+</tr>
+<tr>
+<td>Decomposed Prompting</td>
+<td><code>max_subquestions + 2</code></td>
+</tr>
+<tr>
+<td>Least-to-Most Prompting</td>
+<td><code>max_steps + 2</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="benchmarking-with-postprocessors">Benchmarking with Postprocessors<a class="headerlink" href="#benchmarking-with-postprocessors" title="Permanent link">&para;</a></h2>
+<p>You can test postprocessors on benchmarks by modifying the benchmark scripts:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># In benchmark/bench_folio.py</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">],</span>  <span class="c1"># Add this</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>  <span class="c1"># Add this</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
+<h3 id="proofofthought-parameters">ProofOfThought Parameters<a class="headerlink" href="#proofofthought-parameters" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">ProofOfThought</span><span class="p">(</span>
+    <span class="n">llm_client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gpt-5&quot;</span><span class="p">,</span>
+    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;smt2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Postprocessor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">postprocessor_configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Parameters:</strong>
+- <code>postprocessors</code>: List of postprocessor names or instances
+- <code>postprocessor_configs</code>: Dictionary mapping names to configuration dicts</p>
+<h3 id="query-parameters">Query Parameters<a class="headerlink" href="#query-parameters" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+    <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">enable_postprocessing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Parameters:</strong>
+- <code>enable_postprocessing</code>: Enable/disable postprocessing for this query</p>
+<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
+<p>See <code>examples/postprocessor_example.py</code> for comprehensive demonstrations of all features.</p>
+<h2 id="future-extensions">Future Extensions<a class="headerlink" href="#future-extensions" title="Permanent link">&para;</a></h2>
+<p>The postprocessor architecture is designed to be extensible. To add new postprocessing techniques:</p>
+<ol>
+<li>Create a new class inheriting from <code>Postprocessor</code></li>
+<li>Implement the <code>process()</code> method</li>
+<li>Register in <code>PostprocessorRegistry._POSTPROCESSOR_MAP</code></li>
+</ol>
+<p>See <code>z3adapter/postprocessors/abstract.py</code> for the base interface.</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright &copy; 2025 Debargha Ganguly</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/debarghaG/proofofthought" class="fa fa-code-fork" style="color: #fcfcfc"> debarghaG/proofofthought</a>
+        </span>
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
