@@ -5,7 +5,7 @@ import os
 import tempfile
 import unittest
 
-from z3dsl.interpreter import Z3JSONInterpreter
+from z3adapter.interpreter import Z3JSONInterpreter
 
 
 class TestZ3JSONInterpreter(unittest.TestCase):

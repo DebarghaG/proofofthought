@@ -5,7 +5,7 @@ from typing import Any
 
 from z3 import BoolSort, Const, Function, IntSort
 
-from z3dsl.dsl.expressions import ExpressionParser
+from z3adapter.dsl.expressions import ExpressionParser
 
 
 class TestExpressionParser(unittest.TestCase):
@@ -94,7 +94,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_knowledge_base_simple(self) -> None:
         """Test adding simple knowledge base assertions."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         knowledge_base = ["x > 0", "y < 10"]
@@ -104,7 +104,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_knowledge_base_with_negation(self) -> None:
         """Test adding knowledge base with value=False."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         knowledge_base = [{"assertion": "x > 100", "value": False}]
@@ -113,7 +113,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_knowledge_base_invalid_assertion(self) -> None:
         """Test that invalid assertions raise error."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         knowledge_base = ["invalid + syntax +"]
@@ -122,7 +122,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_rules_with_forall(self) -> None:
         """Test adding rules with universal quantification."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         sorts = {"IntSort": IntSort()}
@@ -131,7 +131,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_rules_with_implication(self) -> None:
         """Test adding implication rules."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         sorts = {"IntSort": IntSort()}
@@ -145,7 +145,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_rules_empty_forall_raises_error(self) -> None:
         """Test that empty forall list raises error."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         sorts = {"IntSort": IntSort()}
@@ -156,7 +156,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_rules_implication_without_forall_raises_error(self) -> None:
         """Test that implication without forall raises error."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         sorts = {"IntSort": IntSort()}
@@ -167,7 +167,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_rules_constraint_without_forall(self) -> None:
         """Test adding constraint rule without quantification."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         sorts = {"IntSort": IntSort()}
@@ -177,7 +177,7 @@ class TestExpressionParser(unittest.TestCase):
 
     def test_add_rules_invalid_rule_format(self) -> None:
         """Test that invalid rule format raises error."""
-        from z3dsl.solvers.z3_solver import Z3Solver
+        from z3adapter.solvers.z3_solver import Z3Solver
 
         solver = Z3Solver()
         sorts = {"IntSort": IntSort()}

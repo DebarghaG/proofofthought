@@ -5,9 +5,9 @@ from typing import Any
 
 from z3 import BoolSort, Const, IntSort
 
-from z3dsl.dsl.expressions import ExpressionParser
-from z3dsl.solvers.z3_solver import Z3Solver
-from z3dsl.verification.verifier import Verifier
+from z3adapter.dsl.expressions import ExpressionParser
+from z3adapter.solvers.z3_solver import Z3Solver
+from z3adapter.verification.verifier import Verifier
 
 
 class TestVerifier(unittest.TestCase):

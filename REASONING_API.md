@@ -10,7 +10,7 @@ Simple Python API for LLM-based reasoning with Z3 theorem proving. Inspired by D
 
 ```python
 from openai import OpenAI
-from z3dsl.reasoning import ProofOfThought
+from z3adapter.reasoning import ProofOfThought
 
 client = OpenAI(api_key="...")
 pot = ProofOfThought(
@@ -27,7 +27,7 @@ print(result.answer)  # True/False/None
 ### EvaluationPipeline
 
 ```python
-from z3dsl.reasoning import EvaluationPipeline
+from z3adapter.reasoning import EvaluationPipeline
 
 evaluator = EvaluationPipeline(pot, output_dir="results/")
 result = evaluator.evaluate(

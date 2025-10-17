@@ -3,7 +3,7 @@
 import ast
 import unittest
 
-from z3dsl.security.validator import ExpressionValidator
+from z3adapter.security.validator import ExpressionValidator
 
 
 class TestExpressionValidator(unittest.TestCase):

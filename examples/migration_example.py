@@ -11,7 +11,7 @@ import os
 
 from openai import OpenAI
 
-from z3dsl.reasoning import EvaluationPipeline, ProofOfThought
+from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
 
 # Configure logging (same as original)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

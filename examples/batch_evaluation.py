@@ -6,7 +6,7 @@ import os
 
 from openai import OpenAI
 
-from z3dsl.reasoning import EvaluationPipeline, ProofOfThought
+from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -23,7 +23,7 @@ client = OpenAI(api_key=api_key)
 model = "gpt-4o"
 
 # Option 2: Azure OpenAI GPT-5 (uncomment to use)
-# from azure_config import get_client_config
+# from utils.azure_config import get_client_config
 # config = get_client_config()
 # client = config["llm_client"]
 # model = config["model"]

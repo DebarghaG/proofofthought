@@ -17,7 +17,7 @@ from sklearn.metrics import (
     recall_score,
 )
 
-from z3dsl.interpreter import Z3JSONInterpreter
+from z3adapter.interpreter import Z3JSONInterpreter
 
 
 def calculate_metrics(y_true: list[Any], y_pred: list[Any]) -> dict[str, Any]:

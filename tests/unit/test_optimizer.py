@@ -5,8 +5,8 @@ from typing import Any
 
 from z3 import Const, IntSort
 
-from z3dsl.dsl.expressions import ExpressionParser
-from z3dsl.optimization.optimizer import OptimizerRunner
+from z3adapter.dsl.expressions import ExpressionParser
+from z3adapter.optimization.optimizer import OptimizerRunner
 
 
 class TestOptimizerRunner(unittest.TestCase):

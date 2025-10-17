@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Convenience script to run the Z3 DSL interpreter."""
 
-from z3dsl.cli import main
+from z3adapter.cli import main
 
 if __name__ == "__main__":
     main()

@@ -9,13 +9,13 @@ import logging
 import sys
 from pathlib import Path
 
-# Add parent directory to path for z3dsl imports
+# Add parent directory to path for z3adapter imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import Azure configuration helper
 from azure_config import get_client_config
 
-from z3dsl.reasoning import ProofOfThought
+from z3adapter.reasoning import ProofOfThought
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

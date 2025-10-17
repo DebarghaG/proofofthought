@@ -4,7 +4,7 @@ import unittest
 
 from z3 import BoolSort, IntSort, RealSort, is_sort
 
-from z3dsl.dsl.sorts import SortManager
+from z3adapter.dsl.sorts import SortManager
 
 
 class TestSortManager(unittest.TestCase):

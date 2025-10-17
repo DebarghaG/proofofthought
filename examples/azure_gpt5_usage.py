@@ -6,7 +6,7 @@ import logging
 # Import Azure configuration helper
 from azure_config import get_client_config
 
-from z3dsl.reasoning import ProofOfThought
+from z3adapter.reasoning import ProofOfThought
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

@@ -7,10 +7,10 @@ import unittest
 
 from z3 import Const, IntSort
 
-from z3dsl.dsl.expressions import ExpressionParser
-from z3dsl.dsl.sorts import SortManager
-from z3dsl.interpreter import Z3JSONInterpreter
-from z3dsl.security.validator import ExpressionValidator
+from z3adapter.dsl.expressions import ExpressionParser
+from z3adapter.dsl.sorts import SortManager
+from z3adapter.interpreter import Z3JSONInterpreter
+from z3adapter.security.validator import ExpressionValidator
 
 
 class TestBugFixes(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestBugFixes(unittest.TestCase):
     def test_bug1_wildcard_import_fixed(self) -> None:
         """Bug #1: Wildcard import pollution is fixed."""
         # Check that main.py doesn't use wildcard imports anymore
-        with open("z3dsl/interpreter.py") as f:
+        with open("z3adapter/interpreter.py") as f:
             content = f.read()
             self.assertNotIn("from z3 import *", content)
             self.assertNotIn("import *", content)
@@ -165,13 +165,13 @@ class TestBugFixes(unittest.TestCase):
 
     def test_bug11_logging_configured_in_main_only(self) -> None:
         """Bug #11: Logging configured in __main__ block only."""
-        # Check that z3dsl modules don't call basicConfig
-        with open("z3dsl/interpreter.py") as f:
+        # Check that z3adapter modules don't call basicConfig
+        with open("z3adapter/interpreter.py") as f:
             content = f.read()
             self.assertNotIn("basicConfig", content)
 
         # CLI should have basicConfig
-        with open("z3dsl/cli.py") as f:
+        with open("z3adapter/cli.py") as f:
             content = f.read()
             self.assertIn("basicConfig", content)
 
