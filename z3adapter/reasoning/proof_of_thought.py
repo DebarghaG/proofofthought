@@ -5,6 +5,7 @@ import logging
 import os
 import tempfile
 import traceback
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -12,6 +13,7 @@ from z3adapter.reasoning.program_generator import Z3ProgramGenerator
 
 if TYPE_CHECKING:
     from z3adapter.backends.abstract import Backend
+    from z3adapter.postprocessors.abstract import Postprocessor
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +61,8 @@ class ProofOfThought:
         optimize_timeout: int = 100000,
         cache_dir: str | None = None,
         z3_path: str = "z3",
+        postprocessors: Sequence[str | "Postprocessor"] | None = None,
+        postprocessor_configs: dict[str, dict] | None = None,
     ) -> None:
         """Initialize ProofOfThought.
 
@@ -71,8 +75,18 @@ class ProofOfThought:
             optimize_timeout: Z3 optimization timeout in milliseconds
             cache_dir: Directory to cache generated programs (None = temp dir)
             z3_path: Path to Z3 executable (for SMT2 backend)
+            postprocessors: List of postprocessor names or instances to apply
+            postprocessor_configs: Configuration for postprocessors (if names provided)
+
+        Example with postprocessors:
+            >>> pot = ProofOfThought(
+            ...     llm_client=client,
+            ...     postprocessors=["self_refine", "self_consistency"],
+            ...     postprocessor_configs={"self_refine": {"num_iterations": 3}}
+            ... )
         """
         self.backend_type = backend
+        self.llm_client = llm_client
         self.generator = Z3ProgramGenerator(llm_client=llm_client, model=model, backend=backend)
 
         # Initialize appropriate backend (import here to avoid circular imports)
@@ -95,6 +109,46 @@ class ProofOfThought:
         # Create cache directory if needed
         os.makedirs(self.cache_dir, exist_ok=True)
 
+        # Initialize postprocessors
+        self.postprocessors: list[Postprocessor] = []
+        if postprocessors:
+            self.postprocessors = self._initialize_postprocessors(
+                postprocessors, postprocessor_configs or {}
+            )
+            logger.info(f"Initialized {len(self.postprocessors)} postprocessors")
+
+    def _initialize_postprocessors(
+        self,
+        postprocessors: Sequence[str | "Postprocessor"],
+        configs: dict[str, dict],
+    ) -> list["Postprocessor"]:
+        """Initialize postprocessor instances from names or objects.
+
+        Args:
+            postprocessors: List of postprocessor names or instances
+            configs: Configuration dict for postprocessors
+
+        Returns:
+            List of postprocessor instances
+        """
+        from z3adapter.postprocessors.abstract import Postprocessor
+        from z3adapter.postprocessors.registry import PostprocessorRegistry
+
+        initialized = []
+        for item in postprocessors:
+            if isinstance(item, str):
+                # Create from registry
+                config = configs.get(item, {})
+                postprocessor = PostprocessorRegistry.get(item, **config)
+                initialized.append(postprocessor)
+            elif isinstance(item, Postprocessor):
+                # Already an instance
+                initialized.append(item)
+            else:
+                logger.warning(f"Invalid postprocessor: {item}, skipping")
+
+        return initialized
+
     def query(
         self,
         question: str,
@@ -102,6 +156,7 @@ class ProofOfThought:
         max_tokens: int = 16384,
         save_program: bool = False,
         program_path: str | None = None,
+        enable_postprocessing: bool = True,
     ) -> QueryResult:
         """Answer a reasoning question using Z3 theorem proving.
 
@@ -111,6 +166,7 @@ class ProofOfThought:
             max_tokens: Maximum tokens for LLM response (default 16384 for GPT-5)
             save_program: Whether to save generated JSON program
             program_path: Path to save program (None = auto-generate)
+            enable_postprocessing: Whether to apply postprocessors (if configured)
 
         Returns:
             QueryResult with answer and execution details
@@ -194,7 +250,7 @@ class ProofOfThought:
                 logger.info(
                     f"Successfully answered question on attempt {attempt}: {verify_result.answer}"
                 )
-                return QueryResult(
+                initial_result = QueryResult(
                     question=question,
                     answer=verify_result.answer,
                     json_program=gen_result.json_program,  # For backward compatibility
@@ -204,6 +260,20 @@ class ProofOfThought:
                     success=True,
                     num_attempts=attempt,
                 )
+
+                # Apply postprocessors if enabled
+                if enable_postprocessing and self.postprocessors:
+                    logger.info(
+                        f"Applying {len(self.postprocessors)} postprocessors to improve result"
+                    )
+                    return self._apply_postprocessors(
+                        question=question,
+                        initial_result=initial_result,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    )
+
+                return initial_result
 
             except Exception as e:
                 error_trace = f"Error: {str(e)}\n{traceback.format_exc()}"
@@ -224,3 +294,55 @@ class ProofOfThought:
             num_attempts=self.max_attempts,
             error=f"Failed after {self.max_attempts} attempts. Last error: {error_trace}",
         )
+
+    def _apply_postprocessors(
+        self,
+        question: str,
+        initial_result: QueryResult,
+        temperature: float,
+        max_tokens: int,
+    ) -> QueryResult:
+        """Apply all configured postprocessors to improve the result.
+
+        Args:
+            question: Original question
+            initial_result: Initial QueryResult
+            temperature: LLM temperature
+            max_tokens: Max tokens
+
+        Returns:
+            Enhanced QueryResult after applying all postprocessors
+        """
+        current_result = initial_result
+
+        for postprocessor in self.postprocessors:
+            logger.info(f"Applying postprocessor: {postprocessor.name}")
+
+            try:
+                enhanced_result = postprocessor.process(
+                    question=question,
+                    initial_result=current_result,
+                    generator=self.generator,
+                    backend=self.backend,
+                    llm_client=self.llm_client,
+                    cache_dir=self.cache_dir,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+
+                if enhanced_result.success:
+                    logger.info(
+                        f"Postprocessor {postprocessor.name} completed. "
+                        f"Answer: {enhanced_result.answer}"
+                    )
+                    current_result = enhanced_result
+                else:
+                    logger.warning(
+                        f"Postprocessor {postprocessor.name} failed, keeping previous result"
+                    )
+
+            except Exception as e:
+                logger.error(f"Error in postprocessor {postprocessor.name}: {e}")
+                # Continue with current result if postprocessor fails
+
+        return current_result

@@ -12,30 +12,6 @@ Install the core dependencies using:
 pip install -r requirements.txt
 ```
 
-This installs the following packages:
-
-- `z3-solver>=4.15.0` - Provides both the Z3 Python API (for JSONBackend) and CLI binary (for SMT2Backend)
-- `openai>=2.0.0` - LLM client with support for both OpenAI and Azure OpenAI
-- `scikit-learn>=1.7.0` - Used for evaluation metrics like `confusion_matrix` and `accuracy_score`
-- `numpy>=2.3.0` - Required for numerical operations
-- `python-dotenv>=1.1.0` - Manages environment variables from `.env` files
-
-### Development Dependencies (Optional)
-
-For development work, install additional tools:
-
-```bash
-pip install -e ".[dev]"
-```
-
-This includes:
-
-- `black>=25.9.0` - Code formatter
-- `ruff>=0.13.0` - Fast Python linter
-- `mypy>=1.18.0` - Static type checker
-- `pytest>=8.0.0` - Testing framework
-- `pre-commit>=4.3.0` - Git hook manager
-
 ## Z3 Verification Setup
 
 ### JSON Backend

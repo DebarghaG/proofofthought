@@ -50,6 +50,7 @@ pip install -r requirements.txt
 - **Comprehensive Benchmarks**: Evaluated on 5 reasoning datasets (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA)
 - **High-level API**: Simple Python interface for reasoning tasks
 - **Batch Evaluation Pipeline**: Built-in tools for dataset evaluation and metrics
+- **Postprocessing Techniques**: Self-Refine, Self-Consistency, Decomposed Prompting, and Least-to-Most Prompting for enhanced reasoning quality
 
 ## Backend Selection
 
@@ -64,6 +65,40 @@ pot = ProofOfThought(llm_client=client, backend="json")
 ```
 
 See [BACKENDS.md](BACKENDS.md) for details on choosing a backend.
+
+## Postprocessing Techniques
+
+Enhance reasoning quality with advanced postprocessing techniques:
+
+```python
+# Enable Self-Refine for iterative refinement
+pot = ProofOfThought(
+    llm_client=client,
+    postprocessors=["self_refine"],
+    postprocessor_configs={"self_refine": {"num_iterations": 2}}
+)
+
+# Use Self-Consistency for improved reliability via majority voting
+pot = ProofOfThought(
+    llm_client=client,
+    postprocessors=["self_consistency"],
+    postprocessor_configs={"self_consistency": {"num_samples": 5}}
+)
+
+# Chain multiple postprocessors
+pot = ProofOfThought(
+    llm_client=client,
+    postprocessors=["self_refine", "self_consistency"]
+)
+```
+
+Available techniques:
+- **Self-Refine**: Iterative refinement through self-critique
+- **Self-Consistency**: Majority voting across multiple reasoning paths
+- **Decomposed Prompting**: Breaking complex questions into sub-questions
+- **Least-to-Most Prompting**: Progressive problem solving from simple to complex
+
+See [POSTPROCESSORS.md](POSTPROCESSORS.md) for complete documentation and usage examples.
 
 ## Architecture
 
