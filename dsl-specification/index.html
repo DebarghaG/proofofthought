@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Debargha Ganguly" /><link rel="canonical" href="https://debarghaG.github.io/proofofthought/dsl-specification/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>DSL Specification - ProofOfThought</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "DSL Specification";
+        var mkdocs_page_input_path = "dsl-specification.md";
+        var mkdocs_page_url = "/proofofthought/dsl-specification/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ProofOfThought
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">DSL Specification</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#rules-vs-verifications">Rules vs Verifications</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#rules">Rules</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#verifications">Verifications</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#example">Example</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#variable-scoping">Variable Scoping</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#free-variables">Free Variables</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#quantified-variables">Quantified Variables</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#shadowing">Shadowing</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#answer-determination">Answer Determination</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#security-model">Security Model</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#ast-validation">AST Validation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#restricted-evaluation">Restricted Evaluation</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sort-dependency-resolution">Sort Dependency Resolution</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#dependency-extraction">Dependency Extraction</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#topological-sort">Topological Sort</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#optimizer-independence">Optimizer Independence</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#execution-pipeline">Execution Pipeline</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#retry-mechanism">Retry Mechanism</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#solver-semantics">Solver Semantics</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#built-in-sorts">Built-in Sorts</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#prompt-template-constraints">Prompt Template Constraints</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../api-reference/">API Reference</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../backends/">Backends</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">Examples</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmarks/">Benchmarks</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ProofOfThought</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">DSL Specification</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/debarghaG/proofofthought/edit/main/docs/dsl-specification.md">Edit on debarghaG/proofofthought</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="dsl-specification">DSL Specification<a class="headerlink" href="#dsl-specification" title="Permanent link">&para;</a></h1>
+<p>Technical details of the JSON DSL implementation.</p>
+<h2 id="rules-vs-verifications">Rules vs Verifications<a class="headerlink" href="#rules-vs-verifications" title="Permanent link">&para;</a></h2>
+<p><strong>Critical distinction:</strong> Rules modify the solver state. Verifications query the solver state.</p>
+<h3 id="rules">Rules<a class="headerlink" href="#rules" title="Permanent link">&para;</a></h3>
+<p><strong>Implementation:</strong> <code>z3adapter/dsl/expressions.py:159-204</code></p>
+<p><strong>Operation:</strong> <code>solver.add(assertion)</code></p>
+<p>Rules are <strong>permanently asserted</strong> into the solver's knowledge base during step 6 of interpretation.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Line 189: Implication rule</span>
+<span class="n">solver</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ForAll</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">antecedent</span><span class="p">,</span> <span class="n">consequent</span><span class="p">)))</span>
+
+<span class="c1"># Line 194-196: Constraint rule</span>
+<span class="k">if</span> <span class="n">variables</span><span class="p">:</span>
+    <span class="n">solver</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ForAll</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">constraint</span><span class="p">))</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">solver</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Structure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;forall&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;p&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">}],</span>
+<span class="w">  </span><span class="nt">&quot;implies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;antecedent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;is_democrat(p)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;consequent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(p)&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Effect:</strong> Defines axioms. Every subsequent verification will inherit this constraint.</p>
+<h3 id="verifications">Verifications<a class="headerlink" href="#verifications" title="Permanent link">&para;</a></h3>
+<p><strong>Implementation:</strong> <code>z3adapter/verification/verifier.py:84-127</code></p>
+<p><strong>Operation:</strong> <code>solver.check(condition)</code></p>
+<p>Verifications <strong>test conditions</strong> against the existing knowledge base without modifying it.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Line 113</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>  <span class="c1"># Temporary hypothesis check</span>
+
+<span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">sat</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sat_count</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="n">unsat</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">unsat_count</span> <span class="o">+=</span> <span class="mi">1</span>
+</code></pre></div>
+
+<p><strong>Semantics:</strong> Checks if <code>KB ∧ condition</code> is satisfiable.</p>
+<ul>
+<li><strong>SAT</strong>: condition is consistent with KB</li>
+<li><strong>UNSAT</strong>: condition contradicts KB</li>
+</ul>
+<p><strong>Structure:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_pelosi&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;publicly_denounce(nancy, abortion)&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Effect:</strong> Returns SAT/UNSAT but does NOT add to KB.</p>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;forall&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;p&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">}],</span>
+<span class="w">      </span><span class="nt">&quot;implies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;antecedent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;is_democrat(p)&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;consequent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(p)&quot;</span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;knowledge_base&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;is_democrat(nancy)&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;verifications&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(nancy)&quot;</span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Execution:</strong>
+1. <code>solver.add(ForAll([p], Implies(is_democrat(p), supports_abortion(p))))</code> — rule
+2. <code>solver.add(is_democrat(nancy))</code> — knowledge base
+3. <code>solver.check(supports_abortion(nancy))</code> — verification → <strong>SAT</strong></p>
+<h2 id="variable-scoping">Variable Scoping<a class="headerlink" href="#variable-scoping" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/dsl/expressions.py:69-107</code></p>
+<h3 id="free-variables">Free Variables<a class="headerlink" href="#free-variables" title="Permanent link">&para;</a></h3>
+<p>Declared in global <code>"variables"</code> section. Available throughout program.</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">&quot;variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Int&quot;</span><span class="p">}]</span>
+</code></pre></div>
+
+<p>Added to evaluation context (line 91):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="quantified-variables">Quantified Variables<a class="headerlink" href="#quantified-variables" title="Permanent link">&para;</a></h3>
+<p>Bound by <code>ForAll</code> or <code>Exists</code> quantifiers. Temporarily shadow free variables within quantified scope.</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">&quot;knowledge_base&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;ForAll([x], x &gt; 0)&quot;</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Here <code>x</code> must exist in context (from <code>"variables"</code>) to be bound by <code>ForAll</code>.</p>
+<h3 id="shadowing">Shadowing<a class="headerlink" href="#shadowing" title="Permanent link">&para;</a></h3>
+<p>Code checks for shadowing (lines 100-106):</p>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">quantified_vars</span><span class="p">:</span>
+    <span class="n">var_name</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">decl</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">context</span> <span class="ow">and</span> <span class="n">var_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="o">...</span><span class="p">]:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Quantified variable &#39;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2">&#39; shadows existing symbol&quot;</span><span class="p">)</span>
+    <span class="n">context</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+</code></pre></div>
+
+<p>Variables bound by quantifiers override free variables in local scope.</p>
+<h2 id="answer-determination">Answer Determination<a class="headerlink" href="#answer-determination" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/backends/abstract.py:52-67</code></p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">determine_answer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sat_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">unsat_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">sat_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">unsat_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">unsat_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sat_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Ambiguous</span>
+</code></pre></div>
+
+<p><strong>Ambiguous results</strong> (<code>None</code>) occur when:
+- <code>sat_count &gt; 0 and unsat_count &gt; 0</code> — multiple verifications with conflicting results
+- <code>sat_count == 0 and unsat_count == 0</code> — no verifications or all unknown</p>
+<p><strong>Handling:</strong> <code>proof_of_thought.py:183-191</code> treats <code>None</code> as error and retries with feedback:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">verify_result</span><span class="o">.</span><span class="n">answer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">error_trace</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Ambiguous verification result: &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;SAT=</span><span class="si">{</span><span class="n">verify_result</span><span class="o">.</span><span class="n">sat_count</span><span class="si">}</span><span class="s2">, UNSAT=</span><span class="si">{</span><span class="n">verify_result</span><span class="o">.</span><span class="n">unsat_count</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="k">continue</span>  <span class="c1"># Retry with error feedback</span>
+</code></pre></div>
+
+<p><strong>Best practice:</strong> Single verification per program (enforced by prompt template line 416).</p>
+<h2 id="security-model">Security Model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/security/validator.py</code></p>
+<h3 id="ast-validation">AST Validation<a class="headerlink" href="#ast-validation" title="Permanent link">&para;</a></h3>
+<p>Before <code>eval()</code>, parses to AST and checks for dangerous constructs (lines 21-42):</p>
+<p><strong>Blocked:</strong>
+- Dunder attributes: <code>__import__</code>, <code>__class__</code>, etc. (line 24)
+- Imports: <code>import</code>, <code>from ... import</code> (line 29)
+- Function/class definitions (line 32)
+- Builtin abuse: <code>eval</code>, <code>exec</code>, <code>compile</code>, <code>__import__</code> (line 36-42)</p>
+<h3 id="restricted-evaluation">Restricted Evaluation<a class="headerlink" href="#restricted-evaluation" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Line 66</span>
+<span class="nb">eval</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;__builtins__&quot;</span><span class="p">:</span> <span class="p">{}},</span> <span class="p">{</span><span class="o">**</span><span class="n">safe_globals</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">})</span>
+</code></pre></div>
+
+<ul>
+<li><strong>No builtins</strong>: <code>__builtins__: {}</code> prevents access to <code>open</code>, <code>print</code>, etc.</li>
+<li><strong>Whitelisted globals</strong>: Only Z3 operators and user-defined functions</li>
+<li><strong>Local context</strong>: Constants, variables, quantified vars</li>
+</ul>
+<p><strong>Whitelisted operators</strong> (<code>expressions.py:33-47</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Z3_OPERATORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;And&quot;</span><span class="p">,</span> <span class="s2">&quot;Or&quot;</span><span class="p">,</span> <span class="s2">&quot;Not&quot;</span><span class="p">,</span> <span class="s2">&quot;Implies&quot;</span><span class="p">,</span> <span class="s2">&quot;If&quot;</span><span class="p">,</span> <span class="s2">&quot;Distinct&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Sum&quot;</span><span class="p">,</span> <span class="s2">&quot;Product&quot;</span><span class="p">,</span> <span class="s2">&quot;ForAll&quot;</span><span class="p">,</span> <span class="s2">&quot;Exists&quot;</span><span class="p">,</span> <span class="s2">&quot;Function&quot;</span><span class="p">,</span> <span class="s2">&quot;Array&quot;</span><span class="p">,</span> <span class="s2">&quot;BitVecVal&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="sort-dependency-resolution">Sort Dependency Resolution<a class="headerlink" href="#sort-dependency-resolution" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/dsl/sorts.py:36-97</code></p>
+<p>Uses <strong>Kahn's algorithm</strong> for topological sorting.</p>
+<h3 id="dependency-extraction">Dependency Extraction<a class="headerlink" href="#dependency-extraction" title="Permanent link">&para;</a></h3>
+<p>ArraySort creates dependencies (lines 59-62):</p>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">sort_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ArraySort(&quot;</span><span class="p">):</span>
+    <span class="n">domain_range</span> <span class="o">=</span> <span class="n">sort_type</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;ArraySort(&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">domain_range</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+    <span class="n">deps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;MyArray&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ArraySort(IntSort, Person)&quot;</span><span class="p">}</span>
+</code></pre></div>
+
+<p>Depends on: <code>IntSort</code> (built-in, skip), <code>Person</code> (must be defined first).</p>
+<h3 id="topological-sort">Topological Sort<a class="headerlink" href="#topological-sort" title="Permanent link">&para;</a></h3>
+<p>Kahn's algorithm (lines 66-87):
+1. Calculate in-degree (dependency count) for each sort
+2. Process sorts with zero dependencies first
+3. Reduce in-degree of dependents
+4. Detect cycles if not all sorts processed (lines 90-92)</p>
+<p><strong>Circular dependency detection:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_names</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dependencies</span><span class="p">):</span>
+    <span class="n">remaining</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dependencies</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">sorted_names</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Circular dependency detected in sorts: </span><span class="si">{</span><span class="n">remaining</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="optimizer-independence">Optimizer Independence<a class="headerlink" href="#optimizer-independence" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/optimization/optimizer.py:29-39</code></p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimize</span><span class="p">()</span>  <span class="c1"># Separate instance</span>
+</code></pre></div>
+
+<p><strong>Critical:</strong> <code>Optimize()</code> is <strong>separate from <code>Solver()</code></strong>. Does NOT share constraints.</p>
+<p>From docstring (line 38-39):</p>
+<blockquote>
+<p>The optimizer is separate from the solver and doesn't share constraints.
+This is intentional to allow independent optimization problems.</p>
+</blockquote>
+<p>Optimizer has its own variables and constraints (lines 49-69). Can reference global constants via extended context (line 60-61):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">base_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">build_context</span><span class="p">()</span>
+<span class="n">opt_context</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">base_context</span><span class="p">,</span> <span class="o">**</span><span class="n">optimization_vars</span><span class="p">}</span>
+</code></pre></div>
+
+<h2 id="execution-pipeline">Execution Pipeline<a class="headerlink" href="#execution-pipeline" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/interpreter.py:135-197</code></p>
+<p>8-step execution sequence:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Step 1: Create sorts</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_sorts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;sorts&quot;</span><span class="p">])</span>
+
+<span class="c1"># Step 2: Create functions</span>
+<span class="n">functions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_functions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;functions&quot;</span><span class="p">])</span>
+
+<span class="c1"># Step 3: Create constants</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_constants</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;constants&quot;</span><span class="p">])</span>
+
+<span class="c1"># Step 4: Create variables</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;variables&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+
+<span class="c1"># Step 5: Initialize expression parser</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span> <span class="o">=</span> <span class="n">ExpressionParser</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">constants</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">mark_symbols_loaded</span><span class="p">()</span>  <span class="c1"># Enable context caching</span>
+
+<span class="c1"># Step 6: Add knowledge base</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">add_knowledge_base</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;knowledge_base&quot;</span><span class="p">])</span>
+
+<span class="c1"># Step 7: Add rules</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">add_rules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;rules&quot;</span><span class="p">],</span> <span class="n">sorts</span><span class="p">)</span>
+
+<span class="c1"># Step 8: Initialize verifier and add verifications</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">verifier</span> <span class="o">=</span> <span class="n">Verifier</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="p">,</span> <span class="n">sorts</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">verifier</span><span class="o">.</span><span class="n">add_verifications</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;verifications&quot;</span><span class="p">])</span>
+
+<span class="c1"># Step 9: Perform actions (e.g., &quot;verify_conditions&quot;)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">perform_actions</span><span class="p">()</span>
+</code></pre></div>
+
+<p><strong>Symbol loading:</strong> Line 172 calls <code>mark_symbols_loaded()</code> to enable context caching (lines 78-84 in <code>expressions.py</code>). After this, <code>build_context()</code> returns cached dict instead of rebuilding.</p>
+<h2 id="retry-mechanism">Retry Mechanism<a class="headerlink" href="#retry-mechanism" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/reasoning/proof_of_thought.py:123-191</code></p>
+<p>Retry loop with error feedback:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">gen_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">gen_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate_with_feedback</span><span class="p">(</span>
+            <span class="n">question</span><span class="p">,</span> <span class="n">error_trace</span><span class="p">,</span> <span class="n">previous_response</span><span class="p">,</span> <span class="o">...</span>
+        <span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Failure modes triggering retry:</strong></p>
+<ol>
+<li>
+<p><strong>Generation failure</strong> (lines 143-149):
+   <code>python
+   if not gen_result.success or gen_result.program is None:
+       error_trace = gen_result.error or "Failed to generate program"
+       continue</code></p>
+</li>
+<li>
+<p><strong>Execution failure</strong> (lines 176-180):
+   <code>python
+   if not verify_result.success:
+       error_trace = verify_result.error or "Z3 verification failed"
+       continue</code></p>
+</li>
+<li>
+<p><strong>Ambiguous result</strong> (lines 183-191):
+   <code>python
+   if verify_result.answer is None:
+       error_trace = f"Ambiguous verification result: SAT={sat_count}, UNSAT={unsat_count}"
+       continue</code></p>
+</li>
+</ol>
+<p><strong>Error feedback:</strong> Multi-turn conversation (<code>program_generator.py:130-174</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">previous_response</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">feedback_message</span><span class="p">},</span>
+<span class="p">]</span>
+</code></pre></div>
+
+<h2 id="solver-semantics">Solver Semantics<a class="headerlink" href="#solver-semantics" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/solvers/z3_solver.py:20-24</code></p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>  <span class="c1"># Temporary hypothesis</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>               <span class="c1"># Check all assertions</span>
+</code></pre></div>
+
+<p><strong>Two modes:</strong></p>
+<ol>
+<li><strong><code>solver.check()</code></strong>: Checks satisfiability of all <code>solver.add()</code> assertions</li>
+<li><strong><code>solver.check(φ)</code></strong>: Checks satisfiability of <code>assertions ∧ φ</code> <strong>without adding φ</strong></li>
+</ol>
+<p>Verifications use mode 2 (<code>verifier.py:113</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+</code></pre></div>
+
+<p>This is <strong>temporary</strong> — <code>condition</code> is NOT added to solver permanently.</p>
+<p><strong>Contrast with rules:</strong>
+- Rules: <code>solver.add(φ)</code> → permanent
+- Verifications: <code>solver.check(φ)</code> → temporary test</p>
+<h2 id="built-in-sorts">Built-in Sorts<a class="headerlink" href="#built-in-sorts" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/dsl/sorts.py:31-34</code></p>
+<p>Three built-in sorts pre-initialized:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_initialize_builtin_sorts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">built_in_sorts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;BoolSort&quot;</span><span class="p">:</span> <span class="n">BoolSort</span><span class="p">(),</span> <span class="s2">&quot;IntSort&quot;</span><span class="p">:</span> <span class="n">IntSort</span><span class="p">(),</span> <span class="s2">&quot;RealSort&quot;</span><span class="p">:</span> <span class="n">RealSort</span><span class="p">()}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">sorts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">built_in_sorts</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Important:</strong> Reference as <code>"BoolSort"</code>, <code>"IntSort"</code>, <code>"RealSort"</code> in JSON (not <code>"Bool"</code>, <code>"Int"</code>, <code>"Real"</code>).</p>
+<p>Do NOT declare in <code>"sorts"</code> section — already available.</p>
+<h2 id="prompt-template-constraints">Prompt Template Constraints<a class="headerlink" href="#prompt-template-constraints" title="Permanent link">&para;</a></h2>
+<p><strong>Implementation:</strong> <code>z3adapter/reasoning/prompt_template.py</code></p>
+<p>Key constraints enforced by prompt (extracted from code):</p>
+<p><strong>Line 228:</strong> Rules with <code>"implies"</code> MUST have non-empty <code>"forall"</code> field</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># expressions.py:184-186</span>
+<span class="k">if</span> <span class="s2">&quot;implies&quot;</span> <span class="ow">in</span> <span class="n">rule</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">variables</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Implication rules require quantified variables&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Line 298:</strong> Empty quantifier lists forbidden</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># verifier.py:42-43, 55-56</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">exists_vars</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Empty &#39;exists&#39; list in verification&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Line 416:</strong> Single verification per program (avoid ambiguous results)</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Directly impacts determine_answer() — mixed SAT/UNSAT returns None</span>
+</code></pre></div>
+
+<p><strong>Line 531:</strong> Output format requirement
+- Must wrap JSON in markdown code block: <code>```json ... ```</code>
+- Regex extraction: <code>r"```json\s*(\{[\s\S]*?\})\s*```"</code> (<code>program_generator.py:224</code>)</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../installation/" class="btn btn-neutral float-left" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../api-reference/" class="btn btn-neutral float-right" title="API Reference">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright &copy; 2025 Debargha Ganguly</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/debarghaG/proofofthought" class="fa fa-code-fork" style="color: #fcfcfc"> debarghaG/proofofthought</a>
+        </span>
+    
+    
+      <span><a href="../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../api-reference/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
