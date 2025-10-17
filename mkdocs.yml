@@ -1,10 +1,10 @@
 site_name: ProofOfThought
 site_description: LLM-based reasoning using Z3 theorem proving
 site_author: Debargha Ganguly
-site_url: https://debarghaG.github.io/proofofthought
+site_url: https://debarghag.github.io/proofofthought
 
-repo_name: debarghaG/proofofthought
-repo_url: https://github.com/debarghaG/proofofthought
+repo_name: debarghag/proofofthought
+repo_url: https://github.com/debarghag/proofofthought
 edit_uri: edit/main/docs/
 
 theme:
@@ -24,6 +24,7 @@ nav:
   - Backends: backends.md
   - Examples: examples.md
   - Benchmarks: benchmarks.md
+  - Postprocessors: postprocessors.md
 
 markdown_extensions:
   - admonition
