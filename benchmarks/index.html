@@ -47,6 +47,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
                 </li>
               </ul>
@@ -110,6 +114,14 @@
     <li class="toctree-l2"><a class="reference internal" href="#dataset-sources">Dataset Sources</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#implementation-notes">Implementation Notes</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#parallel-processing">Parallel Processing</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#caching">Caching</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#timeout-handling">Timeout Handling</a>
+    </li>
+        </ul>
     </li>
     </ul>
                 </li>
@@ -139,22 +151,26 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="benchmarks">Benchmarks<a class="headerlink" href="#benchmarks" title="Permanent link">&para;</a></h1>
-<p>Evaluation on 5 logical reasoning datasets using Azure GPT-5.</p>
+<p>This page presents evaluation results on 5 logical reasoning datasets using Azure GPT-5.</p>
 <h2 id="methodology">Methodology<a class="headerlink" href="#methodology" title="Permanent link">&para;</a></h2>
-<p><strong>Model:</strong> Azure GPT-5 deployment
-<strong>Configuration:</strong>
+<p>The evaluation follows a consistent methodology across all datasets.</p>
+<p><strong>Model:</strong> Azure GPT-5 deployment</p>
+<p><strong>Configuration:</strong>
 - <code>max_attempts=3</code> (retry with error feedback)
 - <code>verify_timeout=10000ms</code>
 - <code>optimize_timeout=100000ms</code> (JSON backend only)
 - <code>num_workers=10</code> (ThreadPoolExecutor for parallel processing)</p>
-<p><strong>Metrics:</strong> <code>sklearn.metrics</code>
-- Accuracy: <code>accuracy_score(y_true, y_pred)</code>
-- Precision: <code>precision_score(y_true, y_pred, zero_division=0)</code>
-- Recall: <code>recall_score(y_true, y_pred, zero_division=0)</code>
-- F1: <code>2 * (precision * recall) / (precision + recall)</code>
-- Success Rate: <code>(total - failed) / total</code></p>
-<p><strong>Execution:</strong> <code>experiments_pipeline.py</code> runs all benchmarks sequentially, modifying <code>BACKEND</code> variable in each <code>benchmark/bench_*.py</code> script via regex substitution.</p>
+<p><strong>Metrics</strong> (computed via <code>sklearn.metrics</code>):</p>
+<ul>
+<li><strong>Accuracy:</strong> <code>accuracy_score(y_true, y_pred)</code></li>
+<li><strong>Precision:</strong> <code>precision_score(y_true, y_pred, zero_division=0)</code></li>
+<li><strong>Recall:</strong> <code>recall_score(y_true, y_pred, zero_division=0)</code></li>
+<li><strong>F1:</strong> <code>2 * (precision * recall) / (precision + recall)</code></li>
+<li><strong>Success Rate:</strong> <code>(total - failed) / total</code></li>
+</ul>
+<p><strong>Execution:</strong> The <code>experiments_pipeline.py</code> script runs all benchmarks sequentially, modifying the <code>BACKEND</code> variable in each <code>benchmark/bench_*.py</code> script via regex substitution.</p>
 <h2 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h2>
+<p>Results from the most recent benchmark run.</p>
 <p><strong>Last Updated:</strong> 2025-10-16 18:14:07</p>
 <table>
 <thead>
@@ -273,88 +289,115 @@
 </tbody>
 </table>
 <h2 id="dataset-characteristics">Dataset Characteristics<a class="headerlink" href="#dataset-characteristics" title="Permanent link">&para;</a></h2>
+<p>Each dataset tests different aspects of logical reasoning.</p>
 <h3 id="prontoqa">ProntoQA<a class="headerlink" href="#prontoqa" title="Permanent link">&para;</a></h3>
-<p>Synthetic first-order logic with deterministic inference.</p>
+<p>ProntoQA features synthetic first-order logic problems with deterministic inference.</p>
 <p><strong>Example:</strong></p>
 <div class="codehilite"><pre><span></span><code>Facts: &quot;Stella is a lion. All lions are brown.&quot;
 Question: &quot;Is Stella brown?&quot;
 Answer: True
 </code></pre></div>
 
-<p><strong>Performance:</strong>
-- SMT2: 100% (100/100)
-- JSON: 99% (99/100)</p>
-<p>Both backends near-perfect. Simplest dataset.</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>SMT2: 100% (100/100)</li>
+<li>JSON: 99% (99/100)</li>
+</ul>
+<p>Both backends achieve near-perfect results, making this the simplest dataset in the benchmark suite.</p>
 <h3 id="folio">FOLIO<a class="headerlink" href="#folio" title="Permanent link">&para;</a></h3>
-<p>First-order logic from Wikipedia articles.</p>
-<p><strong>Characteristics:</strong> Complex nested quantifiers, longer inference chains.</p>
-<p><strong>Performance:</strong>
-- SMT2: 69% (69/100)
-- JSON: 76% (76/100)</p>
-<p>JSON outperforms SMT2 (+7%). Most challenging dataset. Lower success rate for JSON (94% vs 99%) indicates generation difficulties.</p>
+<p>FOLIO presents first-order logic problems derived from Wikipedia articles.</p>
+<p><strong>Characteristics:</strong> Features complex nested quantifiers and longer inference chains.</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>SMT2: 69% (69/100)</li>
+<li>JSON: 76% (76/100)</li>
+</ul>
+<p>JSON outperforms SMT2 by 7% on this dataset, which is the most challenging in the suite. However, JSON's lower success rate (94% vs 99%) indicates greater difficulty in program generation.</p>
 <h3 id="proofwriter">ProofWriter<a class="headerlink" href="#proofwriter" title="Permanent link">&para;</a></h3>
-<p>Deductive reasoning over explicit facts and rules.</p>
+<p>ProofWriter tests deductive reasoning over explicit facts and rules.</p>
 <p><strong>Example:</strong></p>
 <div class="codehilite"><pre><span></span><code>Facts: &quot;The bear is red. If something is red, then it is kind.&quot;
 Question: &quot;Is the bear kind?&quot;
 Answer: True
 </code></pre></div>
 
-<p><strong>Performance:</strong>
-- SMT2: 98.96% (95/96)
-- JSON: 95.83% (92/96)</p>
-<p>High accuracy for both. SMT2 slight edge (+3%).</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>SMT2: 98.96% (95/96)</li>
+<li>JSON: 95.83% (92/96)</li>
+</ul>
+<p>Both backends achieve high accuracy on this dataset, with SMT2 holding a slight 3% edge.</p>
 <h3 id="conditionalqa">ConditionalQA<a class="headerlink" href="#conditionalqa" title="Permanent link">&para;</a></h3>
-<p>Conditional reasoning with if-then statements.</p>
-<p><strong>Performance:</strong>
-- SMT2: 83% (83/100)
-- JSON: 76% (76/100)</p>
-<p>SMT2 better accuracy (+7%) and higher success rate (100% vs 89%).</p>
+<p>ConditionalQA focuses on conditional reasoning with if-then statements.</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>SMT2: 83% (83/100)</li>
+<li>JSON: 76% (76/100)</li>
+</ul>
+<p>SMT2 demonstrates better accuracy (+7%) and also achieves a higher success rate (100% vs 89%).</p>
 <h3 id="strategyqa">StrategyQA<a class="headerlink" href="#strategyqa" title="Permanent link">&para;</a></h3>
-<p>Multi-hop reasoning requiring implicit world knowledge.</p>
+<p>StrategyQA tests multi-hop reasoning that requires implicit world knowledge.</p>
 <p><strong>Example:</strong></p>
 <div class="codehilite"><pre><span></span><code>Question: &quot;Would a vegetarian eat a burger made of plants?&quot;
 Answer: True (requires knowing: vegetarians avoid meat, plant burgers have no meat)
 </code></pre></div>
 
-<p><strong>Performance:</strong>
-- SMT2: 84% (84/100)
-- JSON: 68% (68/100)</p>
-<p>Largest gap (+16% for SMT2). Both achieve 100%/86% success rates respectively.</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>SMT2: 84% (84/100)</li>
+<li>JSON: 68% (68/100)</li>
+</ul>
+<p>This dataset shows the largest performance gap, with SMT2 leading by 16%. Both backends achieve good success rates of 100% and 86% respectively.</p>
 <h2 id="analysis">Analysis<a class="headerlink" href="#analysis" title="Permanent link">&para;</a></h2>
 <h3 id="accuracy-summary">Accuracy Summary<a class="headerlink" href="#accuracy-summary" title="Permanent link">&para;</a></h3>
-<p><strong>SMT2:</strong> 86.8% average across datasets
-<strong>JSON:</strong> 82.8% average across datasets</p>
-<p>SMT2 superior on 4/5 datasets (FOLIO exception where JSON +7%).</p>
+<p>Aggregating results across all datasets:</p>
+<ul>
+<li><strong>SMT2:</strong> 86.8% average accuracy</li>
+<li><strong>JSON:</strong> 82.8% average accuracy</li>
+</ul>
+<p>SMT2 proves superior on 4 out of 5 datasets, with FOLIO being the exception where JSON leads by 7%.</p>
 <h3 id="success-rate-summary">Success Rate Summary<a class="headerlink" href="#success-rate-summary" title="Permanent link">&para;</a></h3>
-<p><strong>SMT2:</strong> 99.4% average (range: 98.96-100%)
-<strong>JSON:</strong> 92.8% average (range: 86-100%)</p>
-<p>SMT2 more reliable program generation and execution. JSON success rate variance higher, indicating LLM generation issues on some datasets.</p>
+<p>The success rate measures program generation and execution reliability:</p>
+<ul>
+<li><strong>SMT2:</strong> 99.4% average (range: 98.96-100%)</li>
+<li><strong>JSON:</strong> 92.8% average (range: 86-100%)</li>
+</ul>
+<p>SMT2 demonstrates more reliable program generation and execution overall. JSON's higher success rate variance indicates LLM generation challenges on certain datasets.</p>
 <h3 id="failure-modes">Failure Modes<a class="headerlink" href="#failure-modes" title="Permanent link">&para;</a></h3>
-<p><strong>SMT2 failures:</strong>
-- JSON extraction from markdown: regex mismatch
-- Z3 subprocess timeout (rare with 10s limit)
-- Invalid SMT-LIB syntax (caught by Z3 parser)</p>
-<p><strong>JSON failures:</strong>
-- JSON parsing errors post-extraction
-- Invalid sort references (e.g., undefined <code>Person</code> sort)
-- Expression evaluation errors in <code>ExpressionParser.parse_expression()</code>
-- Z3 Python API exceptions</p>
+<p>Understanding failure modes helps identify areas for improvement.</p>
+<p><strong>SMT2 failures:</strong></p>
+<ul>
+<li>Program extraction from markdown: regex mismatch</li>
+<li>Z3 subprocess timeout (rare with 10s limit)</li>
+<li>Invalid SMT-LIB syntax (caught by Z3 parser)</li>
+</ul>
+<p><strong>JSON failures:</strong></p>
+<ul>
+<li>JSON parsing errors after extraction</li>
+<li>Invalid sort references (e.g., undefined <code>Person</code> sort)</li>
+<li>Expression evaluation errors in <code>ExpressionParser.parse_expression()</code></li>
+<li>Z3 Python API exceptions</li>
+</ul>
 <h2 id="reproducing-results">Reproducing Results<a class="headerlink" href="#reproducing-results" title="Permanent link">&para;</a></h2>
 <h3 id="full-benchmark-suite">Full benchmark suite<a class="headerlink" href="#full-benchmark-suite" title="Permanent link">&para;</a></h3>
+<p>To run the complete benchmark suite:</p>
 <div class="codehilite"><pre><span></span><code>python<span class="w"> </span>experiments_pipeline.py
 </code></pre></div>
 
-<p>Generates:
-- <code>results/benchmark_results.json</code> - Raw metrics
-- <code>results/benchmark_results.md</code> - Markdown table
-- Updates <code>README.md</code> between <code>&lt;!-- BENCHMARK_RESULTS_START/END --&gt;</code> markers</p>
+<p>This generates:</p>
+<ul>
+<li><code>results/benchmark_results.json</code> - Raw metrics data</li>
+<li><code>results/benchmark_results.md</code> - Formatted markdown table</li>
+<li>Updates <code>README.md</code> between <code>&lt;!-- BENCHMARK_RESULTS_START/END --&gt;</code> markers</li>
+</ul>
 <h3 id="single-benchmark">Single benchmark<a class="headerlink" href="#single-benchmark" title="Permanent link">&para;</a></h3>
+<p>To run just one benchmark:</p>
 <div class="codehilite"><pre><span></span><code>python<span class="w"> </span>benchmark/bench_strategyqa.py
 </code></pre></div>
 
-<p>Modify <code>BACKEND</code> variable in script (<code>smt2</code> or <code>json</code>).</p>
+<p>You'll need to modify the <code>BACKEND</code> variable in the script to either <code>smt2</code> or <code>json</code>.</p>
 <h3 id="custom-evaluation">Custom evaluation<a class="headerlink" href="#custom-evaluation" title="Permanent link">&para;</a></h3>
+<p>For custom evaluation on your own dataset:</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.azure_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_client_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span><span class="p">,</span> <span class="n">EvaluationPipeline</span>
 
@@ -374,6 +417,7 @@ Answer: True (requires knowing: vegetarians avoid meat, plant burgers have no me
 </code></pre></div>
 
 <h2 id="dataset-sources">Dataset Sources<a class="headerlink" href="#dataset-sources" title="Permanent link">&para;</a></h2>
+<p>The benchmark datasets are located in the <code>data/</code> directory:</p>
 <ul>
 <li><strong>ProntoQA:</strong> <code>data/prontoqa_test.json</code></li>
 <li><strong>FOLIO:</strong> <code>data/folio_test.json</code></li>
@@ -381,16 +425,18 @@ Answer: True (requires knowing: vegetarians avoid meat, plant burgers have no me
 <li><strong>ConditionalQA:</strong> <code>data/conditionalQA_test.json</code></li>
 <li><strong>StrategyQA:</strong> <code>data/strategyQA_train.json</code></li>
 </ul>
-<p>Format: JSON arrays with <code>question</code> and <code>answer</code> fields (boolean).</p>
+<p>All datasets follow the same format: JSON arrays with <code>question</code> and <code>answer</code> fields (boolean values).</p>
 <h2 id="implementation-notes">Implementation Notes<a class="headerlink" href="#implementation-notes" title="Permanent link">&para;</a></h2>
-<p><strong>Parallel Processing:</strong>
-Benchmark scripts use <code>num_workers=10</code> with <code>ThreadPoolExecutor</code> (not <code>ProcessPoolExecutor</code> due to ProofOfThought unpicklability).</p>
-<p><strong>Caching:</strong>
-<code>skip_existing=True</code> enables resumption. Results cached as:
-- <code>output/{backend}_evaluation_{dataset}/{sample_id}_result.json</code>
-- <code>output/{backend}_programs_{dataset}/{sample_id}_program.{ext}</code></p>
-<p><strong>Timeout Handling:</strong>
-<code>experiments_pipeline.py</code> sets 1-hour subprocess timeout per benchmark. Individual Z3 calls timeout at 10s (verify) or 100s (optimize).</p>
+<h3 id="parallel-processing">Parallel Processing<a class="headerlink" href="#parallel-processing" title="Permanent link">&para;</a></h3>
+<p>Benchmark scripts use <code>num_workers=10</code> with <code>ThreadPoolExecutor</code> for parallel processing. Note that <code>ProcessPoolExecutor</code> cannot be used due to ProofOfThought being unpicklable.</p>
+<h3 id="caching">Caching<a class="headerlink" href="#caching" title="Permanent link">&para;</a></h3>
+<p>Setting <code>skip_existing=True</code> enables resumption of interrupted runs. Results are cached as:</p>
+<ul>
+<li><code>output/{backend}_evaluation_{dataset}/{sample_id}_result.json</code></li>
+<li><code>output/{backend}_programs_{dataset}/{sample_id}_program.{ext}</code></li>
+</ul>
+<h3 id="timeout-handling">Timeout Handling<a class="headerlink" href="#timeout-handling" title="Permanent link">&para;</a></h3>
+<p>The <code>experiments_pipeline.py</code> script sets a 1-hour subprocess timeout for each benchmark. Individual Z3 verification calls timeout at 10 seconds, while optimization calls timeout at 100 seconds.</p>
               
             </div>
           </div><footer>

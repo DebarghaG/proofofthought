@@ -46,18 +46,22 @@
                 <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
                 </li>
               </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Installation</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#core">Core</a>
+    <li class="toctree-l3"><a class="reference internal" href="#core-dependencies">Core Dependencies</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#development-optional">Development (Optional)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#development-dependencies-optional">Development Dependencies (Optional)</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#z3-verification">Z3 Verification</a>
+    <li class="toctree-l2"><a class="reference internal" href="#z3-verification-setup">Z3 Verification Setup</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#json-backend">JSON Backend</a>
     </li>
@@ -76,6 +80,14 @@
     <li class="toctree-l2"><a class="reference internal" href="#verification">Verification</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#z3-cli-not-found-smt2-backend">Z3 CLI not found (SMT2 backend)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#import-errors-when-running-examples">Import errors when running examples</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#azure-authentication-errors">Azure authentication errors</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#version-constraints">Version Constraints</a>
     </li>
@@ -128,56 +140,58 @@
               
                 <h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
 <h2 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h2>
-<p>Python 3.12+ required (<code>pyproject.toml</code> specifies <code>requires-python = "&gt;=3.12"</code>).</p>
-<h3 id="core">Core<a class="headerlink" href="#core" title="Permanent link">&para;</a></h3>
+<p>ProofOfThought requires Python 3.12 or higher (as specified in <code>pyproject.toml</code>).</p>
+<h3 id="core-dependencies">Core Dependencies<a class="headerlink" href="#core-dependencies" title="Permanent link">&para;</a></h3>
+<p>Install the core dependencies using:</p>
 <div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </code></pre></div>
 
-<p>Installs:</p>
+<p>This installs the following packages:</p>
 <ul>
-<li><code>z3-solver&gt;=4.15.0</code> - Z3 Python API (JSONBackend) + CLI binary (SMT2Backend)</li>
-<li><code>openai&gt;=2.0.0</code> - LLM client (supports Azure OpenAI via same interface)</li>
-<li><code>scikit-learn&gt;=1.7.0</code> - Evaluation metrics (<code>confusion_matrix</code>, <code>accuracy_score</code>, etc.)</li>
-<li><code>numpy&gt;=2.3.0</code> - Numerical operations</li>
-<li><code>python-dotenv&gt;=1.1.0</code> - Environment variable management</li>
+<li><code>z3-solver&gt;=4.15.0</code> - Provides both the Z3 Python API (for JSONBackend) and CLI binary (for SMT2Backend)</li>
+<li><code>openai&gt;=2.0.0</code> - LLM client with support for both OpenAI and Azure OpenAI</li>
+<li><code>scikit-learn&gt;=1.7.0</code> - Used for evaluation metrics like <code>confusion_matrix</code> and <code>accuracy_score</code></li>
+<li><code>numpy&gt;=2.3.0</code> - Required for numerical operations</li>
+<li><code>python-dotenv&gt;=1.1.0</code> - Manages environment variables from <code>.env</code> files</li>
 </ul>
-<h3 id="development-optional">Development (Optional)<a class="headerlink" href="#development-optional" title="Permanent link">&para;</a></h3>
+<h3 id="development-dependencies-optional">Development Dependencies (Optional)<a class="headerlink" href="#development-dependencies-optional" title="Permanent link">&para;</a></h3>
+<p>For development work, install additional tools:</p>
 <div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </code></pre></div>
 
-<p>Additional tools:</p>
+<p>This includes:</p>
 <ul>
 <li><code>black&gt;=25.9.0</code> - Code formatter</li>
-<li><code>ruff&gt;=0.13.0</code> - Linter</li>
-<li><code>mypy&gt;=1.18.0</code> - Type checker</li>
-<li><code>pytest&gt;=8.0.0</code> - Test runner</li>
-<li><code>pre-commit&gt;=4.3.0</code> - Git hooks</li>
+<li><code>ruff&gt;=0.13.0</code> - Fast Python linter</li>
+<li><code>mypy&gt;=1.18.0</code> - Static type checker</li>
+<li><code>pytest&gt;=8.0.0</code> - Testing framework</li>
+<li><code>pre-commit&gt;=4.3.0</code> - Git hook manager</li>
 </ul>
-<h2 id="z3-verification">Z3 Verification<a class="headerlink" href="#z3-verification" title="Permanent link">&para;</a></h2>
+<h2 id="z3-verification-setup">Z3 Verification Setup<a class="headerlink" href="#z3-verification-setup" title="Permanent link">&para;</a></h2>
 <h3 id="json-backend">JSON Backend<a class="headerlink" href="#json-backend" title="Permanent link">&para;</a></h3>
-<p>No additional setup. <code>z3-solver</code> package includes Python API.</p>
+<p>The JSON backend requires no additional setup beyond installing <code>z3-solver</code>, which includes the Python API.</p>
 <h3 id="smt2-backend">SMT2 Backend<a class="headerlink" href="#smt2-backend" title="Permanent link">&para;</a></h3>
-<p>Requires Z3 CLI in PATH:</p>
+<p>The SMT2 backend requires the Z3 CLI to be available in your PATH:</p>
 <div class="codehilite"><pre><span></span><code>z3<span class="w"> </span>--version
 </code></pre></div>
 
-<p>If missing, <code>z3-solver</code> package includes CLI in <code>site-packages</code>. Locate via:</p>
+<p>If Z3 is not found, note that the <code>z3-solver</code> package includes a CLI binary in <code>site-packages</code>. You can locate it with:</p>
 <div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import z3; print(z3.__file__)&quot;</span>
-<span class="c1"># CLI typically at: .../site-packages/z3/bin/z3</span>
+<span class="c1"># The CLI is typically located at: .../site-packages/z3/bin/z3</span>
 </code></pre></div>
 
-<p>macOS/Linux: Add to PATH or specify in code:</p>
+<p>On macOS/Linux, you can either add it to your PATH or specify the path in your code:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">ProofOfThought</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">z3_path</span><span class="o">=</span><span class="s2">&quot;/path/to/z3&quot;</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="api-keys">API Keys<a class="headerlink" href="#api-keys" title="Permanent link">&para;</a></h2>
 <h3 id="openai">OpenAI<a class="headerlink" href="#openai" title="Permanent link">&para;</a></h3>
-<p><code>.env</code>:</p>
+<p>For OpenAI access, create a <code>.env</code> file with:</p>
 <div class="codehilite"><pre><span></span><code><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-...
 </code></pre></div>
 
 <h3 id="azure-openai">Azure OpenAI<a class="headerlink" href="#azure-openai" title="Permanent link">&para;</a></h3>
-<p><code>.env</code>:</p>
+<p>For Azure OpenAI deployments, configure these variables in <code>.env</code>:</p>
 <div class="codehilite"><pre><span></span><code><span class="nv">AZURE_OPENAI_API_KEY</span><span class="o">=</span>...
 <span class="nv">AZURE_OPENAI_ENDPOINT</span><span class="o">=</span>https://....openai.azure.com/
 <span class="nv">AZURE_OPENAI_API_VERSION</span><span class="o">=</span><span class="m">2024</span>-08-01-preview
@@ -185,7 +199,7 @@
 <span class="nv">AZURE_GPT4O_DEPLOYMENT_NAME</span><span class="o">=</span>gpt-4o
 </code></pre></div>
 
-<p>Usage:</p>
+<p>Then use it in your code:</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.azure_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_client_config</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>  <span class="c1"># Returns {&quot;llm_client&quot;: AzureOpenAI(...), &quot;model&quot;: str}</span>
@@ -193,10 +207,11 @@
 </code></pre></div>
 
 <h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<p>To verify your installation is working correctly:</p>
 <div class="codehilite"><pre><span></span><code>python<span class="w"> </span>examples/simple_usage.py
 </code></pre></div>
 
-<p>Expected output structure:</p>
+<p>You should see output similar to:</p>
 <div class="codehilite"><pre><span></span><code>Question: Would Nancy Pelosi publicly denounce abortion?
 Answer: False
 Success: True
@@ -204,47 +219,50 @@ Attempts: 1
 </code></pre></div>
 
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p><strong>Z3 CLI not found (SMT2 backend)</strong></p>
-<p>Error:</p>
+<p>Common issues and their solutions:</p>
+<h3 id="z3-cli-not-found-smt2-backend">Z3 CLI not found (SMT2 backend)<a class="headerlink" href="#z3-cli-not-found-smt2-backend" title="Permanent link">&para;</a></h3>
+<p><strong>Error:</strong></p>
 <div class="codehilite"><pre><span></span><code>FileNotFoundError: Z3 executable not found: &#39;z3&#39;
 </code></pre></div>
 
-<p>Solutions:
-1. Use JSON backend: <code>ProofOfThought(backend="json")</code>
-2. Specify Z3 path: <code>ProofOfThought(z3_path="/path/to/z3")</code>
-3. Add to PATH: <code>export PATH=$PATH:/path/to/z3/bin</code></p>
-<p><strong>Import errors when running examples</strong></p>
-<p>Wrong:</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Switch to JSON backend: <code>ProofOfThought(backend="json")</code></li>
+<li>Specify the Z3 path explicitly: <code>ProofOfThought(z3_path="/path/to/z3")</code></li>
+<li>Add Z3 to your PATH: <code>export PATH=$PATH:/path/to/z3/bin</code></li>
+</ol>
+<h3 id="import-errors-when-running-examples">Import errors when running examples<a class="headerlink" href="#import-errors-when-running-examples" title="Permanent link">&para;</a></h3>
+<p><strong>Incorrect approach:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>examples
 python<span class="w"> </span>simple_usage.py<span class="w">  </span><span class="c1"># ❌ ModuleNotFoundError</span>
 </code></pre></div>
 
-<p>Correct:</p>
+<p><strong>Correct approach:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>/path/to/proofofthought
 python<span class="w"> </span>examples/simple_usage.py<span class="w">  </span><span class="c1"># ✓</span>
 </code></pre></div>
 
-<p>Reason: <code>examples/*.py</code> use <code>sys.path.insert(0, str(Path(__file__).parent.parent))</code> to find <code>z3adapter</code> and <code>utils</code> modules from project root.</p>
-<p><strong>Azure authentication errors</strong></p>
-<p>Verify <code>.env</code> variables are set and endpoint URL is correct. Test via:</p>
+<p><strong>Reason:</strong> The example scripts use <code>sys.path.insert(0, str(Path(__file__).parent.parent))</code> to locate the <code>z3adapter</code> and <code>utils</code> modules from the project root.</p>
+<h3 id="azure-authentication-errors">Azure authentication errors<a class="headerlink" href="#azure-authentication-errors" title="Permanent link">&para;</a></h3>
+<p>First, verify that all <code>.env</code> variables are properly set and that your endpoint URL is correct. You can test the configuration with:</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.azure_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_client_config</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>  <span class="c1"># Should not raise</span>
 </code></pre></div>
 
 <h2 id="version-constraints">Version Constraints<a class="headerlink" href="#version-constraints" title="Permanent link">&para;</a></h2>
-<p>From <code>pyproject.toml</code> and <code>requirements.txt</code>:</p>
+<p>The following version constraints are defined in <code>pyproject.toml</code> and <code>requirements.txt</code>:</p>
 <ul>
-<li>Python: <code>&gt;=3.12</code></li>
-<li>Z3: <code>&gt;=4.15.0</code> (tested with <code>4.15.3.0</code>)</li>
-<li>OpenAI: <code>&gt;=2.0.0</code> (tested with <code>2.0.1</code>)</li>
-<li>scikit-learn: <code>&gt;=1.7.0</code> (tested with <code>1.7.2</code>)</li>
-<li>NumPy: <code>&gt;=2.3.0</code> (tested with <code>2.3.3</code>)</li>
+<li><strong>Python:</strong> <code>&gt;=3.12</code></li>
+<li><strong>Z3:</strong> <code>&gt;=4.15.0</code> (tested with <code>4.15.3.0</code>)</li>
+<li><strong>OpenAI:</strong> <code>&gt;=2.0.0</code> (tested with <code>2.0.1</code>)</li>
+<li><strong>scikit-learn:</strong> <code>&gt;=1.7.0</code> (tested with <code>1.7.2</code>)</li>
+<li><strong>NumPy:</strong> <code>&gt;=2.3.0</code> (tested with <code>2.3.3</code>)</li>
 </ul>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../foreword/" class="btn btn-neutral float-left" title="Foreword"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../dsl-specification/" class="btn btn-neutral float-right" title="DSL Specification">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -273,7 +291,7 @@ python<span class="w"> </span>examples/simple_usage.py<span class="w">  </span><
         </span>
     
     
-      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../foreword/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../dsl-specification/" style="color: #fcfcfc">Next &raquo;</a></span>

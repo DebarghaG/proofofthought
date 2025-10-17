@@ -47,6 +47,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
                 </li>
               </ul>
@@ -102,6 +106,16 @@
     <li class="toctree-l2"><a class="reference internal" href="#built-in-sorts">Built-in Sorts</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#prompt-template-constraints">Prompt Template Constraints</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#line-228-implication-rules">Line 228: Implication Rules</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#line-298-quantifier-lists">Line 298: Quantifier Lists</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#line-416-single-verification">Line 416: Single Verification</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#line-531-output-format">Line 531: Output Format</a>
+    </li>
+        </ul>
     </li>
     </ul>
                 </li>
@@ -147,13 +161,15 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="dsl-specification">DSL Specification<a class="headerlink" href="#dsl-specification" title="Permanent link">&para;</a></h1>
-<p>Technical details of the JSON DSL implementation.</p>
+<p>This page provides technical details of the JSON DSL implementation.</p>
 <h2 id="rules-vs-verifications">Rules vs Verifications<a class="headerlink" href="#rules-vs-verifications" title="Permanent link">&para;</a></h2>
-<p><strong>Critical distinction:</strong> Rules modify the solver state. Verifications query the solver state.</p>
+<p>Understanding the distinction between rules and verifications is critical to using the DSL correctly.</p>
+<p><strong>Key difference:</strong> Rules modify the solver state, while verifications query it.</p>
 <h3 id="rules">Rules<a class="headerlink" href="#rules" title="Permanent link">&para;</a></h3>
+<p>Rules define axioms that permanently affect the solver's knowledge base.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/dsl/expressions.py:159-204</code></p>
 <p><strong>Operation:</strong> <code>solver.add(assertion)</code></p>
-<p>Rules are <strong>permanently asserted</strong> into the solver's knowledge base during step 6 of interpretation.</p>
+<p>Rules are permanently asserted into the solver's knowledge base during step 6 of the interpretation pipeline.</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Line 189: Implication rule</span>
 <span class="n">solver</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ForAll</span><span class="p">(</span><span class="n">variables</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">antecedent</span><span class="p">,</span> <span class="n">consequent</span><span class="p">)))</span>
 
@@ -174,11 +190,12 @@
 <span class="p">}</span>
 </code></pre></div>
 
-<p><strong>Effect:</strong> Defines axioms. Every subsequent verification will inherit this constraint.</p>
+<p><strong>Effect:</strong> This defines an axiom that every subsequent verification will inherit.</p>
 <h3 id="verifications">Verifications<a class="headerlink" href="#verifications" title="Permanent link">&para;</a></h3>
+<p>Verifications test conditions without modifying the knowledge base.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/verification/verifier.py:84-127</code></p>
 <p><strong>Operation:</strong> <code>solver.check(condition)</code></p>
-<p>Verifications <strong>test conditions</strong> against the existing knowledge base without modifying it.</p>
+<p>Verifications test conditions against the existing knowledge base without modifying it.</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Line 113</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>  <span class="c1"># Temporary hypothesis check</span>
 
@@ -188,10 +205,10 @@
     <span class="bp">self</span><span class="o">.</span><span class="n">unsat_count</span> <span class="o">+=</span> <span class="mi">1</span>
 </code></pre></div>
 
-<p><strong>Semantics:</strong> Checks if <code>KB ∧ condition</code> is satisfiable.</p>
+<p><strong>Semantics:</strong> The check determines if <code>KB ∧ condition</code> is satisfiable.</p>
 <ul>
-<li><strong>SAT</strong>: condition is consistent with KB</li>
-<li><strong>UNSAT</strong>: condition contradicts KB</li>
+<li><strong>SAT</strong>: The condition is consistent with the knowledge base</li>
+<li><strong>UNSAT</strong>: The condition contradicts the knowledge base</li>
 </ul>
 <p><strong>Structure:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
@@ -200,8 +217,9 @@
 <span class="p">}</span>
 </code></pre></div>
 
-<p><strong>Effect:</strong> Returns SAT/UNSAT but does NOT add to KB.</p>
+<p><strong>Effect:</strong> Returns SAT/UNSAT result but does NOT add the condition to the knowledge base.</p>
 <h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<p>Here's a complete example showing the interaction between rules and verifications:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
@@ -221,24 +239,25 @@
 2. <code>solver.add(is_democrat(nancy))</code> — knowledge base
 3. <code>solver.check(supports_abortion(nancy))</code> — verification → <strong>SAT</strong></p>
 <h2 id="variable-scoping">Variable Scoping<a class="headerlink" href="#variable-scoping" title="Permanent link">&para;</a></h2>
+<p>The DSL supports both free and quantified variables with careful scoping rules.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/dsl/expressions.py:69-107</code></p>
 <h3 id="free-variables">Free Variables<a class="headerlink" href="#free-variables" title="Permanent link">&para;</a></h3>
-<p>Declared in global <code>"variables"</code> section. Available throughout program.</p>
+<p>Free variables are declared in the global <code>"variables"</code> section and remain available throughout the program.</p>
 <div class="codehilite"><pre><span></span><code><span class="nt">&quot;variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Int&quot;</span><span class="p">}]</span>
 </code></pre></div>
 
-<p>Added to evaluation context (line 91):</p>
+<p>These are added to the evaluation context at line 91:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
 </code></pre></div>
 
 <h3 id="quantified-variables">Quantified Variables<a class="headerlink" href="#quantified-variables" title="Permanent link">&para;</a></h3>
-<p>Bound by <code>ForAll</code> or <code>Exists</code> quantifiers. Temporarily shadow free variables within quantified scope.</p>
+<p>Quantified variables are bound by <code>ForAll</code> or <code>Exists</code> operators and temporarily shadow free variables within their scope.</p>
 <div class="codehilite"><pre><span></span><code><span class="nt">&quot;knowledge_base&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;ForAll([x], x &gt; 0)&quot;</span><span class="p">]</span>
 </code></pre></div>
 
-<p>Here <code>x</code> must exist in context (from <code>"variables"</code>) to be bound by <code>ForAll</code>.</p>
+<p>In this example, <code>x</code> must already exist in the context (from <code>"variables"</code>) to be bound by the <code>ForAll</code> operator.</p>
 <h3 id="shadowing">Shadowing<a class="headerlink" href="#shadowing" title="Permanent link">&para;</a></h3>
-<p>Code checks for shadowing (lines 100-106):</p>
+<p>The implementation includes shadowing checks at lines 100-106:</p>
 <div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">quantified_vars</span><span class="p">:</span>
     <span class="n">var_name</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">decl</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">context</span> <span class="ow">and</span> <span class="n">var_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="o">...</span><span class="p">]:</span>
@@ -246,8 +265,9 @@
     <span class="n">context</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
 </code></pre></div>
 
-<p>Variables bound by quantifiers override free variables in local scope.</p>
+<p>When shadowing occurs, variables bound by quantifiers take precedence over free variables within their local scope.</p>
 <h2 id="answer-determination">Answer Determination<a class="headerlink" href="#answer-determination" title="Permanent link">&para;</a></h2>
+<p>The system determines the final answer based on verification counts.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/backends/abstract.py:52-67</code></p>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">determine_answer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sat_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">unsat_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">sat_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">unsat_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -258,10 +278,12 @@
         <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Ambiguous</span>
 </code></pre></div>
 
-<p><strong>Ambiguous results</strong> (<code>None</code>) occur when:
-- <code>sat_count &gt; 0 and unsat_count &gt; 0</code> — multiple verifications with conflicting results
-- <code>sat_count == 0 and unsat_count == 0</code> — no verifications or all unknown</p>
-<p><strong>Handling:</strong> <code>proof_of_thought.py:183-191</code> treats <code>None</code> as error and retries with feedback:</p>
+<p><strong>Ambiguous results</strong> (returning <code>None</code>) occur in two cases:</p>
+<ul>
+<li><code>sat_count &gt; 0 and unsat_count &gt; 0</code> — multiple verifications produced conflicting results</li>
+<li><code>sat_count == 0 and unsat_count == 0</code> — no verifications ran or all returned unknown</li>
+</ul>
+<p><strong>Handling:</strong> The system treats <code>None</code> as an error and retries with feedback (see <code>proof_of_thought.py:183-191</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">verify_result</span><span class="o">.</span><span class="n">answer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">error_trace</span> <span class="o">=</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;Ambiguous verification result: &quot;</span>
@@ -270,27 +292,30 @@
     <span class="k">continue</span>  <span class="c1"># Retry with error feedback</span>
 </code></pre></div>
 
-<p><strong>Best practice:</strong> Single verification per program (enforced by prompt template line 416).</p>
+<p><strong>Best practice:</strong> Use a single verification per program to avoid ambiguous results. This is enforced by the prompt template at line 416.</p>
 <h2 id="security-model">Security Model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
+<p>The DSL includes multiple security layers to prevent code injection attacks.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/security/validator.py</code></p>
 <h3 id="ast-validation">AST Validation<a class="headerlink" href="#ast-validation" title="Permanent link">&para;</a></h3>
-<p>Before <code>eval()</code>, parses to AST and checks for dangerous constructs (lines 21-42):</p>
-<p><strong>Blocked:</strong>
+<p>Before executing <code>eval()</code>, the system parses expressions to an AST and checks for dangerous constructs (lines 21-42).</p>
+<p><strong>Blocked constructs:</strong>
 - Dunder attributes: <code>__import__</code>, <code>__class__</code>, etc. (line 24)
 - Imports: <code>import</code>, <code>from ... import</code> (line 29)
 - Function/class definitions (line 32)
 - Builtin abuse: <code>eval</code>, <code>exec</code>, <code>compile</code>, <code>__import__</code> (line 36-42)</p>
 <h3 id="restricted-evaluation">Restricted Evaluation<a class="headerlink" href="#restricted-evaluation" title="Permanent link">&para;</a></h3>
+<p>The evaluation environment is carefully sandboxed:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Line 66</span>
 <span class="nb">eval</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;__builtins__&quot;</span><span class="p">:</span> <span class="p">{}},</span> <span class="p">{</span><span class="o">**</span><span class="n">safe_globals</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">})</span>
 </code></pre></div>
 
+<p>Three layers of protection:</p>
 <ul>
-<li><strong>No builtins</strong>: <code>__builtins__: {}</code> prevents access to <code>open</code>, <code>print</code>, etc.</li>
-<li><strong>Whitelisted globals</strong>: Only Z3 operators and user-defined functions</li>
-<li><strong>Local context</strong>: Constants, variables, quantified vars</li>
+<li><strong>No builtins</strong>: Setting <code>__builtins__: {}</code> prevents access to <code>open</code>, <code>print</code>, and other dangerous functions</li>
+<li><strong>Whitelisted globals</strong>: Only Z3 operators and user-defined functions are available</li>
+<li><strong>Local context</strong>: Limited to constants, variables, and quantified variables</li>
 </ul>
-<p><strong>Whitelisted operators</strong> (<code>expressions.py:33-47</code>):</p>
+<p><strong>Whitelisted operators</strong> (from <code>expressions.py:33-47</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">Z3_OPERATORS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;And&quot;</span><span class="p">,</span> <span class="s2">&quot;Or&quot;</span><span class="p">,</span> <span class="s2">&quot;Not&quot;</span><span class="p">,</span> <span class="s2">&quot;Implies&quot;</span><span class="p">,</span> <span class="s2">&quot;If&quot;</span><span class="p">,</span> <span class="s2">&quot;Distinct&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Sum&quot;</span><span class="p">,</span> <span class="s2">&quot;Product&quot;</span><span class="p">,</span> <span class="s2">&quot;ForAll&quot;</span><span class="p">,</span> <span class="s2">&quot;Exists&quot;</span><span class="p">,</span> <span class="s2">&quot;Function&quot;</span><span class="p">,</span> <span class="s2">&quot;Array&quot;</span><span class="p">,</span> <span class="s2">&quot;BitVecVal&quot;</span>
@@ -298,27 +323,30 @@
 </code></pre></div>
 
 <h2 id="sort-dependency-resolution">Sort Dependency Resolution<a class="headerlink" href="#sort-dependency-resolution" title="Permanent link">&para;</a></h2>
+<p>Complex types may depend on other types, requiring careful ordering during creation.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/dsl/sorts.py:36-97</code></p>
-<p>Uses <strong>Kahn's algorithm</strong> for topological sorting.</p>
+<p>The system uses <strong>Kahn's algorithm</strong> for topological sorting of type definitions.</p>
 <h3 id="dependency-extraction">Dependency Extraction<a class="headerlink" href="#dependency-extraction" title="Permanent link">&para;</a></h3>
-<p>ArraySort creates dependencies (lines 59-62):</p>
+<p>ArraySort declarations create dependencies that must be resolved (lines 59-62):</p>
 <div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">sort_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ArraySort(&quot;</span><span class="p">):</span>
     <span class="n">domain_range</span> <span class="o">=</span> <span class="n">sort_type</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;ArraySort(&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">domain_range</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
     <span class="n">deps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 </code></pre></div>
 
-<p>Example:</p>
+<p>For example:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;MyArray&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ArraySort(IntSort, Person)&quot;</span><span class="p">}</span>
 </code></pre></div>
 
-<p>Depends on: <code>IntSort</code> (built-in, skip), <code>Person</code> (must be defined first).</p>
+<p>This depends on: <code>IntSort</code> (built-in, can skip) and <code>Person</code> (must be defined first).</p>
 <h3 id="topological-sort">Topological Sort<a class="headerlink" href="#topological-sort" title="Permanent link">&para;</a></h3>
-<p>Kahn's algorithm (lines 66-87):
-1. Calculate in-degree (dependency count) for each sort
-2. Process sorts with zero dependencies first
-3. Reduce in-degree of dependents
-4. Detect cycles if not all sorts processed (lines 90-92)</p>
+<p>Kahn's algorithm processes types in dependency order (lines 66-87):</p>
+<ol>
+<li>Calculate the in-degree (dependency count) for each sort</li>
+<li>Process sorts with zero dependencies first</li>
+<li>Reduce the in-degree of dependent sorts as their dependencies are satisfied</li>
+<li>Detect cycles if not all sorts can be processed (lines 90-92)</li>
+</ol>
 <p><strong>Circular dependency detection:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_names</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dependencies</span><span class="p">):</span>
     <span class="n">remaining</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dependencies</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">sorted_names</span><span class="p">)</span>
@@ -326,25 +354,27 @@
 </code></pre></div>
 
 <h2 id="optimizer-independence">Optimizer Independence<a class="headerlink" href="#optimizer-independence" title="Permanent link">&para;</a></h2>
+<p>The optimizer operates independently from the main solver.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/optimization/optimizer.py:29-39</code></p>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimize</span><span class="p">()</span>  <span class="c1"># Separate instance</span>
 </code></pre></div>
 
-<p><strong>Critical:</strong> <code>Optimize()</code> is <strong>separate from <code>Solver()</code></strong>. Does NOT share constraints.</p>
-<p>From docstring (line 38-39):</p>
+<p><strong>Critical detail:</strong> The <code>Optimize()</code> instance is completely separate from the main <code>Solver()</code> and does NOT share constraints.</p>
+<p>As stated in the docstring (line 38-39):</p>
 <blockquote>
 <p>The optimizer is separate from the solver and doesn't share constraints.
 This is intentional to allow independent optimization problems.</p>
 </blockquote>
-<p>Optimizer has its own variables and constraints (lines 49-69). Can reference global constants via extended context (line 60-61):</p>
+<p>The optimizer maintains its own variables and constraints (lines 49-69). However, it can reference global constants through an extended context (line 60-61):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">base_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">build_context</span><span class="p">()</span>
 <span class="n">opt_context</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">base_context</span><span class="p">,</span> <span class="o">**</span><span class="n">optimization_vars</span><span class="p">}</span>
 </code></pre></div>
 
 <h2 id="execution-pipeline">Execution Pipeline<a class="headerlink" href="#execution-pipeline" title="Permanent link">&para;</a></h2>
+<p>The interpreter follows a carefully ordered execution sequence.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/interpreter.py:135-197</code></p>
-<p>8-step execution sequence:</p>
+<p><strong>8-step execution sequence:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Step 1: Create sorts</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_sorts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;sorts&quot;</span><span class="p">])</span>
 
@@ -375,10 +405,11 @@ This is intentional to allow independent optimization problems.</p>
 <span class="bp">self</span><span class="o">.</span><span class="n">perform_actions</span><span class="p">()</span>
 </code></pre></div>
 
-<p><strong>Symbol loading:</strong> Line 172 calls <code>mark_symbols_loaded()</code> to enable context caching (lines 78-84 in <code>expressions.py</code>). After this, <code>build_context()</code> returns cached dict instead of rebuilding.</p>
+<p><strong>Symbol loading optimization:</strong> At line 172, calling <code>mark_symbols_loaded()</code> enables context caching (see lines 78-84 in <code>expressions.py</code>). After this point, <code>build_context()</code> returns a cached dictionary instead of rebuilding it on each call.</p>
 <h2 id="retry-mechanism">Retry Mechanism<a class="headerlink" href="#retry-mechanism" title="Permanent link">&para;</a></h2>
+<p>The system can automatically retry failed program generation with error feedback.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/reasoning/proof_of_thought.py:123-191</code></p>
-<p>Retry loop with error feedback:</p>
+<p><strong>Retry loop with error feedback:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_attempts</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">gen_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
@@ -388,7 +419,7 @@ This is intentional to allow independent optimization problems.</p>
         <span class="p">)</span>
 </code></pre></div>
 
-<p><strong>Failure modes triggering retry:</strong></p>
+<p><strong>Failure modes that trigger retry:</strong></p>
 <ol>
 <li>
 <p><strong>Generation failure</strong> (lines 143-149):
@@ -412,7 +443,7 @@ This is intentional to allow independent optimization problems.</p>
        continue</code></p>
 </li>
 </ol>
-<p><strong>Error feedback:</strong> Multi-turn conversation (<code>program_generator.py:130-174</code>):</p>
+<p><strong>Error feedback mechanism:</strong> Uses multi-turn conversation (see <code>program_generator.py:130-174</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">messages</span><span class="o">=</span><span class="p">[</span>
     <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">previous_response</span><span class="p">},</span>
@@ -421,6 +452,7 @@ This is intentional to allow independent optimization problems.</p>
 </code></pre></div>
 
 <h2 id="solver-semantics">Solver Semantics<a class="headerlink" href="#solver-semantics" title="Permanent link">&para;</a></h2>
+<p>The solver's <code>check</code> method has two distinct modes of operation.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/solvers/z3_solver.py:20-24</code></p>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -428,52 +460,61 @@ This is intentional to allow independent optimization problems.</p>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>               <span class="c1"># Check all assertions</span>
 </code></pre></div>
 
-<p><strong>Two modes:</strong></p>
+<p><strong>Two modes of operation:</strong></p>
 <ol>
-<li><strong><code>solver.check()</code></strong>: Checks satisfiability of all <code>solver.add()</code> assertions</li>
-<li><strong><code>solver.check(φ)</code></strong>: Checks satisfiability of <code>assertions ∧ φ</code> <strong>without adding φ</strong></li>
+<li><strong><code>solver.check()</code></strong>: Checks the satisfiability of all assertions added via <code>solver.add()</code></li>
+<li><strong><code>solver.check(φ)</code></strong>: Checks the satisfiability of <code>assertions ∧ φ</code> <strong>without permanently adding φ</strong></li>
 </ol>
-<p>Verifications use mode 2 (<code>verifier.py:113</code>):</p>
+<p>Verifications use mode 2 (see <code>verifier.py:113</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
 </code></pre></div>
 
-<p>This is <strong>temporary</strong> — <code>condition</code> is NOT added to solver permanently.</p>
-<p><strong>Contrast with rules:</strong>
-- Rules: <code>solver.add(φ)</code> → permanent
-- Verifications: <code>solver.check(φ)</code> → temporary test</p>
+<p>This is a <strong>temporary</strong> check — the <code>condition</code> is NOT permanently added to the solver.</p>
+<p><strong>Contrast with rules:</strong></p>
+<ul>
+<li><strong>Rules</strong>: <code>solver.add(φ)</code> → permanently modifies solver state</li>
+<li><strong>Verifications</strong>: <code>solver.check(φ)</code> → temporary test without modification</li>
+</ul>
 <h2 id="built-in-sorts">Built-in Sorts<a class="headerlink" href="#built-in-sorts" title="Permanent link">&para;</a></h2>
+<p>The DSL includes three pre-initialized built-in sorts.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/dsl/sorts.py:31-34</code></p>
-<p>Three built-in sorts pre-initialized:</p>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_initialize_builtin_sorts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">built_in_sorts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;BoolSort&quot;</span><span class="p">:</span> <span class="n">BoolSort</span><span class="p">(),</span> <span class="s2">&quot;IntSort&quot;</span><span class="p">:</span> <span class="n">IntSort</span><span class="p">(),</span> <span class="s2">&quot;RealSort&quot;</span><span class="p">:</span> <span class="n">RealSort</span><span class="p">()}</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">sorts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">built_in_sorts</span><span class="p">)</span>
 </code></pre></div>
 
-<p><strong>Important:</strong> Reference as <code>"BoolSort"</code>, <code>"IntSort"</code>, <code>"RealSort"</code> in JSON (not <code>"Bool"</code>, <code>"Int"</code>, <code>"Real"</code>).</p>
-<p>Do NOT declare in <code>"sorts"</code> section — already available.</p>
+<p><strong>Important:</strong> Always reference these as <code>"BoolSort"</code>, <code>"IntSort"</code>, and <code>"RealSort"</code> in JSON (not <code>"Bool"</code>, <code>"Int"</code>, or <code>"Real"</code>).</p>
+<p>These sorts are already available and should NOT be declared in the <code>"sorts"</code> section.</p>
 <h2 id="prompt-template-constraints">Prompt Template Constraints<a class="headerlink" href="#prompt-template-constraints" title="Permanent link">&para;</a></h2>
+<p>The prompt template enforces several important constraints on DSL programs.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/reasoning/prompt_template.py</code></p>
-<p>Key constraints enforced by prompt (extracted from code):</p>
-<p><strong>Line 228:</strong> Rules with <code>"implies"</code> MUST have non-empty <code>"forall"</code> field</p>
+<p><strong>Key constraints</strong> (extracted from code):</p>
+<h3 id="line-228-implication-rules">Line 228: Implication Rules<a class="headerlink" href="#line-228-implication-rules" title="Permanent link">&para;</a></h3>
+<p>Rules with <code>"implies"</code> MUST have non-empty <code>"forall"</code> field:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># expressions.py:184-186</span>
 <span class="k">if</span> <span class="s2">&quot;implies&quot;</span> <span class="ow">in</span> <span class="n">rule</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">variables</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Implication rules require quantified variables&quot;</span><span class="p">)</span>
 </code></pre></div>
 
-<p><strong>Line 298:</strong> Empty quantifier lists forbidden</p>
+<h3 id="line-298-quantifier-lists">Line 298: Quantifier Lists<a class="headerlink" href="#line-298-quantifier-lists" title="Permanent link">&para;</a></h3>
+<p>Empty quantifier lists are forbidden:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># verifier.py:42-43, 55-56</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">exists_vars</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Empty &#39;exists&#39; list in verification&quot;</span><span class="p">)</span>
 </code></pre></div>
 
-<p><strong>Line 416:</strong> Single verification per program (avoid ambiguous results)</p>
+<h3 id="line-416-single-verification">Line 416: Single Verification<a class="headerlink" href="#line-416-single-verification" title="Permanent link">&para;</a></h3>
+<p>Use a single verification per program to avoid ambiguous results:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Directly impacts determine_answer() — mixed SAT/UNSAT returns None</span>
 </code></pre></div>
 
-<p><strong>Line 531:</strong> Output format requirement
-- Must wrap JSON in markdown code block: <code>```json ... ```</code>
-- Regex extraction: <code>r"```json\s*(\{[\s\S]*?\})\s*```"</code> (<code>program_generator.py:224</code>)</p>
+<h3 id="line-531-output-format">Line 531: Output Format<a class="headerlink" href="#line-531-output-format" title="Permanent link">&para;</a></h3>
+<p>LLM output requirements:</p>
+<ul>
+<li>Must wrap JSON in a markdown code block: <code>```json ... ```</code></li>
+<li>Extracted via regex: <code>r"```json\s*(\{[\s\S]*?\})\s*```"</code> (see <code>program_generator.py:224</code>)</li>
+</ul>
               
             </div>
           </div><footer>

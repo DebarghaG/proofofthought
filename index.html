@@ -63,6 +63,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="installation/">Installation</a>
                 </li>
               </ul>
@@ -111,8 +115,9 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="proofofthought">ProofOfThought<a class="headerlink" href="#proofofthought" title="Permanent link">&para;</a></h1>
-<p>LLM-guided translation of natural language to formal logic, verified via Z3 theorem prover.</p>
+<p>ProofOfThought provides LLM-guided translation of natural language questions into formal logic, which is then verified using the Z3 theorem prover.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<p>The system follows a multi-stage pipeline to transform questions into verifiable answers:</p>
 <div class="codehilite"><pre><span></span><code>Question (NL)
     ↓
 LLM Translation (few-shot prompting)
@@ -125,24 +130,25 @@ SAT/UNSAT → Boolean Answer
 </code></pre></div>
 
 <h3 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h3>
+<p>The architecture consists of several key components that work together:</p>
 <p><strong>Z3ProgramGenerator</strong> (<code>z3adapter.reasoning.program_generator</code>)
-LLM interface for program generation. Extracts formal programs from markdown code blocks using regex. Supports error feedback via multi-turn conversations.</p>
+Provides the LLM interface for program generation. It extracts formal programs from markdown code blocks using regex and supports error feedback through multi-turn conversations.</p>
 <p><strong>Backend</strong> (<code>z3adapter.backends.abstract</code>)
-Abstract interface: <code>execute(program_path) → VerificationResult</code>. Concrete implementations:</p>
+Defines an abstract interface with <code>execute(program_path) → VerificationResult</code>. Two concrete implementations are available:</p>
 <ul>
 <li><strong>SMT2Backend</strong>: Subprocess call to Z3 CLI. Parses stdout/stderr for <code>sat</code>/<code>unsat</code> via regex <code>(?&lt;!un)\bsat\b</code> and <code>\bunsat\b</code>.</li>
 <li><strong>JSONBackend</strong>: Python API execution via <code>Z3JSONInterpreter</code>. Returns structured SAT/UNSAT counts.</li>
 </ul>
 <p><strong>Z3JSONInterpreter</strong> (<code>z3adapter.interpreter</code>)
-Multi-stage pipeline for JSON DSL:</p>
+Implements a multi-stage pipeline for processing the JSON DSL:</p>
 <ol>
-<li>SortManager: Topological sort of type dependencies, create Z3 sorts</li>
-<li>ExpressionParser: <code>eval()</code> with restricted globals for safety</li>
-<li>Verifier: <code>solver.check(condition)</code> for each verification</li>
-<li>Return SAT/UNSAT counts</li>
+<li><strong>SortManager</strong>: Performs topological sorting of type dependencies and creates Z3 sorts</li>
+<li><strong>ExpressionParser</strong>: Evaluates expressions using <code>eval()</code> with restricted globals for security</li>
+<li><strong>Verifier</strong>: Runs <code>solver.check(condition)</code> for each verification</li>
+<li>Finally returns SAT/UNSAT counts</li>
 </ol>
 <p><strong>ProofOfThought</strong> (<code>z3adapter.reasoning.proof_of_thought</code>)
-High-level API. Retry loop (default <code>max_attempts=3</code>) with error feedback. Answer determination: <code>SAT only → True</code>, <code>UNSAT only → False</code>, <code>both/neither → None</code>.</p>
+Provides the high-level API with a retry loop (default <code>max_attempts=3</code>) and error feedback. Answer determination follows: <code>SAT only → True</code>, <code>UNSAT only → False</code>, <code>both/neither → None</code>.</p>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
@@ -154,9 +160,12 @@ High-level API. Retry loop (default <code>max_attempts=3</code>) with error feed
 </code></pre></div>
 
 <h2 id="benchmark-results">Benchmark Results<a class="headerlink" href="#benchmark-results" title="Permanent link">&para;</a></h2>
-<p>Datasets: ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA
-Model: GPT-5 (Azure deployment)
-Config: <code>max_attempts=3</code>, <code>verify_timeout=10000ms</code></p>
+<p>ProofOfThought has been evaluated on multiple reasoning datasets using the following configuration:</p>
+<ul>
+<li><strong>Datasets</strong>: ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA</li>
+<li><strong>Model</strong>: GPT-5 (Azure deployment)</li>
+<li><strong>Config</strong>: <code>max_attempts=3</code>, <code>verify_timeout=10000ms</code></li>
+</ul>
 <table>
 <thead>
 <tr>
@@ -178,33 +187,44 @@ Config: <code>max_attempts=3</code>, <code>verify_timeout=10000ms</code></p>
 </tr>
 </tbody>
 </table>
-<p>SMT2 outperforms JSON on 4/5 datasets. Full results: <a href="benchmarks/">Benchmarks</a></p>
+<p>The SMT2 backend outperforms JSON on 4 out of 5 datasets. For detailed results, see <a href="benchmarks/">Benchmarks</a>.</p>
 <h2 id="design-rationale">Design Rationale<a class="headerlink" href="#design-rationale" title="Permanent link">&para;</a></h2>
-<p><strong>Why external theorem prover?</strong>
-LLMs lack deductive closure. Z3 provides sound logical inference.</p>
-<p><strong>Why two backends?</strong>
-Trade portability (SMT-LIB standard) vs LLM generation reliability (structured JSON).</p>
-<p><strong>Why iterative refinement?</strong>
-Single-shot generation insufficient. Error feedback improves success rate.</p>
+<p>Several key design decisions shape the architecture:</p>
+<ul>
+<li>
+<p><strong>Why use an external theorem prover?</strong> LLMs lack deductive closure, meaning they cannot guarantee sound logical inference. Z3 provides this soundness by formally verifying the logical reasoning.</p>
+</li>
+<li>
+<p><strong>Why offer two backends?</strong> The choice trades off portability (SMT-LIB is a widely-supported standard) against LLM generation reliability (structured JSON is easier for models to produce correctly).</p>
+</li>
+<li>
+<p><strong>Why use iterative refinement?</strong> Single-shot generation is often insufficient for complex reasoning. By incorporating error feedback, the system significantly improves its success rate.</p>
+</li>
+</ul>
 <h2 id="implementation-notes">Implementation Notes<a class="headerlink" href="#implementation-notes" title="Permanent link">&para;</a></h2>
-<p><strong>SMT2 Backend</strong>
-- Z3 subprocess with <code>-T:timeout</code> flag
-- Output parsing: regex on stdout/stderr
-- Standard SMT-LIB 2.0 S-expressions</p>
-<p><strong>JSON Backend</strong>
-- Python Z3 API via <code>z3-solver</code> package
-- Expression evaluation: restricted <code>eval()</code> with <code>ExpressionValidator</code>
-- Supports built-in sorts: <code>BoolSort</code>, <code>IntSort</code>, <code>RealSort</code>
-- Custom sorts: <code>DeclareSort</code>, <code>EnumSort</code>, <code>BitVecSort</code>, <code>ArraySort</code>
-- Quantifiers: <code>ForAll</code>, <code>Exists</code> with variable binding</p>
-<p><strong>Security</strong>
-JSON backend uses <code>ExpressionValidator.safe_eval()</code> with whitelisted Z3 operators. No arbitrary code execution.</p>
-<p>See: <a href="backends/">Backends</a>, <a href="api-reference/">API Reference</a></p>
+<p>Each backend has distinct implementation characteristics:</p>
+<p><strong>SMT2 Backend:</strong></p>
+<ul>
+<li>Runs Z3 as a subprocess with the <code>-T:timeout</code> flag</li>
+<li>Parses output using regex patterns on stdout/stderr</li>
+<li>Uses standard SMT-LIB 2.0 S-expressions</li>
+</ul>
+<p><strong>JSON Backend:</strong></p>
+<ul>
+<li>Leverages the Python Z3 API through the <code>z3-solver</code> package</li>
+<li>Evaluates expressions using restricted <code>eval()</code> with <code>ExpressionValidator</code></li>
+<li>Supports built-in sorts: <code>BoolSort</code>, <code>IntSort</code>, <code>RealSort</code></li>
+<li>Supports custom sorts: <code>DeclareSort</code>, <code>EnumSort</code>, <code>BitVecSort</code>, <code>ArraySort</code></li>
+<li>Handles quantifiers: <code>ForAll</code> and <code>Exists</code> with proper variable binding</li>
+</ul>
+<p><strong>Security:</strong></p>
+<p>The JSON backend employs <code>ExpressionValidator.safe_eval()</code> with a whitelist of allowed Z3 operators, preventing arbitrary code execution.</p>
+<p>For more details, see <a href="backends/">Backends</a> and <a href="api-reference/">API Reference</a>.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="installation/" class="btn btn-neutral float-right" title="Installation">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="foreword/" class="btn btn-neutral float-right" title="Foreword">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -233,7 +253,7 @@ JSON backend uses <code>ExpressionValidator.safe_eval()</code> with whitelisted 
     
     
     
-      <span><a href="installation/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="foreword/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
@@ -253,5 +273,5 @@ JSON backend uses <code>ExpressionValidator.safe_eval()</code> with whitelisted 
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-10-17 01:20:41.027259+00:00
+Build Date UTC : 2025-10-17 01:50:24.265944+00:00
 -->

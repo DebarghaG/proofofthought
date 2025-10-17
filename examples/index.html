@@ -47,6 +47,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
                 </li>
               </ul>
@@ -117,12 +121,14 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h1>
-<p>All examples in <code>examples/</code>. Run from project root:</p>
+<p>This page demonstrates common usage patterns through example scripts.</p>
+<p>All examples are located in the <code>examples/</code> directory and should be run from the project root:</p>
 <div class="codehilite"><pre><span></span><code>python<span class="w"> </span>examples/<span class="o">{</span>script<span class="o">}</span>.py
 </code></pre></div>
 
 <h2 id="basic-query">Basic Query<a class="headerlink" href="#basic-query" title="Permanent link">&para;</a></h2>
-<p><code>examples/simple_usage.py</code></p>
+<p>The simplest way to use ProofOfThought is through a single query.</p>
+<p><strong>File:</strong> <code>examples/simple_usage.py</code></p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
 
@@ -134,7 +140,8 @@
 </code></pre></div>
 
 <h2 id="azure-openai">Azure OpenAI<a class="headerlink" href="#azure-openai" title="Permanent link">&para;</a></h2>
-<p><code>examples/azure_simple_example.py</code></p>
+<p>For Azure OpenAI deployments, use the provided configuration utility.</p>
+<p><strong>File:</strong> <code>examples/azure_simple_example.py</code></p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.azure_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_client_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
 
@@ -146,7 +153,8 @@
 </code></pre></div>
 
 <h2 id="backend-comparison">Backend Comparison<a class="headerlink" href="#backend-comparison" title="Permanent link">&para;</a></h2>
-<p><code>examples/backend_comparison.py</code></p>
+<p>You can compare how the two backends perform on the same question.</p>
+<p><strong>File:</strong> <code>examples/backend_comparison.py</code></p>
 <div class="codehilite"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
 <span class="n">question</span> <span class="o">=</span> <span class="s2">&quot;Can fish breathe underwater?&quot;</span>
 
@@ -161,7 +169,8 @@
 </code></pre></div>
 
 <h2 id="batch-evaluation">Batch Evaluation<a class="headerlink" href="#batch-evaluation" title="Permanent link">&para;</a></h2>
-<p><code>examples/batch_evaluation.py</code></p>
+<p>For evaluating multiple questions from a dataset, use the evaluation pipeline.</p>
+<p><strong>File:</strong> <code>examples/batch_evaluation.py</code></p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationPipeline</span><span class="p">,</span> <span class="n">ProofOfThought</span>
 
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
@@ -179,7 +188,8 @@
 </code></pre></div>
 
 <h2 id="azure-smt2-evaluation">Azure + SMT2 Evaluation<a class="headerlink" href="#azure-smt2-evaluation" title="Permanent link">&para;</a></h2>
-<p><code>examples/batch_evaluation_smt2_azure.py</code></p>
+<p>This example combines Azure OpenAI with the SMT2 backend for batch evaluation.</p>
+<p><strong>File:</strong> <code>examples/batch_evaluation_smt2_azure.py</code></p>
 <div class="codehilite"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
 
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
@@ -193,17 +203,20 @@
 </code></pre></div>
 
 <h2 id="full-benchmark-suite">Full Benchmark Suite<a class="headerlink" href="#full-benchmark-suite" title="Permanent link">&para;</a></h2>
-<p><code>experiments_pipeline.py</code></p>
-<p>Runs all 5 benchmarks (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA) with both backends:</p>
+<p>For comprehensive benchmarking, the experiments pipeline runs all datasets with both backends.</p>
+<p><strong>File:</strong> <code>experiments_pipeline.py</code></p>
+<p>This script runs all 5 benchmarks (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA) with both backends:</p>
 <div class="codehilite"><pre><span></span><code>python<span class="w"> </span>experiments_pipeline.py
 </code></pre></div>
 
-<p>Implementation:
-- Modifies <code>benchmark/bench_*.py</code> files to set backend via regex
-- Runs each script as subprocess with 1-hour timeout
-- Collects metrics from <code>output/{backend}_evaluation_{benchmark}/</code> directories
-- Generates markdown table and updates README.md</p>
-<p>Configuration (<code>experiments_pipeline.py:29-41</code>):</p>
+<p><strong>Implementation details:</strong></p>
+<ul>
+<li>Modifies <code>benchmark/bench_*.py</code> files to set the backend via regex substitution</li>
+<li>Runs each benchmark script as a subprocess with a 1-hour timeout</li>
+<li>Collects metrics from <code>output/{backend}_evaluation_{benchmark}/</code> directories</li>
+<li>Generates a markdown table and updates README.md with results</li>
+</ul>
+<p><strong>Configuration</strong> (<code>experiments_pipeline.py:29-41</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">BENCHMARKS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;prontoqa&quot;</span><span class="p">:</span> <span class="s2">&quot;benchmark/bench_prontoqa.py&quot;</span><span class="p">,</span>
     <span class="s2">&quot;folio&quot;</span><span class="p">:</span> <span class="s2">&quot;benchmark/bench_folio.py&quot;</span><span class="p">,</span>
@@ -215,7 +228,8 @@
 </code></pre></div>
 
 <h2 id="benchmark-script-structure">Benchmark Script Structure<a class="headerlink" href="#benchmark-script-structure" title="Permanent link">&para;</a></h2>
-<p><code>benchmark/bench_strategyqa.py</code> (representative):</p>
+<p>Individual benchmark scripts follow a common pattern, illustrated here with StrategyQA.</p>
+<p><strong>File:</strong> <code>benchmark/bench_strategyqa.py</code></p>
 <div class="codehilite"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
 
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
@@ -241,7 +255,7 @@
 </code></pre></div>
 
 <h2 id="dataset-format">Dataset Format<a class="headerlink" href="#dataset-format" title="Permanent link">&para;</a></h2>
-<p>JSON array of objects:</p>
+<p>Datasets should be formatted as JSON arrays of objects:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">[</span>
 <span class="w">  </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;question&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Can fish breathe underwater?&quot;</span><span class="p">,</span>
@@ -254,12 +268,13 @@
 <span class="p">]</span>
 </code></pre></div>
 
-<p>Optional ID field:</p>
+<p>You can optionally include an ID field:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;qid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sample_123&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;question&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;answer&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">}</span>
 </code></pre></div>
 
-<p>Custom field names via <code>question_field</code>, <code>answer_field</code>, <code>id_field</code> parameters.</p>
+<p>Use the <code>question_field</code>, <code>answer_field</code>, and <code>id_field</code> parameters to specify custom field names.</p>
 <h2 id="saving-programs">Saving Programs<a class="headerlink" href="#saving-programs" title="Permanent link">&para;</a></h2>
+<p>To save generated programs to disk for inspection:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
     <span class="s2">&quot;Can fish breathe underwater?&quot;</span><span class="p">,</span>
     <span class="n">save_program</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -267,8 +282,9 @@
 <span class="p">)</span>
 </code></pre></div>
 
-<p>Default path: <code>{cache_dir}/{auto_generated}{ext}</code></p>
+<p>If you don't specify a path, the default is: <code>{cache_dir}/{auto_generated}{ext}</code></p>
 <h2 id="advanced-configuration">Advanced Configuration<a class="headerlink" href="#advanced-configuration" title="Permanent link">&para;</a></h2>
+<p>For more control over the reasoning process, you can customize various parameters:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
     <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-5&quot;</span><span class="p">,</span>

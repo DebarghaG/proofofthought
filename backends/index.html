@@ -47,6 +47,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
                 </li>
               </ul>
@@ -137,30 +141,35 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="backends">Backends<a class="headerlink" href="#backends" title="Permanent link">&para;</a></h1>
-<p>Two execution backends for Z3: SMT-LIB 2.0 (standard) and JSON DSL (custom).</p>
+<p>ProofOfThought supports two execution backends for Z3: the standard SMT-LIB 2.0 format and a custom JSON DSL.</p>
 <h2 id="smt2backend">SMT2Backend<a class="headerlink" href="#smt2backend" title="Permanent link">&para;</a></h2>
+<p>The SMT2 backend leverages Z3's standard command-line interface.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/backends/smt2_backend.py</code></p>
 <h3 id="execution">Execution<a class="headerlink" href="#execution" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">z3_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;-T:</span><span class="si">{</span><span class="n">timeout_seconds</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">program_path</span><span class="p">])</span>
 </code></pre></div>
 
+<p>The execution process involves:</p>
 <ul>
-<li>Z3 CLI subprocess with timeout flag</li>
-<li>Hard timeout: <code>timeout_seconds + 10</code></li>
-<li>Output captured from stdout + stderr</li>
+<li>Running Z3 as a CLI subprocess with a timeout flag</li>
+<li>Applying a hard timeout of <code>timeout_seconds + 10</code> to prevent hanging</li>
+<li>Capturing output from both stdout and stderr</li>
 </ul>
 <h3 id="result-parsing">Result Parsing<a class="headerlink" href="#result-parsing" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="n">sat_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;(?&lt;!un)\bsat\b&quot;</span>      <span class="c1"># Negative lookbehind to exclude &quot;unsat&quot;</span>
 <span class="n">unsat_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;\bunsat\b&quot;</span>
 </code></pre></div>
 
-<p>Counts occurrences in Z3 output. Answer logic:
-- <code>sat_count &gt; 0, unsat_count == 0</code> → <code>True</code>
-- <code>unsat_count &gt; 0, sat_count == 0</code> → <code>False</code>
-- Otherwise → <code>None</code></p>
+<p>The parser counts occurrences in Z3 output and applies the following answer logic:</p>
+<ul>
+<li><code>sat_count &gt; 0, unsat_count == 0</code> → <code>True</code></li>
+<li><code>unsat_count &gt; 0, sat_count == 0</code> → <code>False</code></li>
+<li>Otherwise → <code>None</code></li>
+</ul>
 <h3 id="prompt-template">Prompt Template<a class="headerlink" href="#prompt-template" title="Permanent link">&para;</a></h3>
-<p>Source: <code>z3adapter/reasoning/smt2_prompt_template.py</code></p>
-<p>Instructions for generating SMT-LIB 2.0 programs. Key requirements:
+<p>The prompt template guides LLM program generation.</p>
+<p><strong>Source:</strong> <code>z3adapter/reasoning/smt2_prompt_template.py</code></p>
+<p>The template provides instructions for generating SMT-LIB 2.0 programs with these key requirements:
 - All commands as S-expressions: <code>(command args...)</code>
 - Declare sorts before use
 - Single <code>(check-sat)</code> per program
@@ -168,6 +177,7 @@
 <h3 id="file-extension">File Extension<a class="headerlink" href="#file-extension" title="Permanent link">&para;</a></h3>
 <p><code>.smt2</code></p>
 <h2 id="json-backend">JSON Backend<a class="headerlink" href="#json-backend" title="Permanent link">&para;</a></h2>
+<p>The JSON backend uses Z3's Python API for direct programmatic access.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/backends/json_backend.py</code></p>
 <h3 id="execution-pipeline">Execution Pipeline<a class="headerlink" href="#execution-pipeline" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="n">interpreter</span> <span class="o">=</span> <span class="n">Z3JSONInterpreter</span><span class="p">(</span><span class="n">program_path</span><span class="p">,</span> <span class="n">verify_timeout</span><span class="p">,</span> <span class="n">optimize_timeout</span><span class="p">)</span>
@@ -176,25 +186,26 @@
 </code></pre></div>
 
 <h3 id="z3jsoninterpreter-pipeline">Z3JSONInterpreter Pipeline<a class="headerlink" href="#z3jsoninterpreter-pipeline" title="Permanent link">&para;</a></h3>
+<p>The interpreter processes JSON programs through three main stages:</p>
 <p><strong>Step 1: SortManager</strong> (<code>z3adapter/dsl/sorts.py</code>)</p>
-<p>Topologically sorts type definitions to handle dependencies. Creates Z3 sorts:</p>
+<p>First, the system topologically sorts type definitions to handle dependencies, then creates Z3 sorts:</p>
 <ul>
 <li>Built-in: <code>BoolSort()</code>, <code>IntSort()</code>, <code>RealSort()</code> (pre-defined)</li>
 <li>Custom: <code>DeclareSort(name)</code>, <code>EnumSort(name, values)</code>, <code>BitVecSort(n)</code>, <code>ArraySort(domain, range)</code></li>
 </ul>
-<p>Example ArraySort dependency:</p>
+<p>For example, an ArraySort creates dependencies:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IntArray&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ArraySort(IntSort, IntSort)&quot;</span><span class="p">}</span>
 </code></pre></div>
 
-<p>Requires <code>IntSort</code> already defined (built-in) before creating <code>IntArray</code>.</p>
+<p>This requires <code>IntSort</code> to be defined first (fortunately, it's built-in) before creating <code>IntArray</code>.</p>
 <p><strong>Step 2: ExpressionParser</strong> (<code>z3adapter/dsl/expressions.py</code>)</p>
-<p>Parses logical expressions from strings via restricted <code>eval()</code>:</p>
+<p>Next, the parser evaluates logical expressions from strings using a restricted <code>eval()</code>:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">safe_globals</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">Z3_OPERATORS</span><span class="p">,</span> <span class="o">**</span><span class="n">functions</span><span class="p">}</span>
 <span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">functions</span><span class="p">,</span> <span class="o">**</span><span class="n">constants</span><span class="p">,</span> <span class="o">**</span><span class="n">variables</span><span class="p">,</span> <span class="o">**</span><span class="n">quantified_vars</span><span class="p">}</span>
 <span class="n">ExpressionValidator</span><span class="o">.</span><span class="n">safe_eval</span><span class="p">(</span><span class="n">expr_str</span><span class="p">,</span> <span class="n">safe_globals</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
 </code></pre></div>
 
-<p>Whitelisted operators:</p>
+<p>Only whitelisted operators are permitted:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">Z3_OPERATORS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;And&quot;</span><span class="p">,</span> <span class="s2">&quot;Or&quot;</span><span class="p">,</span> <span class="s2">&quot;Not&quot;</span><span class="p">,</span> <span class="s2">&quot;Implies&quot;</span><span class="p">,</span> <span class="s2">&quot;If&quot;</span><span class="p">,</span> <span class="s2">&quot;Distinct&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Sum&quot;</span><span class="p">,</span> <span class="s2">&quot;Product&quot;</span><span class="p">,</span> <span class="s2">&quot;ForAll&quot;</span><span class="p">,</span> <span class="s2">&quot;Exists&quot;</span><span class="p">,</span> <span class="s2">&quot;Function&quot;</span><span class="p">,</span> <span class="s2">&quot;Array&quot;</span><span class="p">,</span> <span class="s2">&quot;BitVecVal&quot;</span>
@@ -202,7 +213,7 @@
 </code></pre></div>
 
 <p><strong>Step 3: Verifier</strong> (<code>z3adapter/verification/verifier.py</code>)</p>
-<p>For each verification condition:</p>
+<p>Finally, the verifier tests each verification condition:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>  <span class="c1"># Adds condition as hypothesis to KB</span>
 <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">sat</span><span class="p">:</span>
     <span class="n">sat_count</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -211,12 +222,15 @@
 </code></pre></div>
 
 <p><strong>Verification Semantics:</strong>
-- <code>solver.check(φ)</code> asks: "Is KB ∧ φ satisfiable?"
-- SAT: φ is consistent with KB (possible)
-- UNSAT: φ contradicts KB (impossible)</p>
+When calling <code>solver.check(φ)</code>, the system asks: "Is KB ∧ φ satisfiable?"</p>
+<ul>
+<li><strong>SAT</strong>: φ is consistent with the knowledge base (possible scenario)</li>
+<li><strong>UNSAT</strong>: φ contradicts the knowledge base (impossible scenario)</li>
+</ul>
 <h3 id="prompt-template_1">Prompt Template<a class="headerlink" href="#prompt-template_1" title="Permanent link">&para;</a></h3>
-<p>Source: <code>z3adapter/reasoning/prompt_template.py</code></p>
-<p>Comprehensive 546-line specification of JSON DSL. Key sections:</p>
+<p>The JSON prompt template is more comprehensive than its SMT2 counterpart.</p>
+<p><strong>Source:</strong> <code>z3adapter/reasoning/prompt_template.py</code></p>
+<p>This 546-line specification of the JSON DSL includes these key sections:</p>
 <p><strong>Sorts:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DeclareSort&quot;</span><span class="p">}</span>
 </code></pre></div>
@@ -239,31 +253,32 @@ Free variables for quantifier binding:</p>
 </code></pre></div>
 
 <p><strong>Verifications:</strong>
-Three types:</p>
+The DSL supports three types of verifications:</p>
 <ol>
-<li>Simple constraint:</li>
+<li><strong>Simple constraint:</strong></li>
 </ol>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(nancy)&quot;</span><span class="p">}</span>
 </code></pre></div>
 
 <ol>
-<li>Existential:</li>
+<li><strong>Existential:</strong></li>
 </ol>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;exists&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Int&quot;</span><span class="p">}],</span><span class="w"> </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x &gt; 0&quot;</span><span class="p">}</span>
 </code></pre></div>
 
 <ol>
-<li>Universal:</li>
+<li><strong>Universal:</strong></li>
 </ol>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;forall&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Int&quot;</span><span class="p">}],</span>
 <span class="w"> </span><span class="nt">&quot;implies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;antecedent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x &gt; 0&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;consequent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x &gt;= 1&quot;</span><span class="p">}}</span>
 </code></pre></div>
 
-<p><strong>Critical constraint:</strong> Single verification per question (avoid ambiguous results from testing both φ and ¬φ).</p>
+<p><strong>Critical constraint:</strong> The prompt enforces a single verification per question to avoid ambiguous results from testing both φ and ¬φ.</p>
 <h3 id="file-extension_1">File Extension<a class="headerlink" href="#file-extension_1" title="Permanent link">&para;</a></h3>
 <p><code>.json</code></p>
 <h2 id="benchmark-performance">Benchmark Performance<a class="headerlink" href="#benchmark-performance" title="Permanent link">&para;</a></h2>
-<p>Results from <code>experiments_pipeline.py</code> (100 samples per dataset, GPT-5, <code>max_attempts=3</code>):</p>
+<p>Performance comparison across datasets reveals notable differences between the backends.</p>
+<p><strong>Results from</strong> <code>experiments_pipeline.py</code> (100 samples per dataset, GPT-5, <code>max_attempts=3</code>):</p>
 <table>
 <thead>
 <tr>
@@ -312,20 +327,22 @@ Three types:</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Success Rate</strong> = percentage of queries completing without error (generation + execution).</p>
-<p>SMT2 higher accuracy on 4/5 datasets. JSON higher success rate variance (86-100% vs 99-100%).</p>
+<p><strong>Success Rate</strong> represents the percentage of queries that complete without error (including both generation and execution).</p>
+<p>Overall, SMT2 achieves higher accuracy on 4 out of 5 datasets, while JSON shows greater success rate variance (86-100% compared to SMT2's 99-100%).</p>
 <h2 id="implementation-differences">Implementation Differences<a class="headerlink" href="#implementation-differences" title="Permanent link">&para;</a></h2>
+<p>The backends differ in several implementation details.</p>
 <h3 id="program-generation">Program Generation<a class="headerlink" href="#program-generation" title="Permanent link">&para;</a></h3>
-<p><strong>SMT2:</strong> Extract from markdown via:</p>
+<p><strong>SMT2:</strong> Extracts programs from markdown via:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;```smt2\s*([\s\S]*?)\s*```&quot;</span>
 </code></pre></div>
 
-<p><strong>JSON:</strong> Extract and parse via:</p>
+<p><strong>JSON:</strong> Extracts and parses via:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;```json\s*(\{[\s\S]*?\})\s*```&quot;</span>
 <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 </code></pre></div>
 
 <h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
+<p>Error handling varies significantly between backends.</p>
 <p><strong>SMT2:</strong>
 - Subprocess timeout → <code>TimeoutExpired</code>
 - Parse errors → regex mismatch → <code>answer=None</code>
@@ -336,15 +353,17 @@ Three types:</p>
 - Invalid sort reference → <code>ValueError</code> during SortManager
 - Expression eval error → <code>ValueError</code> during ExpressionParser</p>
 <h3 id="timeout-configuration">Timeout Configuration<a class="headerlink" href="#timeout-configuration" title="Permanent link">&para;</a></h3>
+<p>Timeout handling differs between the two backends.</p>
 <p><strong>SMT2:</strong>
-- Single timeout parameter: <code>verify_timeout</code> (ms)
-- Converted to seconds for Z3 CLI: <code>verify_timeout // 1000</code>
-- Hard subprocess timeout: <code>timeout_seconds + 10</code></p>
+- Uses a single timeout parameter: <code>verify_timeout</code> (ms)
+- Converts to seconds for Z3 CLI: <code>verify_timeout // 1000</code>
+- Applies a hard subprocess timeout: <code>timeout_seconds + 10</code></p>
 <p><strong>JSON:</strong>
-- Two timeouts: <code>verify_timeout</code> (ms), <code>optimize_timeout</code> (ms)
-- Set via <code>solver.set("timeout", verify_timeout)</code> in Verifier
-- Applies per <code>solver.check()</code> call</p>
+- Uses two separate timeouts: <code>verify_timeout</code> (ms) and <code>optimize_timeout</code> (ms)
+- Sets timeout via <code>solver.set("timeout", verify_timeout)</code> in Verifier
+- Timeout applies per individual <code>solver.check()</code> call</p>
 <h2 id="backend-selection-code">Backend Selection Code<a class="headerlink" href="#backend-selection-code" title="Permanent link">&para;</a></h2>
+<p>The system selects backends at runtime based on configuration:</p>
 <div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.backends.json_backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONBackend</span>
     <span class="n">backend_instance</span> <span class="o">=</span> <span class="n">JSONBackend</span><span class="p">(</span><span class="n">verify_timeout</span><span class="p">,</span> <span class="n">optimize_timeout</span><span class="p">)</span>
@@ -353,16 +372,17 @@ Three types:</p>
     <span class="n">backend_instance</span> <span class="o">=</span> <span class="n">SMT2Backend</span><span class="p">(</span><span class="n">verify_timeout</span><span class="p">,</span> <span class="n">z3_path</span><span class="p">)</span>
 </code></pre></div>
 
-<p>File: <code>z3adapter/reasoning/proof_of_thought.py:78-90</code></p>
+<p><strong>File:</strong> <code>z3adapter/reasoning/proof_of_thought.py:78-90</code></p>
 <h2 id="prompt-selection">Prompt Selection<a class="headerlink" href="#prompt-selection" title="Permanent link">&para;</a></h2>
+<p>The appropriate prompt template is chosen based on the selected backend:</p>
 <div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
     <span class="n">prompt</span> <span class="o">=</span> <span class="n">build_prompt</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>  <span class="c1"># smt2</span>
     <span class="n">prompt</span> <span class="o">=</span> <span class="n">build_smt2_prompt</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
 </code></pre></div>
 
-<p>File: <code>z3adapter/reasoning/program_generator.py:78-81</code></p>
-<p>Prompts include few-shot examples and format specifications. SMT2 prompt emphasizes S-expression syntax. JSON prompt details variable scoping and quantifier semantics.</p>
+<p><strong>File:</strong> <code>z3adapter/reasoning/program_generator.py:78-81</code></p>
+<p>Both prompts include few-shot examples and format specifications. The SMT2 prompt emphasizes S-expression syntax, while the JSON prompt provides detailed guidance on variable scoping and quantifier semantics.</p>
               
             </div>
           </div><footer>

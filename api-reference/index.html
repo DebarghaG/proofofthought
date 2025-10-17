@@ -47,6 +47,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
                 </li>
               </ul>
@@ -78,6 +82,10 @@
     <li class="toctree-l2"><a class="reference internal" href="#evaluationmetrics">EvaluationMetrics</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#backend">Backend</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#interface-methods">Interface Methods</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#verificationresult">VerificationResult</a>
     </li>
@@ -131,8 +139,10 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
+<p>This reference documents the public API for ProofOfThought.</p>
 <h2 id="proofofthought">ProofOfThought<a class="headerlink" href="#proofofthought" title="Permanent link">&para;</a></h2>
-<p><code>z3adapter.reasoning.proof_of_thought.ProofOfThought</code></p>
+<p>The main entry point for the reasoning system.</p>
+<p><strong>Location:</strong> <code>z3adapter.reasoning.proof_of_thought.ProofOfThought</code></p>
 <h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
@@ -178,7 +188,8 @@
 <li><code>program_path</code>: Custom save path (default: auto-generated in <code>cache_dir</code>)</li>
 </ul>
 <p><strong>Returns:</strong> <code>QueryResult</code></p>
-<p><strong>Implementation:</strong> Retry loop with error feedback</p>
+<p><strong>Implementation details:</strong></p>
+<p>The method implements a retry loop with error feedback:</p>
 <div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_attempts</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">gen_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">max_tokens</span><span class="p">)</span>
@@ -190,6 +201,7 @@
 </code></pre></div>
 
 <h2 id="queryresult">QueryResult<a class="headerlink" href="#queryresult" title="Permanent link">&para;</a></h2>
+<p>Contains the results of a reasoning query.</p>
 <div class="codehilite"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">QueryResult</span><span class="p">:</span>
     <span class="n">question</span><span class="p">:</span> <span class="nb">str</span>                        <span class="c1"># Input question</span>
@@ -204,7 +216,8 @@
 </code></pre></div>
 
 <h2 id="evaluationpipeline">EvaluationPipeline<a class="headerlink" href="#evaluationpipeline" title="Permanent link">&para;</a></h2>
-<p><code>z3adapter.reasoning.evaluation.EvaluationPipeline</code></p>
+<p>Facilitates batch evaluation of reasoning questions on datasets.</p>
+<p><strong>Location:</strong> <code>z3adapter.reasoning.evaluation.EvaluationPipeline</code></p>
 <h3 id="constructor_1">Constructor<a class="headerlink" href="#constructor_1" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
@@ -242,8 +255,10 @@
 <li><code>skip_existing</code>: Skip cached results (default: <code>True</code>)</li>
 </ul>
 <p><strong>Returns:</strong> <code>EvaluationResult</code></p>
-<p><strong>Caching:</strong> Saves <code>{sample_id}_result.json</code> and <code>{sample_id}_program{ext}</code> to <code>output_dir</code></p>
+<p><strong>Caching behavior:</strong></p>
+<p>Results are cached by saving <code>{sample_id}_result.json</code> and <code>{sample_id}_program{ext}</code> files to <code>output_dir</code>.</p>
 <h2 id="evaluationmetrics">EvaluationMetrics<a class="headerlink" href="#evaluationmetrics" title="Permanent link">&para;</a></h2>
+<p>Provides comprehensive metrics for evaluation results.</p>
 <div class="codehilite"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationMetrics</span><span class="p">:</span>
     <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span>                <span class="c1"># sklearn.metrics.accuracy_score</span>
@@ -263,10 +278,11 @@
     <span class="n">failed_answers</span><span class="p">:</span> <span class="nb">int</span>            <span class="c1"># success == False</span>
 </code></pre></div>
 
-<p>Computed via <code>sklearn.metrics.confusion_matrix</code> for binary classification.</p>
+<p>Metrics are computed using <code>sklearn.metrics.confusion_matrix</code> for binary classification.</p>
 <h2 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h2>
-<p><code>z3adapter.backends.abstract.Backend</code></p>
-<p>Abstract interface:</p>
+<p>Defines the abstract interface for execution backends.</p>
+<p><strong>Location:</strong> <code>z3adapter.backends.abstract.Backend</code></p>
+<h3 id="interface-methods">Interface Methods<a class="headerlink" href="#interface-methods" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Backend</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">program_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationResult</span><span class="p">:</span>
@@ -289,8 +305,9 @@
             <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
 
-<p>Implementations: <code>SMT2Backend</code>, <code>JSONBackend</code></p>
+<p>Concrete implementations are provided by <code>SMT2Backend</code> and <code>JSONBackend</code>.</p>
 <h2 id="verificationresult">VerificationResult<a class="headerlink" href="#verificationresult" title="Permanent link">&para;</a></h2>
+<p>Encapsulates the results of Z3 verification execution.</p>
 <div class="codehilite"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">VerificationResult</span><span class="p">:</span>
     <span class="n">answer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># True (SAT), False (UNSAT), None (ambiguous/error)</span>
@@ -302,7 +319,8 @@
 </code></pre></div>
 
 <h2 id="z3programgenerator">Z3ProgramGenerator<a class="headerlink" href="#z3programgenerator" title="Permanent link">&para;</a></h2>
-<p><code>z3adapter.reasoning.program_generator.Z3ProgramGenerator</code></p>
+<p>Handles LLM-based program generation with error recovery.</p>
+<p><strong>Location:</strong> <code>z3adapter.reasoning.program_generator.Z3ProgramGenerator</code></p>
 <h3 id="generate">generate()<a class="headerlink" href="#generate" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
@@ -320,9 +338,9 @@
 <span class="p">)</span>
 </code></pre></div>
 
-<p>Note: <code>temperature</code> parameter not passed (GPT-5 constraint).</p>
+<p>Note that the <code>temperature</code> parameter is not passed to the API due to GPT-5 constraints.</p>
 <h3 id="generate_with_feedback">generate_with_feedback()<a class="headerlink" href="#generate_with_feedback" title="Permanent link">&para;</a></h3>
-<p>Multi-turn conversation with error feedback:</p>
+<p>Enables multi-turn conversation with error feedback:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">messages</span><span class="o">=</span><span class="p">[</span>
     <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
     <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">previous_response</span><span class="p">},</span>
@@ -331,19 +349,22 @@
 </code></pre></div>
 
 <h2 id="utility-azure-config">Utility: Azure Config<a class="headerlink" href="#utility-azure-config" title="Permanent link">&para;</a></h2>
-<p><code>utils.azure_config.get_client_config()</code></p>
-<p>Returns:</p>
+<p>Provides convenient configuration for Azure OpenAI deployments.</p>
+<p><strong>Location:</strong> <code>utils.azure_config.get_client_config()</code></p>
+<p><strong>Returns:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
     <span class="s2">&quot;llm_client&quot;</span><span class="p">:</span> <span class="n">AzureOpenAI</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
     <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Deployment name from env</span>
 <span class="p">}</span>
 </code></pre></div>
 
-<p>Required environment variables:
-- <code>AZURE_OPENAI_API_KEY</code>
-- <code>AZURE_OPENAI_ENDPOINT</code>
-- <code>AZURE_OPENAI_API_VERSION</code>
-- <code>AZURE_GPT5_DEPLOYMENT_NAME</code> or <code>AZURE_GPT4O_DEPLOYMENT_NAME</code></p>
+<p><strong>Required environment variables:</strong></p>
+<ul>
+<li><code>AZURE_OPENAI_API_KEY</code></li>
+<li><code>AZURE_OPENAI_ENDPOINT</code></li>
+<li><code>AZURE_OPENAI_API_VERSION</code></li>
+<li><code>AZURE_GPT5_DEPLOYMENT_NAME</code> or <code>AZURE_GPT4O_DEPLOYMENT_NAME</code></li>
+</ul>
               
             </div>
           </div><footer>
