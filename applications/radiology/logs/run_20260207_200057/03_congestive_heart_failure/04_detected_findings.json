@@ -1,0 +1,13 @@
+{
+  "detected_findings": [
+    "bilateral_infiltrates",
+    "cephalization",
+    "costophrenic_blunting",
+    "enlarged_cardiac_silhouette",
+    "increased_cardiothoracic_ratio"
+  ],
+  "claimed_diagnoses": [
+    "pulmonary_edema_dx",
+    "cardiomegaly_dx"
+  ]
+}

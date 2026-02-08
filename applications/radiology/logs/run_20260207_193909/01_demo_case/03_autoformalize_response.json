@@ -1,0 +1,13 @@
+{
+  "detected_findings": [
+    "focal_opacity",
+    "dense_opacity",
+    "air_bronchogram",
+    "costophrenic_blunting",
+    "enlarged_cardiac_silhouette"
+  ],
+  "claimed_diagnoses": [
+    "pneumonia_dx",
+    "cardiomegaly_dx"
+  ]
+}

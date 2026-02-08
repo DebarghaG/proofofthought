@@ -1,0 +1,10 @@
+{
+  "detected_findings": [
+    "absent_lung_markings",
+    "deep_sulcus_sign",
+    "visible_pleural_line"
+  ],
+  "claimed_diagnoses": [
+    "pneumothorax_dx"
+  ]
+}

@@ -1,0 +1,70 @@
+CLINICAL DECISION PROCEDURE
+============================================================
+
+Each diagnosis is a biconditional: the diagnosis holds if and only
+if the required combination of radiological findings is met.
+
+  Pneumonia (pneumonia_dx)
+    Criteria: Or(focal_opacity, ground_glass_opacity, dense_opacity) and air_bronchogram
+
+  Pneumothorax (pneumothorax_dx)
+    Criteria: visible_pleural_line or (absent_lung_markings and deep_sulcus_sign)
+
+  Pulmonary Edema (pulmonary_edema_dx)
+    Criteria: (bilateral_infiltrates or bilateral_opacities) and (cephalization or kerley_b_lines or peribronchial_cuffing)
+
+  Consolidation (consolidation_dx)
+    Criteria: dense_opacity and (air_bronchogram or silhouette_sign_loss)
+
+  Atelectasis (atelectasis_dx)
+    Criteria: (volume_loss or fissure_displacement) and (linear_opacity or increased_opacity)
+
+  Pleural Effusion (pleural_effusion_dx)
+    Criteria: costophrenic_blunting or meniscus_sign or layering_fluid
+
+  Fracture (fracture_dx)
+    Criteria: cortical_break
+
+  Cardiomegaly (cardiomegaly_dx)
+    Criteria: enlarged_cardiac_silhouette or increased_cardiothoracic_ratio
+
+  Emphysema (emphysema_dx)
+    Criteria: hyperinflation and (flattened_diaphragm or bullae)
+
+  Fibrosis (fibrosis_dx)
+    Criteria: (reticular_opacities or honeycombing) and (traction_bronchiectasis or volume_loss)
+
+------------------------------------------------------------
+Total findings: 29
+Total diagnoses: 10
+
+Findings:
+  - focal_opacity
+  - ground_glass_opacity
+  - dense_opacity
+  - air_bronchogram
+  - visible_pleural_line
+  - absent_lung_markings
+  - deep_sulcus_sign
+  - bilateral_infiltrates
+  - bilateral_opacities
+  - cephalization
+  - kerley_b_lines
+  - peribronchial_cuffing
+  - silhouette_sign_loss
+  - volume_loss
+  - fissure_displacement
+  - linear_opacity
+  - increased_opacity
+  - costophrenic_blunting
+  - meniscus_sign
+  - layering_fluid
+  - cortical_break
+  - enlarged_cardiac_silhouette
+  - increased_cardiothoracic_ratio
+  - hyperinflation
+  - flattened_diaphragm
+  - bullae
+  - reticular_opacities
+  - honeycombing
+  - traction_bronchiectasis

@@ -1,0 +1,10 @@
+{
+  "detected_findings": [
+    "bilateral_opacities",
+    "kerley_b_lines",
+    "peribronchial_cuffing"
+  ],
+  "claimed_diagnoses": [
+    "pulmonary_edema_dx"
+  ]
+}

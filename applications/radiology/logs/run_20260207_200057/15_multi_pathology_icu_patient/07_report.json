@@ -1,0 +1,83 @@
+{
+  "detected_findings": [
+    "air_bronchogram",
+    "bilateral_infiltrates",
+    "cephalization",
+    "cortical_break",
+    "costophrenic_blunting",
+    "dense_opacity",
+    "enlarged_cardiac_silhouette",
+    "focal_opacity",
+    "kerley_b_lines"
+  ],
+  "claimed_diagnoses": [
+    "cardiomegaly_dx",
+    "pulmonary_edema_dx",
+    "pneumonia_dx",
+    "pleural_effusion_dx",
+    "fracture_dx"
+  ],
+  "supported": [
+    "pneumonia_dx",
+    "pulmonary_edema_dx",
+    "pleural_effusion_dx",
+    "fracture_dx",
+    "cardiomegaly_dx"
+  ],
+  "unsupported": [],
+  "missed": [
+    "consolidation_dx"
+  ],
+  "per_diagnosis": {
+    "pneumonia_dx": {
+      "label": "Pneumonia",
+      "entailed": true,
+      "z3_status": "unsat"
+    },
+    "pneumothorax_dx": {
+      "label": "Pneumothorax",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "pulmonary_edema_dx": {
+      "label": "Pulmonary Edema",
+      "entailed": true,
+      "z3_status": "unsat"
+    },
+    "consolidation_dx": {
+      "label": "Consolidation",
+      "entailed": true,
+      "z3_status": "unsat"
+    },
+    "atelectasis_dx": {
+      "label": "Atelectasis",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "pleural_effusion_dx": {
+      "label": "Pleural Effusion",
+      "entailed": true,
+      "z3_status": "unsat"
+    },
+    "fracture_dx": {
+      "label": "Fracture",
+      "entailed": true,
+      "z3_status": "unsat"
+    },
+    "cardiomegaly_dx": {
+      "label": "Cardiomegaly",
+      "entailed": true,
+      "z3_status": "unsat"
+    },
+    "emphysema_dx": {
+      "label": "Emphysema",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "fibrosis_dx": {
+      "label": "Fibrosis",
+      "entailed": false,
+      "z3_status": "sat"
+    }
+  }
+}

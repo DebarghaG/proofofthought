@@ -1,0 +1,8 @@
+{
+  "detected_findings": [
+    "focal_opacity"
+  ],
+  "claimed_diagnoses": [
+    "pneumonia_dx"
+  ]
+}

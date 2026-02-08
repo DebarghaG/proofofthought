@@ -61,7 +61,7 @@ select = ["E", "F", "I", "UP", "B"]
 ignore = ["E203", "E501"]
 
 [tool.setuptools]
-packages = ["z3adapter", "z3adapter.backends", "z3adapter.dsl", "z3adapter.optimization", "z3adapter.postprocessors", "z3adapter.reasoning", "z3adapter.security", "z3adapter.solvers", "z3adapter.verification"]
+packages = ["z3adapter", "z3adapter.backends", "z3adapter.backends.smt2", "z3adapter.dsl", "z3adapter.optimization", "z3adapter.postprocessors", "z3adapter.reasoning", "z3adapter.security", "z3adapter.solvers", "z3adapter.verification"]
 
 [tool.setuptools.package-data]
 z3adapter = ["py.typed"]

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-BackendType = Literal["json", "smt2"]
+BackendType = Literal["json", "smt2", "staged_smt2"]
 
 
 @dataclass
@@ -97,6 +97,12 @@ class ProofOfThought:
 
             backend_instance: Backend = JSONBackend(
                 verify_timeout=verify_timeout, optimize_timeout=optimize_timeout
+            )
+        elif backend == "staged_smt2":
+            from z3adapter.backends.smt2.backend import StagedSMT2Backend
+
+            backend_instance = StagedSMT2Backend(
+                verify_timeout=verify_timeout, z3_path=z3_path
             )
         else:  # smt2
             from z3adapter.backends.smt2_backend import SMT2Backend

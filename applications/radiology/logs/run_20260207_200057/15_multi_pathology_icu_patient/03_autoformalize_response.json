@@ -1,0 +1,20 @@
+{
+  "detected_findings": [
+    "focal_opacity",
+    "dense_opacity",
+    "air_bronchogram",
+    "bilateral_infiltrates",
+    "cephalization",
+    "kerley_b_lines",
+    "costophrenic_blunting",
+    "cortical_break",
+    "enlarged_cardiac_silhouette"
+  ],
+  "claimed_diagnoses": [
+    "cardiomegaly_dx",
+    "pulmonary_edema_dx",
+    "pneumonia_dx",
+    "pleural_effusion_dx",
+    "fracture_dx"
+  ]
+}

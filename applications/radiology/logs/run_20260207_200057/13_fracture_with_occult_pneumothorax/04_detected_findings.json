@@ -1,0 +1,9 @@
+{
+  "detected_findings": [
+    "cortical_break",
+    "visible_pleural_line"
+  ],
+  "claimed_diagnoses": [
+    "fracture_dx"
+  ]
+}

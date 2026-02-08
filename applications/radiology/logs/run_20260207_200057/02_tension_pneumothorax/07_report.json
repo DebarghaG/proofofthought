@@ -1,0 +1,67 @@
+{
+  "detected_findings": [
+    "absent_lung_markings",
+    "deep_sulcus_sign",
+    "visible_pleural_line"
+  ],
+  "claimed_diagnoses": [
+    "pneumothorax_dx"
+  ],
+  "supported": [
+    "pneumothorax_dx"
+  ],
+  "unsupported": [],
+  "missed": [],
+  "per_diagnosis": {
+    "pneumonia_dx": {
+      "label": "Pneumonia",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "pneumothorax_dx": {
+      "label": "Pneumothorax",
+      "entailed": true,
+      "z3_status": "unsat"
+    },
+    "pulmonary_edema_dx": {
+      "label": "Pulmonary Edema",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "consolidation_dx": {
+      "label": "Consolidation",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "atelectasis_dx": {
+      "label": "Atelectasis",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "pleural_effusion_dx": {
+      "label": "Pleural Effusion",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "fracture_dx": {
+      "label": "Fracture",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "cardiomegaly_dx": {
+      "label": "Cardiomegaly",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "emphysema_dx": {
+      "label": "Emphysema",
+      "entailed": false,
+      "z3_status": "sat"
+    },
+    "fibrosis_dx": {
+      "label": "Fibrosis",
+      "entailed": false,
+      "z3_status": "sat"
+    }
+  }
+}

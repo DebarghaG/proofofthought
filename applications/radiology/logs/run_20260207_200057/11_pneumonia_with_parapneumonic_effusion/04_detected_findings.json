@@ -1,0 +1,11 @@
+{
+  "detected_findings": [
+    "air_bronchogram",
+    "costophrenic_blunting",
+    "dense_opacity"
+  ],
+  "claimed_diagnoses": [
+    "pneumonia_dx",
+    "pleural_effusion_dx"
+  ]
+}

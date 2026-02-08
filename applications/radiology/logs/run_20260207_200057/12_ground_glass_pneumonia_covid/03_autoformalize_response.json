@@ -1,0 +1,10 @@
+{
+  "detected_findings": [
+    "ground_glass_opacity",
+    "bilateral_opacities",
+    "air_bronchogram"
+  ],
+  "claimed_diagnoses": [
+    "pneumonia_dx"
+  ]
+}

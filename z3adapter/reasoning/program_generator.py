@@ -11,7 +11,7 @@ from z3adapter.reasoning.smt2_prompt_template import build_smt2_prompt
 
 logger = logging.getLogger(__name__)
 
-BackendType = Literal["json", "smt2"]
+BackendType = Literal["json", "smt2", "staged_smt2"]
 
 
 @dataclass
@@ -35,7 +35,7 @@ class GenerationResult:
     @property
     def smt2_program(self) -> str | None:
         """Get SMT2 program text."""
-        if self.backend == "smt2" and isinstance(self.program, str):
+        if self.backend in ("smt2", "staged_smt2") and isinstance(self.program, str):
             return self.program
         return None
 
