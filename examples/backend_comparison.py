@@ -6,13 +6,7 @@ This example demonstrates using both backends on the same question.
 """
 
 import logging
-import sys
-from pathlib import Path
 
-# Add parent directory to path for z3adapter imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Import Azure configuration helper
 from azure_config import get_client_config
 
 from z3adapter.reasoning import ProofOfThought
@@ -45,7 +39,7 @@ print(f"UNSAT count: {result_json.unsat_count}")
 
 if not result_json.success:
     print(f"Error: {result_json.error}")
-    sys.exit(1)
+    raise SystemExit(1)
 
 # Test with SMT2 backend
 print("\n[2/2] Testing SMT2 Backend")
@@ -62,7 +56,7 @@ print(f"UNSAT count: {result_smt2.unsat_count}")
 
 if not result_smt2.success:
     print(f"Error: {result_smt2.error}")
-    sys.exit(1)
+    raise SystemExit(1)
 
 # Compare results
 print("\n" + "=" * 80)

@@ -254,16 +254,21 @@ def format_constants_prompt(text: str, ctx: ConversionContext) -> str:
 def format_kb_prompt(text: str, ctx: ConversionContext) -> str:
     """Format the knowledge base stage prompt."""
     sorts = ", ".join(ctx.sorts.keys()) if ctx.sorts else "(none)"
-    functions = ", ".join(
-        f"{name}({','.join(f.domain)})->{f.range_sort}"
-        for name, f in ctx.functions.items()
-    ) if ctx.functions else "(none)"
-    constants = ", ".join(
-        f"{name}:{c.sort}" for name, c in ctx.constants.items()
-    ) if ctx.constants else "(none)"
-    existing_kb = "\n".join(
-        a.smt_code for a in ctx.kb_assertions.values()
-    ) if ctx.kb_assertions else "(none)"
+    functions = (
+        ", ".join(
+            f"{name}({','.join(f.domain)})->{f.range_sort}" for name, f in ctx.functions.items()
+        )
+        if ctx.functions
+        else "(none)"
+    )
+    constants = (
+        ", ".join(f"{name}:{c.sort}" for name, c in ctx.constants.items())
+        if ctx.constants
+        else "(none)"
+    )
+    existing_kb = (
+        "\n".join(a.smt_code for a in ctx.kb_assertions.values()) if ctx.kb_assertions else "(none)"
+    )
 
     return KNOWLEDGE_BASE_PROMPT.format(
         base=BASE_INSTRUCTIONS,

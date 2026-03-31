@@ -67,13 +67,9 @@ class Z3OutputParser:
 
     # Model parsing patterns
     MODEL_START = re.compile(r"\(model")
-    DEFINE_FUN_PATTERN = re.compile(
-        r"\(define-fun\s+(\S+)\s+\(\)\s+(\S+)\s+(.+?)\s*\)", re.DOTALL
-    )
+    DEFINE_FUN_PATTERN = re.compile(r"\(define-fun\s+(\S+)\s+\(\)\s+(\S+)\s+(.+?)\s*\)", re.DOTALL)
 
-    def parse(
-        self, output: str, query_names: list[str] | None = None
-    ) -> ExecutionResult:
+    def parse(self, output: str, query_names: list[str] | None = None) -> ExecutionResult:
         """
         Parse Z3 output into structured results.
 
@@ -95,9 +91,7 @@ class Z3OutputParser:
 
         for i, block in enumerate(blocks):
             query_id = f"query_{i}"
-            query_name = (
-                query_names[i] if query_names and i < len(query_names) else query_id
-            )
+            query_name = query_names[i] if query_names and i < len(query_names) else query_id
 
             # Determine status
             if self.TIMEOUT_PATTERN.search(block):
@@ -153,7 +147,7 @@ class Z3OutputParser:
         if not lines or not output.strip():
             return []
 
-        blocks = []
+        blocks: list[str] = []
         current_block: list[str] = []
         in_model = False
         paren_depth = 0
@@ -189,7 +183,9 @@ class Z3OutputParser:
             if stripped in ("sat", "unsat", "unknown", "timeout"):
                 has_status = True
             # Check if we've seen a status and model is done — next status starts a new block
-            elif has_status and current_block and stripped in ("sat", "unsat", "unknown", "timeout"):
+            elif (
+                has_status and current_block and stripped in ("sat", "unsat", "unknown", "timeout")
+            ):
                 pass  # Will be handled by next iteration
 
         # If we couldn't split meaningfully, fall back to status-line splitting
@@ -232,8 +228,8 @@ class Z3OutputParser:
             if stripped in ("sat", "unsat", "unknown", "timeout"):
                 # If we already have a block with a status, start a new one
                 if current_block and any(
-                    l.strip() in ("sat", "unsat", "unknown", "timeout")
-                    for l in current_block
+                    block_line.strip() in ("sat", "unsat", "unknown", "timeout")
+                    for block_line in current_block
                 ):
                     blocks.append("\n".join(current_block))
                     current_block = [line]
@@ -249,7 +245,7 @@ class Z3OutputParser:
 
     def _parse_model(self, block: str) -> list[ModelValue]:
         """Parse model definitions from a block."""
-        model = []
+        model: list[ModelValue] = []
 
         # Find model section
         model_match = self.MODEL_START.search(block)

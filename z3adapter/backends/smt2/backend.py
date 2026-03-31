@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import subprocess
 import tempfile
@@ -79,6 +80,17 @@ class StagedSMT2Backend(Backend):
 
             # Parse output
             sat_count, unsat_count = self.parser.parse_simple(output)
+
+            if sat_count == 0 and unsat_count == 0:
+                return VerificationResult(
+                    answer=None,
+                    sat_count=0,
+                    unsat_count=0,
+                    output=output,
+                    success=False,
+                    error=output.strip() or f"Z3 exited with code {result.returncode}",
+                )
+
             answer = self.determine_answer(sat_count, unsat_count)
 
             return VerificationResult(
@@ -320,13 +332,10 @@ class StagedSMT2Backend(Backend):
         Returns:
             VerificationResult with answer and execution details
         """
-        import tempfile
-        import os
-
         # Write to temp file
         fd, temp_path = tempfile.mkstemp(suffix=".smt2")
         try:
-            with os.fdopen(fd, 'w') as f:
+            with os.fdopen(fd, "w") as f:
                 f.write(smt2_program)
 
             # Execute

@@ -2,14 +2,16 @@
 
 ## Dependencies
 
-ProofOfThought requires Python 3.12 or higher (as specified in `pyproject.toml`).
+ProofOfThought requires Python 3.13.
 
 ### Core Dependencies
 
-Install the core dependencies using:
+For development, create and activate the project virtual environment first:
 
 ```bash
-pip install -r requirements.txt
+python -m venv venv
+source venv/bin/activate
+pip install -e ".[dev]"
 ```
 
 ## Z3 Verification Setup
@@ -20,20 +22,20 @@ The JSON backend requires no additional setup beyond installing `z3-solver`, whi
 
 ### SMT2 Backend
 
-The SMT2 backend requires the Z3 CLI to be available in your PATH:
+The SMT2 backend requires the `z3` binary to be available in your active environment:
 
 ```bash
 z3 --version
 ```
 
-If Z3 is not found, note that the `z3-solver` package includes a CLI binary in `site-packages`. You can locate it with:
+If you installed dependencies into the repo's `venv`, activate it before running examples or tests so `venv/bin/z3` is on `PATH`:
 
 ```bash
-python -c "import z3; print(z3.__file__)"
-# The CLI is typically located at: .../site-packages/z3/bin/z3
+source venv/bin/activate
+z3 --version
 ```
 
-On macOS/Linux, you can either add it to your PATH or specify the path in your code:
+You can also specify the binary path explicitly in code:
 ```python
 ProofOfThought(..., z3_path="/path/to/z3")
 ```
@@ -52,11 +54,10 @@ OPENAI_API_KEY=sk-...
 
 For Azure OpenAI deployments, configure these variables in `.env`:
 ```bash
-AZURE_OPENAI_API_KEY=...
+AZURE_OPENAI_KEY=...
 AZURE_OPENAI_ENDPOINT=https://....openai.azure.com/
-AZURE_OPENAI_API_VERSION=2024-08-01-preview
-AZURE_GPT5_DEPLOYMENT_NAME=gpt-5
-AZURE_GPT4O_DEPLOYMENT_NAME=gpt-4o
+AZURE_API_VERSION=2024-12-01-preview
+AZURE_DEPLOYMENT_NAME=gpt-5
 ```
 
 Then use it in your code:
@@ -117,7 +118,7 @@ cd /path/to/proofofthought
 python examples/simple_usage.py  # ✓
 ```
 
-**Reason:** The example scripts use `sys.path.insert(0, str(Path(__file__).parent.parent))` to locate the `z3adapter` and `utils` modules from the project root.
+**Reason:** The example scripts rely on the project root and the activated virtual environment so both `z3adapter` and `z3` resolve correctly.
 
 ### Azure authentication errors
 
@@ -131,7 +132,7 @@ config = get_client_config()  # Should not raise
 
 The following version constraints are defined in `pyproject.toml` and `requirements.txt`:
 
-- **Python:** `>=3.12`
+- **Python:** `>=3.13,<3.14`
 - **Z3:** `>=4.15.0` (tested with `4.15.3.0`)
 - **OpenAI:** `>=2.0.0` (tested with `2.0.1`)
 - **scikit-learn:** `>=1.7.0` (tested with `1.7.2`)

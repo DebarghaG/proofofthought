@@ -79,9 +79,7 @@ class SortsStage(PipelineStage):
 
         return "\n".join(lines) + "\n" if len(lines) > 1 else ""
 
-    def _topological_sort(
-        self, sort_defs: list[dict], ctx: ConversionContext
-    ) -> list[dict]:
+    def _topological_sort(self, sort_defs: list[dict], ctx: ConversionContext) -> list[dict]:
         """Sort definitions by dependencies (similar to SortManager)."""
         if not sort_defs:
             return []
@@ -100,8 +98,7 @@ class SortsStage(PipelineStage):
 
         # Kahn's algorithm
         in_degree = {
-            name: len([d for d in deps if d in dependencies])
-            for name, deps in dependencies.items()
+            name: len([d for d in deps if d in dependencies]) for name, deps in dependencies.items()
         }
         queue = [name for name, deg in in_degree.items() if deg == 0]
         sorted_names = []
@@ -162,17 +159,11 @@ class SortsStage(PipelineStage):
                 smt_code="",  # Array sorts don't need declaration
             )
         elif sort_type in ("IntSort", "Int"):
-            return SMTSort(
-                name=name, kind=SMTSortKind.BUILTIN, smt_name="Int", smt_code=""
-            )
+            return SMTSort(name=name, kind=SMTSortKind.BUILTIN, smt_name="Int", smt_code="")
         elif sort_type in ("RealSort", "Real"):
-            return SMTSort(
-                name=name, kind=SMTSortKind.BUILTIN, smt_name="Real", smt_code=""
-            )
+            return SMTSort(name=name, kind=SMTSortKind.BUILTIN, smt_name="Real", smt_code="")
         elif sort_type in ("BoolSort", "Bool"):
-            return SMTSort(
-                name=name, kind=SMTSortKind.BUILTIN, smt_name="Bool", smt_code=""
-            )
+            return SMTSort(name=name, kind=SMTSortKind.BUILTIN, smt_name="Bool", smt_code="")
         else:
             raise ValueError(f"Unknown sort type: {sort_type}")
 
@@ -235,7 +226,7 @@ class ConstantsStage(PipelineStage):
 
         lines = ["; --- Constants ---"]
 
-        for category, const_info in const_defs.items():
+        for _category, const_info in const_defs.items():
             sort_name = const_info["sort"]
             members = const_info["members"]
 

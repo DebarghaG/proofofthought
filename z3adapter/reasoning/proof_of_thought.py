@@ -101,9 +101,7 @@ class ProofOfThought:
         elif backend == "staged_smt2":
             from z3adapter.backends.smt2.backend import StagedSMT2Backend
 
-            backend_instance = StagedSMT2Backend(
-                verify_timeout=verify_timeout, z3_path=z3_path
-            )
+            backend_instance = StagedSMT2Backend(verify_timeout=verify_timeout, z3_path=z3_path)
         else:  # smt2
             from z3adapter.backends.smt2_backend import SMT2Backend
 

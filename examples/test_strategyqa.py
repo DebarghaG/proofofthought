@@ -184,7 +184,7 @@ def save_results(results: list[dict[str, Any]], output_path: str) -> None:
 def main() -> None:
     """Main benchmark execution."""
     script_dir = Path(__file__).parent
-    dataset_path = script_dir / "strategyQA_train.json"
+    dataset_path = script_dir.parent / "data" / "strategyQA_train.json"
     output_path = script_dir / "strategyqa_results.json"
     num_questions = 100
 

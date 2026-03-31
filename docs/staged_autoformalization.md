@@ -85,9 +85,9 @@ OPENAI_API_KEY=sk-your-api-key-here
 
 ```python
 import sys
-sys.path.insert(0, 'utils')
+sys.path.insert(0, '.')
 
-from azure_config import get_azure_client, DEPLOYMENT_NAME
+from utils.azure_config import DEPLOYMENT_NAME, get_azure_client
 from z3adapter.backends.smt2 import StagedGenerator, StagedSMT2Backend
 
 # 1. Create LLM client wrapper

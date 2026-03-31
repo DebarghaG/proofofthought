@@ -65,6 +65,16 @@ class SMT2Backend(Backend):
             # Parse Z3 output for sat/unsat
             sat_count, unsat_count = self._parse_z3_output(output)
 
+            if sat_count == 0 and unsat_count == 0:
+                return VerificationResult(
+                    answer=None,
+                    sat_count=0,
+                    unsat_count=0,
+                    output=output,
+                    success=False,
+                    error=output.strip() or f"Z3 exited with code {result.returncode}",
+                )
+
             # Determine answer
             answer = self.determine_answer(sat_count, unsat_count)
 

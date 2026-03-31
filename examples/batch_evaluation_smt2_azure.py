@@ -2,15 +2,13 @@
 """Example: Batch evaluation on StrategyQA using SMT2 backend with Azure OpenAI."""
 
 import logging
-import sys
 from pathlib import Path
-
-# Add parent directory to path for z3adapter imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from azure_config import get_client_config
 
 from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
+
+project_root = Path(__file__).parent.parent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -24,20 +22,20 @@ pot = ProofOfThought(
     model=config["model"],
     backend="smt2",  # ← Use SMT2 backend
     max_attempts=3,
-    cache_dir="output/programs_smt2",
+    cache_dir=str(project_root / "output" / "programs_smt2"),
     z3_path="z3",
 )
 
 # Create evaluation pipeline with 10 parallel workers
 evaluator = EvaluationPipeline(
     proof_of_thought=pot,
-    output_dir="output/evaluation_results_smt2",
+    output_dir=str(project_root / "output" / "evaluation_results_smt2"),
     num_workers=10,  # Run 10 LLM generations in parallel
 )
 
 # Run evaluation
 result = evaluator.evaluate(
-    dataset="examples/strategyQA_train.json",
+    dataset=str(project_root / "data" / "strategyQA_train.json"),
     question_field="question",
     answer_field="answer",
     id_field="qid",

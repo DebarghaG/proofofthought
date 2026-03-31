@@ -8,10 +8,15 @@ implementation to the new DSPy-style ProofOfThought API.
 
 import logging
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from openai import OpenAI
 
 from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
+
+project_root = Path(__file__).parent.parent
+load_dotenv(project_root / ".env")
 
 # Configure logging (same as original)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -85,17 +90,18 @@ pot = ProofOfThought(
     model="gpt-4o",
     max_attempts=3,  # Same as original max_attempts
     verify_timeout=10000,
-    cache_dir="strategyqa_outputs/programs",
+    cache_dir=str(project_root / "strategyqa_outputs" / "programs"),
 )
 
 # Create evaluation pipeline
 evaluator = EvaluationPipeline(
-    proof_of_thought=pot, output_dir="strategyqa_outputs/evaluation_results"
+    proof_of_thought=pot,
+    output_dir=str(project_root / "strategyqa_outputs" / "evaluation_results"),
 )
 
 # Run evaluation (replaces entire 800-line loop)
 result = evaluator.evaluate(
-    dataset="strategyqa_train.json",
+    dataset=str(project_root / "data" / "strategyQA_train.json"),
     question_field="question",
     answer_field="answer",
     id_field="qid",

@@ -6,8 +6,6 @@ import tempfile
 import pytest
 
 from z3adapter.backends.smt2 import (
-    ConversionContext,
-    ExecutionResult,
     Pipeline,
     StagedSMT2Backend,
 )
@@ -16,6 +14,7 @@ from z3adapter.backends.smt2 import (
 # Skip tests if Z3 is not installed
 def z3_available():
     import shutil
+
     return shutil.which("z3") is not None
 
 
@@ -68,9 +67,7 @@ class TestStagedSMT2BackendExecution:
             "functions": [],
             "constants": {},
             "knowledge_base": ["x > 0"],
-            "verifications": [
-                {"name": "check_positive", "constraint": "x > 0"}
-            ]
+            "verifications": [{"name": "check_positive", "constraint": "x > 0"}],
         }
 
         verify_result, exec_result = backend.execute_config(config)
@@ -83,19 +80,13 @@ class TestStagedSMT2BackendExecution:
         """Test execute_config with custom sorts."""
         config = {
             "sorts": [{"name": "Person", "type": "DeclareSort"}],
-            "functions": [
-                {"name": "age", "domain": ["Person"], "range": "IntSort"}
-            ],
-            "constants": {
-                "people": {"sort": "Person", "members": ["alice", "bob"]}
-            },
+            "functions": [{"name": "age", "domain": ["Person"], "range": "IntSort"}],
+            "constants": {"people": {"sort": "Person", "members": ["alice", "bob"]}},
             "knowledge_base": [
                 "age(alice) == 30",
                 "age(bob) == 25",
             ],
-            "verifications": [
-                {"name": "alice_older", "constraint": "age(alice) > age(bob)"}
-            ]
+            "verifications": [{"name": "alice_older", "constraint": "age(alice) > age(bob)"}],
         }
 
         verify_result, exec_result = backend.execute_config(config)
@@ -151,8 +142,7 @@ class TestFoundationReuse:
 
         foundation = backend.build_foundation(config)
         program = backend.add_query(
-            {"name": "check_age", "constraint": "age(alice) > 20"},
-            foundation
+            {"name": "check_age", "constraint": "age(alice) > 20"}, foundation
         )
 
         assert "(set-logic ALL)" in program
@@ -169,14 +159,8 @@ class TestFoundationReuse:
 
         foundation = backend.build_foundation(config)
 
-        query1 = backend.add_query(
-            {"name": "q1", "constraint": "x > 0"},
-            foundation
-        )
-        query2 = backend.add_query(
-            {"name": "q2", "constraint": "y < 10"},
-            foundation
-        )
+        query1 = backend.add_query({"name": "q1", "constraint": "x > 0"}, foundation)
+        query2 = backend.add_query({"name": "q2", "constraint": "y < 10"}, foundation)
 
         assert "x > 0" in query1 or "(> x 0)" in query1
         assert "y < 10" in query2 or "(< y 10)" in query2
@@ -252,12 +236,12 @@ class TestPipelineIntegration:
                     "implies": {
                         "antecedent": "age(p) > 18",
                         "consequent": "is_adult(p)",
-                    }
+                    },
                 }
             ],
             "verifications": [
                 {"name": "alice_older", "constraint": "age(alice) > age(bob)"},
-            ]
+            ],
         }
 
         smt2 = pipeline.run(config)

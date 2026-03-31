@@ -13,15 +13,9 @@ Usage:
 """
 
 import logging
-import sys
-from pathlib import Path
 
-# Add parent and utils to path for imports
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / "utils"))
+from azure_config import DEPLOYMENT_NAME, get_azure_client
 
-from azure_config import get_azure_client, DEPLOYMENT_NAME
 from z3adapter.backends.smt2 import (
     StagedGenerator,
     StagedSMT2Backend,
@@ -30,7 +24,7 @@ from z3adapter.backends.smt2 import (
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -98,7 +92,7 @@ def run_staged_autoformalization():
     for stage_name, output in result.stage_outputs.items():
         print(f"\n    --- {stage_name.upper()} ---")
         # Show first 500 chars of each stage
-        lines = output.strip().split('\n')
+        lines = output.strip().split("\n")
         for line in lines[:10]:
             print(f"    {line}")
         if len(lines) > 10:
@@ -182,7 +176,9 @@ def run_simple_example():
     try:
         backend = StagedSMT2Backend()
         verify_result = backend.execute_from_string(result.smt2_program)
-        print(f"\nZ3 Result: {'SAT' if verify_result.answer else 'UNSAT' if verify_result.answer is False else 'UNKNOWN'}")
+        print(
+            f"\nZ3 Result: {'SAT' if verify_result.answer else 'UNSAT' if verify_result.answer is False else 'UNKNOWN'}"
+        )
     except Exception as e:
         print(f"\nZ3 execution error: {e}")
 

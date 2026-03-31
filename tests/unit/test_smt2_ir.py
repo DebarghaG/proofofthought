@@ -1,7 +1,5 @@
 """Unit tests for SMT2 Intermediate Representation."""
 
-import pytest
-
 from z3adapter.backends.smt2.ir import (
     ConversionContext,
     SMTAssertion,
@@ -127,9 +125,7 @@ class TestConversionContext:
         ctx.sorts["Person"] = SMTSort(
             name="Person", kind=SMTSortKind.UNINTERPRETED, smt_name="Person", emitted=False
         )
-        ctx.functions["age"] = SMTFunction(
-            name="age", smt_name="age", emitted=True
-        )
+        ctx.functions["age"] = SMTFunction(name="age", smt_name="age", emitted=True)
 
         unemitted = ctx.get_unemitted()
         assert "sort:Person" in unemitted
@@ -140,12 +136,8 @@ class TestConversionContext:
         ctx.sorts["Person"] = SMTSort(
             name="Person", kind=SMTSortKind.UNINTERPRETED, smt_name="Person"
         )
-        ctx.functions["age"] = SMTFunction(
-            name="age", smt_name="age"
-        )
-        ctx.constants["alice"] = SMTConstant(
-            name="alice", smt_name="alice", sort="Person"
-        )
+        ctx.functions["age"] = SMTFunction(name="age", smt_name="age")
+        ctx.constants["alice"] = SMTConstant(name="alice", smt_name="alice", sort="Person")
 
         summary = ctx.to_summary()
         assert "; Logic: ALL" in summary

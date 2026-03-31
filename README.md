@@ -1,6 +1,6 @@
 # ProofOfThought
 
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Z3](https://img.shields.io/badge/Z3-4.15+-green.svg)](https://github.com/Z3Prover/z3)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Compatible-412991.svg)](https://platform.openai.com/)
@@ -40,14 +40,16 @@ For contributing or using the latest development version:
 ```bash
 git clone https://github.com/debarghaG/proofofthought.git
 cd proofofthought
-pip install -r requirements.txt
+python -m venv venv
+source venv/bin/activate
+pip install -e ".[dev]"
 ```
 
 ### Prerequisites
 
-- Python 3.12 or higher
+- Python 3.13
 - An OpenAI API key or Azure OpenAI endpoint
-- Z3 solver (automatically installed via `z3-solver` package)
+- Z3 solver (`z3-solver` installs the `z3` binary into the active virtual environment)
 
 ## Setup
 
@@ -65,7 +67,7 @@ OPENAI_API_KEY=your-api-key-here
 AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
 AZURE_OPENAI_KEY=your-azure-key-here
 AZURE_DEPLOYMENT_NAME=gpt-5  # or gpt-4o
-AZURE_API_VERSION=2024-02-15-preview
+AZURE_API_VERSION=2024-12-01-preview
 ```
 
 You can also set these as system environment variables instead of using a `.env` file.
@@ -150,7 +152,7 @@ pot = ProofOfThought(llm_client=client, backend="smt2")
 pot = ProofOfThought(llm_client=client, backend="json")
 ```
 
-See [BACKENDS.md](BACKENDS.md) for details on choosing a backend.
+See [docs/backends.md](docs/backends.md) for details on choosing a backend.
 
 ## Postprocessing Techniques
 
@@ -184,7 +186,7 @@ Available techniques:
 - **Decomposed Prompting**: Breaking complex questions into sub-questions
 - **Least-to-Most Prompting**: Progressive problem solving from simple to complex
 
-See [POSTPROCESSORS.md](POSTPROCESSORS.md) for complete documentation and usage examples.
+See [docs/postprocessors.md](docs/postprocessors.md) for complete documentation and usage examples.
 
 ## Architecture
 
@@ -215,10 +217,11 @@ If you cloned the repository:
 
 ```bash
 cd /path/to/proofofthought
+source venv/bin/activate
 python examples/simple_usage.py
 ```
 
-**Note:** Some examples use helper modules like `utils/azure_config.py` which are only available when running from the repository root.
+**Note:** Run examples from the repository root with the project virtual environment activated so both `z3adapter` and `venv/bin/z3` are available.
 
 ## Running Experiments
 

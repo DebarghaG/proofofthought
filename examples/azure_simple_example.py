@@ -7,7 +7,6 @@ This example shows the easiest method using the azure_config helper.
 
 import logging
 
-# Import Azure configuration helper
 from azure_config import get_client_config
 
 from z3adapter.reasoning import ProofOfThought

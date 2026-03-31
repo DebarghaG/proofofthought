@@ -274,7 +274,7 @@ Provides convenient configuration for Azure OpenAI deployments.
 
 **Required environment variables:**
 
-- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_KEY`
 - `AZURE_OPENAI_ENDPOINT`
-- `AZURE_OPENAI_API_VERSION`
-- `AZURE_GPT5_DEPLOYMENT_NAME` or `AZURE_GPT4O_DEPLOYMENT_NAME`
+- `AZURE_API_VERSION`
+- `AZURE_DEPLOYMENT_NAME`

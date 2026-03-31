@@ -3,10 +3,15 @@
 
 import logging
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from openai import OpenAI
 
 from z3adapter.reasoning import ProofOfThought
+
+project_root = Path(__file__).parent.parent
+load_dotenv(project_root / ".env")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

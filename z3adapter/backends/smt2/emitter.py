@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import logging
-import re
 from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
@@ -117,11 +116,12 @@ class ExpressionEmitter:
             comparisons = []
             prev = left
 
-            for op, comparator in zip(node.ops, node.comparators):
+            for op, comparator in zip(node.ops, node.comparators, strict=False):
                 right = self._emit_node(comparator)
-                smt_op = self.COMPARISON_OPS.get(type(op))
-                if smt_op:
-                    comparisons.append(f"({smt_op} {prev} {right})")
+                comparison_operator = self.COMPARISON_OPS.get(type(op))
+                if comparison_operator is None:
+                    raise ValueError(f"Unsupported comparison operator: {type(op)}")
+                comparisons.append(f"({comparison_operator} {prev} {right})")
                 prev = right
 
             if len(comparisons) == 1:
@@ -132,11 +132,10 @@ class ExpressionEmitter:
         elif isinstance(node, ast.BinOp):
             left = self._emit_node(node.left)
             right = self._emit_node(node.right)
-            smt_op = self.ARITH_OPS.get(type(node.op))
-            if smt_op:
-                return f"({smt_op} {left} {right})"
-            else:
+            arithmetic_operator = self.ARITH_OPS.get(type(node.op))
+            if arithmetic_operator is None:
                 raise ValueError(f"Unsupported binary operator: {type(node.op)}")
+            return f"({arithmetic_operator} {left} {right})"
 
         elif isinstance(node, ast.UnaryOp):
             operand = self._emit_node(node.operand)
@@ -168,14 +167,6 @@ class ExpressionEmitter:
             idx = self._emit_node(node.slice)
             return f"(select {value} {idx})"
 
-        elif isinstance(node, ast.List):
-            # Handle list of variable names for quantifiers
-            return [self._emit_node(elt) for elt in node.elts]
-
-        elif isinstance(node, ast.Tuple):
-            # Handle tuple (treat as list)
-            return [self._emit_node(elt) for elt in node.elts]
-
         else:
             raise ValueError(f"Unsupported AST node type: {type(node).__name__}")
 
@@ -187,6 +178,8 @@ class ExpressionEmitter:
         # First argument is the list of bound variables
         var_list = node.args[0]
         if isinstance(var_list, ast.List):
+            var_names = [self._emit_node(v) for v in var_list.elts]
+        elif isinstance(var_list, ast.Tuple):
             var_names = [self._emit_node(v) for v in var_list.elts]
         else:
             var_names = [self._emit_node(var_list)]

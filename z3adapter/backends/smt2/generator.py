@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol
+from typing import Protocol
 
 from z3adapter.backends.smt2.ir import (
     ConversionContext,
@@ -182,7 +183,9 @@ class StagedGenerator:
                 )
 
         # Match (declare-datatypes ((Name 0)) (((Name (v1) (v2)...))))
-        enum_pattern = r"\(declare-datatypes\s+\(\((\w+)\s+0\)\)\s+\(\(\((\w+)\s+((?:\(\w+\)\s*)+)\)\)\)\)"
+        enum_pattern = (
+            r"\(declare-datatypes\s+\(\((\w+)\s+0\)\)\s+\(\(\((\w+)\s+((?:\(\w+\)\s*)+)\)\)\)\)"
+        )
         for match in re.finditer(enum_pattern, output):
             name = match.group(1)
             values_str = match.group(3)
@@ -239,7 +242,7 @@ class StagedGenerator:
         """Parse knowledge base assertions from LLM output."""
         # Match (assert ...)
         assertions = self._extract_assertions(output)
-        for i, assertion_code in enumerate(assertions):
+        for assertion_code in assertions:
             assertion_id = f"kb_{len(ctx.kb_assertions)}"
             ctx.kb_assertions[assertion_id] = SMTAssertion(
                 id=assertion_id,
@@ -256,7 +259,7 @@ class StagedGenerator:
 
         # Parse assertions into scenario_assertions
         assertions = self._extract_assertions(output)
-        for i, assertion_code in enumerate(assertions):
+        for assertion_code in assertions:
             assertion_id = f"scenario_{len(ctx.scenario_assertions)}"
             ctx.scenario_assertions[assertion_id] = SMTAssertion(
                 id=assertion_id,

@@ -3,10 +3,15 @@
 
 import logging
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from openai import OpenAI
 
 from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
+
+project_root = Path(__file__).parent.parent
+load_dotenv(project_root / ".env")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -33,15 +38,18 @@ pot = ProofOfThought(
     llm_client=client,
     model=model,
     max_attempts=3,  # Retry up to 3 times
-    cache_dir="output/programs",  # Save generated programs
+    cache_dir=str(project_root / "output" / "programs"),  # Save generated programs
 )
 
 # Create evaluation pipeline
-evaluator = EvaluationPipeline(proof_of_thought=pot, output_dir="output/evaluation_results")
+evaluator = EvaluationPipeline(
+    proof_of_thought=pot,
+    output_dir=str(project_root / "output" / "evaluation_results"),
+)
 
 # Run evaluation on StrategyQA dataset
 result = evaluator.evaluate(
-    dataset="strategyqa_train.json",  # Path to dataset
+    dataset=str(project_root / "data" / "strategyQA_train.json"),
     question_field="question",  # Field name for questions
     answer_field="answer",  # Field name for ground truth
     id_field="qid",  # Field name for question IDs
