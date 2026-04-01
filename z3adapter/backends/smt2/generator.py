@@ -79,6 +79,7 @@ class StagedGenerator:
         text: str,
         question: str,
         stages: list[str] | None = None,
+        reset_context: bool = True,
     ) -> GenerationResult:
         """
         Generate SMT-LIB program through staged prompting.
@@ -87,11 +88,13 @@ class StagedGenerator:
             text: Natural language text describing the domain/rules
             question: The question to verify
             stages: Optional list of stage names to run (default: all)
+            reset_context: Whether to reset the conversion context before generation
 
         Returns:
             GenerationResult with complete program and context
         """
-        self.ctx = ConversionContext()
+        if reset_context:
+            self.ctx = ConversionContext()
         stage_outputs: dict[str, str] = {}
         errors: list[str] = []
 
@@ -167,41 +170,124 @@ class StagedGenerator:
         # Remove leading/trailing whitespace
         return output.strip()
 
+    def _canonicalize_symbol(self, symbol: str) -> str:
+        """Canonicalize a symbol name for stable SMT-LIB emission."""
+        normalized = symbol.strip().replace("-", "_")
+        return normalized.lower()
+
+    def _apply_aliases(self, output: str, ctx: ConversionContext) -> str:
+        """Rewrite known symbol aliases to their canonical SMT names."""
+        if not ctx.symbol_aliases:
+            return output
+
+        rewritten = output
+        for original, canonical in sorted(
+            ctx.symbol_aliases.items(), key=lambda item: -len(item[0])
+        ):
+            rewritten = re.sub(rf"\b{re.escape(original)}\b", canonical, rewritten)
+        return rewritten
+
+    def _extract_forms(self, output: str, command_name: str) -> list[str]:
+        """Extract balanced SMT-LIB forms starting with the given command."""
+        forms = []
+        search_start = 0
+
+        while True:
+            match = re.search(rf"\({re.escape(command_name)}\b", output[search_start:])
+            if not match:
+                break
+
+            start = search_start + match.start()
+            depth = 0
+            end = start
+            for index, char in enumerate(output[start:], start):
+                if char == "(":
+                    depth += 1
+                elif char == ")":
+                    depth -= 1
+                    if depth == 0:
+                        end = index + 1
+                        break
+
+            if end > start:
+                forms.append(output[start:end])
+                search_start = end
+            else:
+                break
+
+        return forms
+
+    def _format_enum_sort(self, sort_name: str, values: list[str]) -> str:
+        """Emit a canonical declare-datatypes block for an enum sort."""
+        constructors = " ".join(f"({value})" for value in values)
+        return f"(declare-datatypes (({sort_name} 0)) (({constructors})))"
+
     def _parse_sorts(self, output: str, ctx: ConversionContext) -> None:
         """Parse sort declarations from LLM output."""
         # Match (declare-sort Name 0)
         sort_pattern = r"\(declare-sort\s+(\w+)\s+0\)"
         for match in re.finditer(sort_pattern, output):
-            name = match.group(1)
-            if name not in ctx.sorts:
-                ctx.sorts[name] = SMTSort(
-                    name=name,
+            sort_name = match.group(1)
+            if sort_name not in ctx.sorts:
+                ctx.sorts[sort_name] = SMTSort(
+                    name=sort_name,
                     kind=SMTSortKind.UNINTERPRETED,
-                    smt_name=name,
+                    smt_name=sort_name,
                     smt_code=match.group(0),
                     emitted=True,
                 )
 
-        # Match (declare-datatypes ((Name 0)) (((Name (v1) (v2)...))))
-        enum_pattern = (
-            r"\(declare-datatypes\s+\(\((\w+)\s+0\)\)\s+\(\(\((\w+)\s+((?:\(\w+\)\s*)+)\)\)\)\)"
-        )
-        for match in re.finditer(enum_pattern, output):
-            name = match.group(1)
-            values_str = match.group(3)
-            values = re.findall(r"\((\w+)\)", values_str)
+        for form in self._extract_forms(output, "declare-datatypes"):
+            name: str | None = None
+            values_str: str | None = None
+
+            full_syntax_match = re.search(
+                r"\(declare-datatypes\s+\(\((\w+)\s+0\)\)\s+\(\((.*)\)\)\)\s*$",
+                form,
+                flags=re.DOTALL,
+            )
+            if full_syntax_match:
+                name = full_syntax_match.group(1)
+                values_str = full_syntax_match.group(2)
+            else:
+                shorthand_match = re.search(
+                    r"\(declare-datatypes\s+\(\)\s+\(\((\w+)\s+(.*)\)\)\)\s*$",
+                    form,
+                    flags=re.DOTALL,
+                )
+                if shorthand_match:
+                    name = shorthand_match.group(1)
+                    values_str = shorthand_match.group(2)
+
+            if not name or values_str is None:
+                continue
+
+            if "(" in values_str:
+                raw_values = re.findall(r"\((\w+)\)", values_str)
+                if raw_values and raw_values[0] == name:
+                    raw_values = raw_values[1:]
+            else:
+                raw_values = [value for value in re.findall(r"\b(\w+)\b", values_str) if value]
+
+            canonical_values = []
+            for value in raw_values:
+                canonical = self._canonicalize_symbol(value)
+                ctx.symbol_aliases[value] = canonical
+                canonical_values.append(canonical)
+
             if name not in ctx.sorts:
                 ctx.sorts[name] = SMTSort(
                     name=name,
                     kind=SMTSortKind.ENUM,
                     smt_name=name,
-                    params={"values": values},
-                    smt_code=match.group(0),
+                    params={"values": canonical_values},
+                    smt_code=self._format_enum_sort(name, canonical_values),
                     emitted=True,
                 )
 
     def _parse_functions(self, output: str, ctx: ConversionContext) -> None:
         """Parse function declarations from LLM output."""
+        output = self._apply_aliases(output, ctx)
         # Match (declare-fun name (Sort1 Sort2) RetSort)
         func_pattern = r"\(declare-fun\s+(\w+)\s+\(([^)]*)\)\s+(\w+)\)"
         for match in re.finditer(func_pattern, output):
@@ -223,11 +309,23 @@ class StagedGenerator:
 
     def _parse_constants(self, output: str, ctx: ConversionContext) -> None:
         """Parse constant declarations from LLM output."""
+        output = self._apply_aliases(output, ctx)
         # Match (declare-const name Sort)
         const_pattern = r"\(declare-const\s+(\w+)\s+(\w+)\)"
         for match in re.finditer(const_pattern, output):
             name = match.group(1)
             sort = match.group(2)
+
+            enum_values = {
+                value
+                for enum_sort in ctx.sorts.values()
+                if enum_sort.kind == SMTSortKind.ENUM
+                for value in enum_sort.params.get("values", [])
+            }
+            if name in enum_values:
+                continue
+            if name in ctx.functions or name in ctx.sorts:
+                continue
 
             if name not in ctx.constants:
                 ctx.constants[name] = SMTConstant(
@@ -240,6 +338,7 @@ class StagedGenerator:
 
     def _parse_kb(self, output: str, ctx: ConversionContext) -> None:
         """Parse knowledge base assertions from LLM output."""
+        output = self._apply_aliases(output, ctx)
         # Match (assert ...)
         assertions = self._extract_assertions(output)
         for assertion_code in assertions:
@@ -254,6 +353,7 @@ class StagedGenerator:
 
     def _parse_scenario(self, output: str, ctx: ConversionContext) -> None:
         """Parse scenario setup from LLM output."""
+        output = self._apply_aliases(output, ctx)
         # Parse any new constants
         self._parse_constants(output, ctx)
 
@@ -271,6 +371,7 @@ class StagedGenerator:
 
     def _parse_query(self, output: str, ctx: ConversionContext) -> None:
         """Parse query from LLM output."""
+        output = self._apply_aliases(output, ctx)
         query_id = f"query_{len(ctx.queries)}"
         ctx.queries[query_id] = SMTQuery(
             id=query_id,
@@ -338,6 +439,74 @@ class StagedGenerator:
     def get_context_summary(self) -> str:
         """Get a summary of the context for debugging/display."""
         return format_full_context(self.ctx)
+
+    def compose_context_program(
+        self,
+        *,
+        include_scenario: bool = True,
+        include_queries: bool = True,
+    ) -> str:
+        """Compose an SMT-LIB program from the accumulated context."""
+        parts = [
+            f"(set-logic {self.ctx.logic})",
+            "",
+        ]
+
+        section_defs: list[tuple[str, list[str]]] = [
+            (
+                "Sorts",
+                [sort.smt_code for sort in self.ctx.sorts.values() if sort.smt_code],
+            ),
+            (
+                "Functions",
+                [func.smt_code for func in self.ctx.functions.values() if func.smt_code],
+            ),
+            (
+                "Constants",
+                [const.smt_code for const in self.ctx.constants.values() if const.smt_code],
+            ),
+            (
+                "Knowledge Base",
+                [
+                    assertion.smt_code
+                    for assertion in self.ctx.kb_assertions.values()
+                    if assertion.smt_code
+                ],
+            ),
+            (
+                "Rules",
+                [rule.smt_code for rule in self.ctx.rules.values() if rule.smt_code],
+            ),
+        ]
+
+        if include_scenario:
+            section_defs.append(
+                (
+                    "Scenario",
+                    [
+                        assertion.smt_code
+                        for assertion in self.ctx.scenario_assertions.values()
+                        if assertion.smt_code
+                    ],
+                )
+            )
+
+        if include_queries:
+            section_defs.append(
+                (
+                    "Queries",
+                    [query.smt_code for query in self.ctx.queries.values() if query.smt_code],
+                )
+            )
+
+        for section_name, lines in section_defs:
+            if not lines:
+                continue
+            parts.append(f"; --- {section_name} ---")
+            parts.extend(lines)
+            parts.append("")
+
+        return "\n".join(parts).rstrip()
 
 
 class SimpleLLMClient:

@@ -128,6 +128,9 @@ class ConversionContext:
     # Emission order tracking
     emission_order: list[str] = field(default_factory=list)  # IDs in emission order
 
+    # Symbol aliases used to normalize LLM-generated names to canonical SMT names.
+    symbol_aliases: dict[str, str] = field(default_factory=dict)
+
     def has_sort(self, name: str) -> bool:
         """Check if sort has been registered or is a built-in."""
         builtin_sorts = {"Bool", "Int", "Real", "BoolSort", "IntSort", "RealSort"}
@@ -224,6 +227,7 @@ class ConversionContext:
                 for name, const in self.constants.items()
             },
             "variables": self.variables,
+            "symbol_aliases": self.symbol_aliases,
             "kb_assertion_count": len(self.kb_assertions),
             "rule_count": len(self.rules),
             "query_count": len(self.queries),

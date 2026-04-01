@@ -135,7 +135,7 @@ class SortsStage(PipelineStage):
                 kind=SMTSortKind.ENUM,
                 smt_name=name,
                 params={"values": values},
-                smt_code=f"(declare-datatypes (({name} 0)) ((({name} {constructors}))))",
+                smt_code=f"(declare-datatypes (({name} 0)) (({constructors})))",
             )
         elif sort_type.startswith("BitVecSort("):
             size = int(sort_type[len("BitVecSort(") : -1])

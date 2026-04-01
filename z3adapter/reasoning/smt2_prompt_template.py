@@ -54,7 +54,7 @@ Bool, Int, Real
 (declare-sort Person 0)
 
 ; Enumerated datatype
-(declare-datatypes () ((Color (red) (green) (blue))))
+(declare-datatypes ((Color 0)) (((red) (green) (blue))))
 
 ; Bitvectors
 (_ BitVec 8)  ; 8-bit bitvector sort

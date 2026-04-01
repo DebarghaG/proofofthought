@@ -27,7 +27,7 @@ Analyze the text and identify all distinct entity types, categories, or domains.
 
 ### SMT-LIB Sort Syntax:
 - Uninterpreted sort: (declare-sort SortName 0)
-- Enumeration: (declare-datatypes ((EnumName 0)) (((EnumName (val1) (val2) (val3)))))
+- Enumeration: (declare-datatypes ((EnumName 0)) (((val1) (val2) (val3))))
 
 ### Guidelines:
 - Use PascalCase for sort names (Person, Ticket, Request)
