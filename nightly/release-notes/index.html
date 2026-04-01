@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Debargha Ganguly" /><link rel="canonical" href="https://debarghaG.github.io/proofofthought/nightly/release-notes/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Release Notes - ProofOfThought Nightly</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Release Notes";
+        var mkdocs_page_input_path = "release-notes.md";
+        var mkdocs_page_url = "/proofofthought/nightly/release-notes/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ProofOfThought Nightly
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Nightly</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Release Notes</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#101dev202604011558">1.0.1.dev202604011558</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#highlights">Highlights</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#staged-smt2-backend">Staged SMT2 backend</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#document-grounded-verification-pipeline">Document-grounded verification pipeline</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#validation-and-examples">Validation and examples</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#compatibility-notes">Compatibility Notes</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../release-policy/">Release Policy</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ProofOfThought Nightly</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Release Notes</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/debarghaG/proofofthought/edit/main/docs-nightly/release-notes.md">Edit on debarghaG/proofofthought</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="nightly-release-notes">Nightly Release Notes<a class="headerlink" href="#nightly-release-notes" title="Permanent link">&para;</a></h1>
+<h2 id="101dev202604011558">1.0.1.dev202604011558<a class="headerlink" href="#101dev202604011558" title="Permanent link">&para;</a></h2>
+<p>Published on April 1, 2026.</p>
+<p>This nightly is the staged-pipeline branch snapshot published to PyPI. It is the first prerelease that packages the staged SMT2 work and the document-grounded verification pipeline together with the new nightly-release automation.</p>
+<h2 id="highlights">Highlights<a class="headerlink" href="#highlights" title="Permanent link">&para;</a></h2>
+<h3 id="staged-smt2-backend">Staged SMT2 backend<a class="headerlink" href="#staged-smt2-backend" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>ProofOfThought</code> now accepts <code>backend="staged_smt2"</code> in addition to the existing <code>json</code> and <code>smt2</code> backends.</li>
+<li>The staged backend formalizes text in ordered phases for sorts, functions, constants, and knowledge-base assertions before running query verification.</li>
+<li>The SMT2 stack now includes dedicated staged IR, parser, emitter, prompt, and backend components.</li>
+</ul>
+<h3 id="document-grounded-verification-pipeline">Document-grounded verification pipeline<a class="headerlink" href="#document-grounded-verification-pipeline" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added <code>DocumentVerificationPipeline</code> for building document-level SMT foundations from chunked source text and verifying answer options against them.</li>
+<li>Added helper exports in <code>z3adapter.reasoning</code> for <code>build_document_model</code>, <code>verify_qa_pairs</code>, <code>evaluate_dataset</code>, and <code>load_question_selector</code>.</li>
+<li>Added <code>examples/nl_smt_bench_document_verification.py</code> for running staged verification over NL-SMT-Bench-style <code>qa_outputs</code>.</li>
+</ul>
+<h3 id="validation-and-examples">Validation and examples<a class="headerlink" href="#validation-and-examples" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added integration coverage for staged backend execution and document verification behavior.</li>
+<li>Added unit coverage for the staged SMT2 IR, parser, emitter, and stage orchestration layers.</li>
+<li>Expanded documentation and examples for staged autoformalization and Azure-backed staged usage.</li>
+</ul>
+<h2 id="compatibility-notes">Compatibility Notes<a class="headerlink" href="#compatibility-notes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>This is a nightly prerelease. It may change behavior or APIs before the next stable release.</li>
+<li>The document verification pipeline requires <code>ProofOfThought(..., backend="staged_smt2")</code>.</li>
+<li>The package still requires Python 3.13 and a working <code>z3</code> executable for SMT2-backed verification flows.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../installation/" class="btn btn-neutral float-left" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../release-policy/" class="btn btn-neutral float-right" title="Release Policy">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright &copy; 2025 Debargha Ganguly</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/debarghaG/proofofthought" class="fa fa-code-fork" style="color: #fcfcfc"> debarghaG/proofofthought</a>
+        </span>
+    
+    
+      <span><a href="../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../release-policy/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
