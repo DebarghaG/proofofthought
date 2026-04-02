@@ -38,6 +38,9 @@ class ExecutionResult:
     unknown_count: int = 0
     error: str | None = None
     raw_output: str = ""
+    solver_errors: list[str] = field(default_factory=list)
+    non_model_errors: list[str] = field(default_factory=list)
+    model_errors: list[str] = field(default_factory=list)
 
     @property
     def answer(self) -> bool | None:
@@ -64,6 +67,7 @@ class Z3OutputParser:
     UNSAT_PATTERN = re.compile(r"\bunsat\b", re.IGNORECASE)
     UNKNOWN_PATTERN = re.compile(r"\bunknown\b", re.IGNORECASE)
     TIMEOUT_PATTERN = re.compile(r"\btimeout\b", re.IGNORECASE)
+    ERROR_LINE_PATTERN = re.compile(r"^\(error .+\)$", re.MULTILINE)
 
     # Model parsing patterns
     MODEL_START = re.compile(r"\(model")
@@ -83,6 +87,11 @@ class Z3OutputParser:
         # Split by push/pop blocks if present
         # Each block represents a separate query
         blocks = self._split_by_blocks(output)
+        solver_errors = self._extract_errors(output)
+        model_errors = [
+            error for error in solver_errors if "model is not available" in error.lower()
+        ]
+        non_model_errors = [error for error in solver_errors if error not in model_errors]
 
         query_results = []
         sat_count = 0
@@ -126,14 +135,37 @@ class Z3OutputParser:
             )
 
         return ExecutionResult(
-            success=len(query_results) > 0,
+            success=len(query_results) > 0 and not non_model_errors,
             queries=query_results,
             sat_count=sat_count,
             unsat_count=unsat_count,
             unknown_count=unknown_count,
-            error="No query results parsed from Z3 output" if not query_results else None,
+            error=self._build_error_message(
+                query_results=query_results,
+                non_model_errors=non_model_errors,
+            ),
             raw_output=output,
+            solver_errors=solver_errors,
+            non_model_errors=non_model_errors,
+            model_errors=model_errors,
         )
+
+    def _extract_errors(self, output: str) -> list[str]:
+        """Extract solver error lines from raw Z3 output."""
+        return [match.group(0) for match in self.ERROR_LINE_PATTERN.finditer(output)]
+
+    def _build_error_message(
+        self,
+        *,
+        query_results: list[SMTQueryResult],
+        non_model_errors: list[str],
+    ) -> str | None:
+        """Build a summary error message for parsed execution output."""
+        if non_model_errors:
+            return "Z3 reported errors: " + "; ".join(non_model_errors)
+        if not query_results:
+            return "No query results parsed from Z3 output"
+        return None
 
     def _split_by_blocks(self, output: str) -> list[str]:
         """

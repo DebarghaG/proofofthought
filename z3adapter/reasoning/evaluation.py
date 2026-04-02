@@ -77,6 +77,7 @@ class EvaluationPipeline:
         sample: dict[str, Any],
         idx: int,
         total: int,
+        text_field: str | None,
         question_field: str,
         answer_field: str,
         id_field: str | None,
@@ -98,6 +99,7 @@ class EvaluationPipeline:
         """
         # Extract fields
         question = sample[question_field]
+        text = sample[text_field] if text_field else None
         ground_truth = sample[answer_field]
         sample_id = sample.get(id_field) if id_field else f"sample_{idx}"
 
@@ -118,6 +120,7 @@ class EvaluationPipeline:
         file_ext = self.pot.backend.get_file_extension()
         result = self.pot.query(
             question=question,
+            text=text,
             save_program=True,
             program_path=os.path.join(self.output_dir, f"{sample_id}_program{file_ext}"),
         )
@@ -133,6 +136,9 @@ class EvaluationPipeline:
             "sat_count": result.sat_count,
             "unsat_count": result.unsat_count,
             "error": result.error,
+            "failure_code": result.failure_code,
+            "background_knowledge_used": result.background_knowledge_used,
+            "rigor_level": result.rigor_level,
         }
 
         # Save result
@@ -146,6 +152,7 @@ class EvaluationPipeline:
     def evaluate(
         self,
         dataset: list[dict[str, Any]] | str,
+        text_field: str | None = None,
         question_field: str = "question",
         answer_field: str = "answer",
         id_field: str | None = None,
@@ -156,6 +163,7 @@ class EvaluationPipeline:
 
         Args:
             dataset: List of samples or path to JSON file
+            text_field: Optional field name for foundation/background text
             question_field: Field name for question text
             answer_field: Field name for ground truth answer
             id_field: Optional field name for sample ID
@@ -193,6 +201,7 @@ class EvaluationPipeline:
                     sample,
                     idx,
                     len(dataset_list),
+                    text_field,
                     question_field,
                     answer_field,
                     id_field,
@@ -241,6 +250,7 @@ class EvaluationPipeline:
                         sample,
                         idx,
                         len(dataset_list),
+                        text_field,
                         question_field,
                         answer_field,
                         id_field,

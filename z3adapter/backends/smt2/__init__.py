@@ -32,6 +32,7 @@ from z3adapter.backends.smt2.prompts import (
     format_query_prompt,
     format_scenario_prompt,
     format_sorts_prompt,
+    format_world_model_smt,
 )
 from z3adapter.backends.smt2.stages import (
     ConstantsStage,
@@ -63,6 +64,7 @@ __all__ = [
     "format_scenario_prompt",
     "format_query_prompt",
     "format_full_context",
+    "format_world_model_smt",
     # IR
     "ConversionContext",
     "SMTSort",

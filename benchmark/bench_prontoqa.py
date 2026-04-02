@@ -77,14 +77,15 @@ print()
 # Get Azure OpenAI configuration
 config = get_client_config()
 
-# Backend selection (change this to "json" to test JSON backend)
-BACKEND: Literal["json", "smt2"] = "json"  # Options: "smt2" or "json"
+# Backend selection
+BACKEND: Literal["smt2", "staged_smt2"] = "staged_smt2"
 
 # Create ProofOfThought instance with configurable backend
 pot = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
     backend=BACKEND,
+    verification_mode="entailment",
     max_attempts=3,
     cache_dir=f"output/{BACKEND}_programs_prontoqa",
     z3_path="z3",
@@ -100,7 +101,8 @@ evaluator = EvaluationPipeline(
 # Run evaluation on preprocessed dataset
 result = evaluator.evaluate(
     dataset=processed_file,
-    question_field="question",
+    text_field="original_context",
+    question_field="original_question",
     answer_field="answer",
     id_field="id",
     max_samples=100,

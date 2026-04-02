@@ -36,6 +36,8 @@ class ArtifactExecution:
     error: str | None = None
     failure_code: str | None = None
     program_path: str | None = None
+    background_knowledge_used: bool = False
+    rigor_level: str = "strict_grounded"
 
 
 @dataclass
@@ -60,6 +62,8 @@ class ArtifactCheck:
     success: bool = False
     failure_code: str | None = None
     program_path: str | None = None
+    background_knowledge_used: bool = False
+    rigor_level: str = "strict_grounded"
 
 
 @dataclass
@@ -139,6 +143,8 @@ class StagedArtifact:
         success: bool = False,
         failure_code: str | None = None,
         program_path: str | None = None,
+        background_knowledge_used: bool = False,
+        rigor_level: str = "strict_grounded",
     ) -> ArtifactCheck:
         """Append a check record to the artifact history."""
         check = ArtifactCheck(
@@ -151,6 +157,8 @@ class StagedArtifact:
             success=success,
             failure_code=failure_code,
             program_path=program_path,
+            background_knowledge_used=background_knowledge_used,
+            rigor_level=rigor_level,
         )
         self.check_history.append(check)
         return check

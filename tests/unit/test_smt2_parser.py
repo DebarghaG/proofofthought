@@ -141,6 +141,17 @@ sat
 unsat"""
         result = parser.parse(output)
         assert result.unsat_count == 1
+        assert result.success is False
+        assert result.non_model_errors == ['(error "line 5: unknown sort \'Foo\'")']
+
+    def test_parse_model_unavailable_error_is_nonfatal(self, parser):
+        output = """unsat
+(error "line 8 column 10: model is not available")"""
+        result = parser.parse(output)
+        assert result.unsat_count == 1
+        assert result.success is True
+        assert result.non_model_errors == []
+        assert result.model_errors == ['(error "line 8 column 10: model is not available")']
 
     def test_parse_case_insensitive(self, parser):
         output = "SAT"

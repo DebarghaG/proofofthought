@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -16,6 +17,7 @@ from z3adapter.backends.smt2.parser import ExecutionResult, Z3OutputParser
 from z3adapter.backends.smt2.stages import Pipeline
 
 logger = logging.getLogger(__name__)
+VERIFICATION_MODE_MARKER = re.compile(r"^\s*;\s*Verification mode:\s*(\w+)\s*$", re.MULTILINE)
 
 
 class StagedSMT2Backend(Backend):
@@ -58,6 +60,7 @@ class StagedSMT2Backend(Backend):
         """
         try:
             timeout_seconds = self.verify_timeout // 1000
+            program_text = Path(program_path).read_text(encoding="utf-8")
 
             result = subprocess.run(
                 [self.z3_path, f"-T:{timeout_seconds}", program_path],
@@ -68,26 +71,37 @@ class StagedSMT2Backend(Backend):
 
             output = result.stdout + result.stderr
 
-            # Parse output
-            sat_count, unsat_count = self.parser.parse_simple(output)
+            exec_result = self.parser.parse(output)
 
-            if sat_count == 0 and unsat_count == 0:
+            if exec_result.non_model_errors:
+                return VerificationResult(
+                    answer=None,
+                    sat_count=exec_result.sat_count,
+                    unsat_count=exec_result.unsat_count,
+                    output=output,
+                    success=False,
+                    error=exec_result.error,
+                    failure_code="solver_error",
+                )
+
+            if exec_result.sat_count == 0 and exec_result.unsat_count == 0:
                 return VerificationResult(
                     answer=None,
                     sat_count=0,
                     unsat_count=0,
                     output=output,
                     success=False,
-                    error=output.strip() or f"Z3 exited with code {result.returncode}",
+                    error=exec_result.error or output.strip() or f"Z3 exited with code {result.returncode}",
                     failure_code="no_solver_result",
                 )
 
-            answer = self.determine_answer(sat_count, unsat_count)
+            query_modes = self._extract_query_modes(program_text)
+            answer = self._determine_answer(exec_result, query_modes)
 
             return VerificationResult(
                 answer=answer,
-                sat_count=sat_count,
-                unsat_count=unsat_count,
+                sat_count=exec_result.sat_count,
+                unsat_count=exec_result.unsat_count,
                 output=output,
                 success=True,
             )
@@ -131,6 +145,37 @@ class StagedSMT2Backend(Backend):
                 error=str(e),
                 failure_code="execution_error",
             )
+
+    def _extract_query_modes(self, program_text: str) -> list[str]:
+        """Extract verification modes from query block comments."""
+        return [match.group(1).strip().lower() for match in VERIFICATION_MODE_MARKER.finditer(program_text)]
+
+    def _determine_answer(self, exec_result: ExecutionResult, query_modes: list[str]) -> bool | None:
+        """Determine the boolean answer using the configured verification mode(s)."""
+        answers: list[bool | None] = []
+        normalized_modes = list(query_modes)
+        if len(normalized_modes) < len(exec_result.queries):
+            normalized_modes.extend(["consistency"] * (len(exec_result.queries) - len(normalized_modes)))
+
+        for index, query in enumerate(exec_result.queries):
+            mode = normalized_modes[index] if index < len(normalized_modes) else "consistency"
+            if query.status not in {"sat", "unsat"}:
+                answers.append(None)
+                continue
+
+            if mode == "entailment":
+                answers.append(query.status == "unsat")
+            else:
+                answers.append(query.status == "sat")
+
+        concrete_answers = [answer for answer in answers if answer is not None]
+        if len(concrete_answers) != len(answers):
+            return None
+        if all(answer is True for answer in concrete_answers):
+            return True
+        if all(answer is False for answer in concrete_answers):
+            return False
+        return None
 
     def execute_config(
         self,
@@ -298,10 +343,10 @@ class StagedSMT2Backend(Backend):
         ctx.variables = saved_variables
 
         lines.append(f"; Query: {name}")
+        lines.append("; Verification mode: consistency")
         lines.append("(push 1)")
         lines.append(f"(assert {smt_expr})")
         lines.append("(check-sat)")
-        lines.append("(get-model)")
         lines.append("(pop 1)")
 
         return "\n".join(lines)

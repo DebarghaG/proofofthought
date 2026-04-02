@@ -56,14 +56,75 @@ class TestStagedSMT2BackendExecution:
         assert result.answer is False
         assert result.unsat_count == 1
 
+    def test_execute_rejects_solver_parse_errors(self, backend):
+        """Programs with non-model Z3 errors should fail verification."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".smt2", delete=False) as f:
+            f.write("""
+(set-logic ALL)
+(declare-sort Thing 0)
+(declare-fun is_round (Thing) Bool)
+(declare-const dave Thing)
+(push 1)
+(assert (not is_round(dave)))
+(check-sat)
+(pop 1)
+""")
+            f.flush()
+            result = backend.execute(f.name)
+            os.unlink(f.name)
+
+        assert result.success is False
+        assert result.answer is None
+        assert result.failure_code == "solver_error"
+
+    def test_execute_ignores_model_unavailable_errors(self, backend):
+        """Unsat results should remain valid even if a model is requested."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".smt2", delete=False) as f:
+            f.write("""
+(set-logic ALL)
+(declare-const x Int)
+(assert (> x 10))
+(assert (< x 5))
+(check-sat)
+(get-model)
+""")
+            f.flush()
+            result = backend.execute(f.name)
+            os.unlink(f.name)
+
+        assert result.success is True
+        assert result.answer is False
+        assert result.unsat_count == 1
+
+    def test_execute_uses_entailment_mode_marker(self, backend):
+        """Entailment-mode queries should invert raw SAT/UNSAT semantics."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".smt2", delete=False) as f:
+            f.write("""
+(set-logic ALL)
+(declare-const x Int)
+(assert (= x 1))
+; Verification mode: entailment
+(push 1)
+(assert (not (= x 1)))
+(check-sat)
+(pop 1)
+""")
+            f.flush()
+            result = backend.execute(f.name)
+            os.unlink(f.name)
+
+        assert result.success is True
+        assert result.answer is True
+        assert result.unsat_count == 1
+
     def test_execute_config_simple(self, backend):
         """Test execute_config with a simple configuration."""
         config = {
             "sorts": [],
             "functions": [],
             "constants": {},
-            "knowledge_base": ["x > 0"],
-            "verifications": [{"name": "check_positive", "constraint": "x > 0"}],
+            "knowledge_base": ["1 < 2"],
+            "verifications": [{"name": "check_positive", "constraint": "1 < 2"}],
         }
 
         verify_result, exec_result = backend.execute_config(config)

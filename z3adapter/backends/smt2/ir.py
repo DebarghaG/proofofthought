@@ -9,6 +9,17 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+BUILTIN_SORT_ALIASES = {
+    "Bool": "Bool",
+    "Int": "Int",
+    "Real": "Real",
+    "String": "String",
+    "BoolSort": "Bool",
+    "IntSort": "Int",
+    "RealSort": "Real",
+    "StringSort": "String",
+}
+
 
 class SMTSortKind(Enum):
     """Kind of SMT-LIB sort."""
@@ -69,6 +80,7 @@ class SMTAssertion:
     dsl_expr: str  # Original DSL expression
     smt_expr: str  # SMT-LIB expression
     label: str | None = None  # Optional label for named assertions
+    background_knowledge: bool = False  # Assertion came from model-side common knowledge
 
     emitted: bool = False
     smt_code: str = ""
@@ -80,6 +92,8 @@ class SMTQuery:
 
     id: str  # Unique query identifier
     name: str  # Human-readable name
+    formula: str = ""  # Canonical SMT-LIB boolean formula being checked
+    verification_mode: str = "entailment"  # entailment or consistency
     assertions: list[str] = field(default_factory=list)  # Additional assertion IDs
     check_model: bool = True  # Whether to emit (get-model)
     get_values: list[str] = field(default_factory=list)  # Expressions for (get-value)
@@ -133,21 +147,12 @@ class ConversionContext:
 
     def has_sort(self, name: str) -> bool:
         """Check if sort has been registered or is a built-in."""
-        builtin_sorts = {"Bool", "Int", "Real", "BoolSort", "IntSort", "RealSort"}
-        return name in self.sorts or name in builtin_sorts
+        return name in self.sorts or name in BUILTIN_SORT_ALIASES
 
     def resolve_sort_name(self, name: str) -> str:
         """Resolve a DSL sort name to its SMT-LIB name."""
-        # Handle built-in sort aliases
-        builtin_map = {
-            "BoolSort": "Bool",
-            "IntSort": "Int",
-            "RealSort": "Real",
-        }
-        if name in builtin_map:
-            return builtin_map[name]
-        if name in ("Bool", "Int", "Real"):
-            return name
+        if name in BUILTIN_SORT_ALIASES:
+            return BUILTIN_SORT_ALIASES[name]
         # Look up user-defined sort
         if name in self.sorts:
             return self.sorts[name].smt_name
@@ -245,6 +250,7 @@ class ConversionContext:
                     "dsl_expr": assertion.dsl_expr,
                     "smt_expr": assertion.smt_expr,
                     "label": assertion.label,
+                    "background_knowledge": assertion.background_knowledge,
                     "emitted": assertion.emitted,
                     "smt_code": assertion.smt_code,
                 }
@@ -256,6 +262,7 @@ class ConversionContext:
                     "dsl_expr": assertion.dsl_expr,
                     "smt_expr": assertion.smt_expr,
                     "label": assertion.label,
+                    "background_knowledge": assertion.background_knowledge,
                     "emitted": assertion.emitted,
                     "smt_code": assertion.smt_code,
                 }
@@ -267,6 +274,7 @@ class ConversionContext:
                     "dsl_expr": assertion.dsl_expr,
                     "smt_expr": assertion.smt_expr,
                     "label": assertion.label,
+                    "background_knowledge": assertion.background_knowledge,
                     "emitted": assertion.emitted,
                     "smt_code": assertion.smt_code,
                 }
@@ -276,6 +284,8 @@ class ConversionContext:
                 name: {
                     "id": query.id,
                     "name": query.name,
+                    "formula": query.formula,
+                    "verification_mode": query.verification_mode,
                     "assertions": query.assertions,
                     "check_model": query.check_model,
                     "get_values": query.get_values,
@@ -330,6 +340,7 @@ class ConversionContext:
                 dsl_expr=assertion.get("dsl_expr", ""),
                 smt_expr=assertion.get("smt_expr", ""),
                 label=assertion.get("label"),
+                background_knowledge=bool(assertion.get("background_knowledge", False)),
                 emitted=bool(assertion.get("emitted", False)),
                 smt_code=assertion.get("smt_code", ""),
             )
@@ -340,6 +351,7 @@ class ConversionContext:
                 dsl_expr=assertion.get("dsl_expr", ""),
                 smt_expr=assertion.get("smt_expr", ""),
                 label=assertion.get("label"),
+                background_knowledge=bool(assertion.get("background_knowledge", False)),
                 emitted=bool(assertion.get("emitted", False)),
                 smt_code=assertion.get("smt_code", ""),
             )
@@ -350,6 +362,7 @@ class ConversionContext:
                 dsl_expr=assertion.get("dsl_expr", ""),
                 smt_expr=assertion.get("smt_expr", ""),
                 label=assertion.get("label"),
+                background_knowledge=bool(assertion.get("background_knowledge", False)),
                 emitted=bool(assertion.get("emitted", False)),
                 smt_code=assertion.get("smt_code", ""),
             )
@@ -358,6 +371,8 @@ class ConversionContext:
             ctx.queries[name] = SMTQuery(
                 id=query.get("id", name),
                 name=query.get("name", name),
+                formula=query.get("formula", ""),
+                verification_mode=query.get("verification_mode", "entailment"),
                 assertions=list(query.get("assertions", [])),
                 check_model=bool(query.get("check_model", True)),
                 get_values=list(query.get("get_values", [])),
