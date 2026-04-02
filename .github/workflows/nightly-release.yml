@@ -1,0 +1,80 @@
+name: Nightly PyPI Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      stamp:
+        description: "Optional UTC timestamp stamp in YYYYMMDDHHMM format"
+        required: false
+        type: string
+      publish:
+        description: "Upload the validated artifacts to PyPI"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install release dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run test suite
+        run: pytest -q
+
+      - name: Stamp nightly version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.stamp }}" ]; then
+            NIGHTLY_VERSION="$(python scripts/release_version.py nightly --stamp "${{ inputs.stamp }}")"
+          else
+            NIGHTLY_VERSION="$(python scripts/release_version.py nightly)"
+          fi
+          python scripts/release_version.py write --version "$NIGHTLY_VERSION"
+          echo "nightly_version=$NIGHTLY_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing nightly version $NIGHTLY_VERSION"
+
+      - name: Build distributions
+        run: |
+          python scripts/clean_build_artifacts.py
+          python -m build --sdist --wheel --no-isolation
+
+      - name: Validate distributions
+        run: |
+          python -m twine check dist/*
+          python scripts/check_release_artifacts.py dist
+
+      - name: Smoke install wheel
+        shell: bash
+        run: |
+          python -m venv /tmp/proofofthought-nightly-smoke
+          /tmp/proofofthought-nightly-smoke/bin/pip install --upgrade pip
+          /tmp/proofofthought-nightly-smoke/bin/pip install dist/*.whl
+          /tmp/proofofthought-nightly-smoke/bin/python -c "import proofofthought, z3adapter; assert proofofthought.__version__ == '${{ steps.version.outputs.nightly_version }}'; assert proofofthought.__version__ == z3adapter.__version__; print(proofofthought.__version__)"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: proofofthought-nightly-${{ steps.version.outputs.nightly_version }}
+          path: dist/*
+
+      - name: Publish to PyPI
+        if: ${{ inputs.publish }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

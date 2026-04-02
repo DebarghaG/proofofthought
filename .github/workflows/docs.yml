@@ -22,14 +22,20 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
           pip install mkdocs mkdocs-material pymdown-extensions
 
-      - name: Build documentation
-        run: mkdocs build
+      - name: Build stable documentation
+        run: mkdocs build --clean --site-dir site
+
+      - name: Build v1.0.1 documentation
+        run: mkdocs build -f mkdocs-v1.0.1.yml --clean --site-dir site/v1.0.1
+
+      - name: Build nightly documentation
+        run: mkdocs build -f mkdocs-nightly.yml --clean --site-dir site/nightly
 
       - name: Deploy to GitHub Pages
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main')

@@ -207,28 +207,163 @@ class ConversionContext:
             "logic": self.logic,
             "sorts": {
                 name: {
+                    "name": sort.name,
                     "kind": sort.kind.value,
                     "smt_name": sort.smt_name,
                     "params": sort.params,
                     "emitted": sort.emitted,
+                    "smt_code": sort.smt_code,
                 }
                 for name, sort in self.sorts.items()
             },
             "functions": {
                 name: {
+                    "name": func.name,
+                    "smt_name": func.smt_name,
                     "domain": func.domain,
                     "range_sort": func.range_sort,
                     "emitted": func.emitted,
+                    "smt_code": func.smt_code,
                 }
                 for name, func in self.functions.items()
             },
             "constants": {
-                name: {"sort": const.sort, "emitted": const.emitted}
+                name: {
+                    "name": const.name,
+                    "smt_name": const.smt_name,
+                    "sort": const.sort,
+                    "emitted": const.emitted,
+                    "smt_code": const.smt_code,
+                }
                 for name, const in self.constants.items()
             },
             "variables": self.variables,
             "symbol_aliases": self.symbol_aliases,
-            "kb_assertion_count": len(self.kb_assertions),
-            "rule_count": len(self.rules),
-            "query_count": len(self.queries),
+            "kb_assertions": {
+                name: {
+                    "id": assertion.id,
+                    "dsl_expr": assertion.dsl_expr,
+                    "smt_expr": assertion.smt_expr,
+                    "label": assertion.label,
+                    "emitted": assertion.emitted,
+                    "smt_code": assertion.smt_code,
+                }
+                for name, assertion in self.kb_assertions.items()
+            },
+            "rules": {
+                name: {
+                    "id": assertion.id,
+                    "dsl_expr": assertion.dsl_expr,
+                    "smt_expr": assertion.smt_expr,
+                    "label": assertion.label,
+                    "emitted": assertion.emitted,
+                    "smt_code": assertion.smt_code,
+                }
+                for name, assertion in self.rules.items()
+            },
+            "scenario_assertions": {
+                name: {
+                    "id": assertion.id,
+                    "dsl_expr": assertion.dsl_expr,
+                    "smt_expr": assertion.smt_expr,
+                    "label": assertion.label,
+                    "emitted": assertion.emitted,
+                    "smt_code": assertion.smt_code,
+                }
+                for name, assertion in self.scenario_assertions.items()
+            },
+            "queries": {
+                name: {
+                    "id": query.id,
+                    "name": query.name,
+                    "assertions": query.assertions,
+                    "check_model": query.check_model,
+                    "get_values": query.get_values,
+                    "emitted": query.emitted,
+                    "smt_code": query.smt_code,
+                }
+                for name, query in self.queries.items()
+            },
+            "emission_order": self.emission_order,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ConversionContext":
+        """Rebuild a conversion context from serialized data."""
+        ctx = cls(logic=data.get("logic", "ALL"))
+
+        for name, sort in data.get("sorts", {}).items():
+            ctx.sorts[name] = SMTSort(
+                name=sort.get("name", name),
+                kind=SMTSortKind(sort["kind"]),
+                smt_name=sort.get("smt_name", name),
+                params=dict(sort.get("params", {})),
+                emitted=bool(sort.get("emitted", False)),
+                smt_code=sort.get("smt_code", ""),
+            )
+
+        for name, func in data.get("functions", {}).items():
+            ctx.functions[name] = SMTFunction(
+                name=func.get("name", name),
+                smt_name=func.get("smt_name", name),
+                domain=list(func.get("domain", [])),
+                range_sort=func.get("range_sort", ""),
+                emitted=bool(func.get("emitted", False)),
+                smt_code=func.get("smt_code", ""),
+            )
+
+        for name, const in data.get("constants", {}).items():
+            ctx.constants[name] = SMTConstant(
+                name=const.get("name", name),
+                smt_name=const.get("smt_name", name),
+                sort=const.get("sort", ""),
+                emitted=bool(const.get("emitted", False)),
+                smt_code=const.get("smt_code", ""),
+            )
+
+        ctx.variables = dict(data.get("variables", {}))
+        ctx.symbol_aliases = dict(data.get("symbol_aliases", {}))
+
+        for name, assertion in data.get("kb_assertions", {}).items():
+            ctx.kb_assertions[name] = SMTAssertion(
+                id=assertion.get("id", name),
+                dsl_expr=assertion.get("dsl_expr", ""),
+                smt_expr=assertion.get("smt_expr", ""),
+                label=assertion.get("label"),
+                emitted=bool(assertion.get("emitted", False)),
+                smt_code=assertion.get("smt_code", ""),
+            )
+
+        for name, assertion in data.get("rules", {}).items():
+            ctx.rules[name] = SMTAssertion(
+                id=assertion.get("id", name),
+                dsl_expr=assertion.get("dsl_expr", ""),
+                smt_expr=assertion.get("smt_expr", ""),
+                label=assertion.get("label"),
+                emitted=bool(assertion.get("emitted", False)),
+                smt_code=assertion.get("smt_code", ""),
+            )
+
+        for name, assertion in data.get("scenario_assertions", {}).items():
+            ctx.scenario_assertions[name] = SMTAssertion(
+                id=assertion.get("id", name),
+                dsl_expr=assertion.get("dsl_expr", ""),
+                smt_expr=assertion.get("smt_expr", ""),
+                label=assertion.get("label"),
+                emitted=bool(assertion.get("emitted", False)),
+                smt_code=assertion.get("smt_code", ""),
+            )
+
+        for name, query in data.get("queries", {}).items():
+            ctx.queries[name] = SMTQuery(
+                id=query.get("id", name),
+                name=query.get("name", name),
+                assertions=list(query.get("assertions", [])),
+                check_model=bool(query.get("check_model", True)),
+                get_values=list(query.get("get_values", [])),
+                emitted=bool(query.get("emitted", False)),
+                smt_code=query.get("smt_code", ""),
+            )
+
+        ctx.emission_order = list(data.get("emission_order", []))
+        return ctx

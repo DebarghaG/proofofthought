@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-import shutil
 
 import pytest
 
+from z3adapter._z3 import is_z3_available
 from z3adapter.backends.smt2 import SimpleLLMClient, StagedGenerator
 from z3adapter.reasoning import (
     DocumentVerificationPipeline,
@@ -17,7 +17,7 @@ from z3adapter.reasoning import (
 
 
 def z3_available() -> bool:
-    return shutil.which("z3") is not None
+    return is_z3_available()
 
 
 class _FakeMessage:

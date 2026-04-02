@@ -20,12 +20,18 @@ While large language models have demonstrated impressive capabilities in natural
 
 ## ProofOfThought: Bridging Natural Language and Formal Logic
 
-ProofOfThought addresses this challenge by combining the flexibility of language models with the rigor of automated theorem provers. It makes three key contributions:
+ProofOfThought addresses this challenge by combining the flexibility of language models with the rigor of automated theorem provers. In the staged major release it makes three key contributions:
 
-- **Provides a systematic pipeline for translating natural language questions into formal logic**, ensuring that informal reasoning is grounded in verifiable formal representations through both SMT-LIB 2.0 and a structured JSON DSL.
+- **Provides a systematic pipeline for translating natural language questions into formal logic**, ensuring that informal reasoning is grounded in verifiable formal representations centered on SMT-LIB 2.0 and Z3.
 
 - **Leverages the Z3 theorem prover to provide sound logical verification**, moving beyond language model predictions to mathematically guaranteed correctness through satisfiability checking.
 
-- **Implements iterative refinement with error feedback**, allowing language models to learn from verification failures and improve program generation through multi-turn conversations with concrete error diagnostics.
+- **Makes intermediate formalization stages explicit and durable**, allowing users and LLMs to inspect, persist, and rerun individual stages instead of treating formalization as a single opaque generation step.
+
+This staged structure matters for current AI systems because the same substrate can support:
+
+- policy and compliance guardrails for tool-using agents
+- post-hoc auditing of agent trajectories
+- code verification from contracts and invariants
 
 ProofOfThought's architecture bridges two complementary paradigms: the remarkable natural language understanding of modern LLMs and the formal soundness guarantees of automated theorem provers. By making the translation process explicit and the verification results interpretable, the system provides both correctness and explainability—essential properties for trustworthy AI reasoning systems.

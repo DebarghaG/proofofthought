@@ -5,6 +5,7 @@ from z3adapter.backends.smt2.emitter import ExpressionEmitter, emit_smt2_expr
 from z3adapter.backends.smt2.generator import (
     GenerationResult,
     GenerationStage,
+    STAGE_ORDER,
     SimpleLLMClient,
     StagedGenerator,
 )
@@ -52,6 +53,7 @@ __all__ = [
     "StagedGenerator",
     "GenerationResult",
     "GenerationStage",
+    "STAGE_ORDER",
     "SimpleLLMClient",
     # Prompts
     "format_sorts_prompt",

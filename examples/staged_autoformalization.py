@@ -16,7 +16,7 @@ import logging
 
 from azure_config import DEPLOYMENT_NAME, get_azure_client
 
-from z3adapter.backends.smt2 import (
+from proofofthought.backends.smt2 import (
     StagedGenerator,
     StagedSMT2Backend,
 )

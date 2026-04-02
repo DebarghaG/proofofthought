@@ -2,7 +2,31 @@
 
 ## Dependencies
 
-ProofOfThought requires Python 3.13.
+ProofOfThought requires Python 3.10 or newer.
+
+## Release Channels
+
+### Stable
+
+Install the latest stable release from PyPI:
+
+```bash
+pip install proofofthought
+```
+
+### Nightly
+
+Install the latest nightly prerelease from PyPI:
+
+```bash
+pip install --pre proofofthought
+```
+
+Nightly builds are published from the current `main` branch. They can introduce breaking changes and should be pinned to an explicit prerelease version when reproducibility matters.
+
+For the nightly-only documentation set, use `/nightly/` on the docs site:
+
+<https://debarghaG.github.io/proofofthought/nightly/>
 
 ### Core Dependencies
 
@@ -16,9 +40,7 @@ pip install -e ".[dev]"
 
 ## Z3 Verification Setup
 
-### JSON Backend
-
-The JSON backend requires no additional setup beyond installing `z3-solver`, which includes the Python API.
+The supported execution path is the staged SMT-LIB pipeline.
 
 ### SMT2 Backend
 
@@ -99,9 +121,14 @@ FileNotFoundError: Z3 executable not found: 'z3'
 
 **Solutions:**
 
-1. Switch to JSON backend: `ProofOfThought(backend="json")`
+1. Activate the same virtual environment you installed into, then retry.
 2. Specify the Z3 path explicitly: `ProofOfThought(z3_path="/path/to/z3")`
 3. Add Z3 to your PATH: `export PATH=$PATH:/path/to/z3/bin`
+4. Install `z3-solver` into the active environment if it is missing.
+
+## Legacy Docs
+
+If you need the older `1.0.1` line, use the archived docs at `/v1.0.1/`.
 
 ### Import errors when running examples
 
@@ -118,7 +145,7 @@ cd /path/to/proofofthought
 python examples/simple_usage.py  # ✓
 ```
 
-**Reason:** The example scripts rely on the project root and the activated virtual environment so both `z3adapter` and `z3` resolve correctly.
+**Reason:** The example scripts rely on the project root and the active environment so the `proofofthought` package and the `z3` executable resolve correctly.
 
 ### Azure authentication errors
 
@@ -132,7 +159,7 @@ config = get_client_config()  # Should not raise
 
 The following version constraints are defined in `pyproject.toml` and `requirements.txt`:
 
-- **Python:** `>=3.13,<3.14`
+- **Python:** `>=3.10,<3.14`
 - **Z3:** `>=4.15.0` (tested with `4.15.3.0`)
 - **OpenAI:** `>=2.0.0` (tested with `2.0.1`)
 - **scikit-learn:** `>=1.7.0` (tested with `1.7.2`)

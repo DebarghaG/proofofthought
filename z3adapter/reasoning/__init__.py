@@ -16,9 +16,14 @@ from z3adapter.reasoning.document_verification import (
     verify_qa_pairs,
 )
 from z3adapter.reasoning.evaluation import EvaluationMetrics, EvaluationPipeline, EvaluationResult
-from z3adapter.reasoning.program_generator import GenerationResult, Z3ProgramGenerator
 from z3adapter.reasoning.proof_of_thought import ProofOfThought, QueryResult
-from z3adapter.reasoning.verifier import VerificationResult, Z3Verifier
+from z3adapter.reasoning.staged_artifact import (
+    ArtifactCheck,
+    ArtifactExecution,
+    ArtifactTraceEntry,
+    STAGE_ORDER,
+    StagedArtifact,
+)
 
 __all__ = [
     "DocumentChunkRecord",
@@ -34,12 +39,13 @@ __all__ = [
     "verify_qa_pairs",
     "evaluate_dataset",
     "load_question_selector",
-    "Z3Verifier",
-    "VerificationResult",
-    "Z3ProgramGenerator",
-    "GenerationResult",
     "ProofOfThought",
     "QueryResult",
+    "StagedArtifact",
+    "ArtifactExecution",
+    "ArtifactTraceEntry",
+    "ArtifactCheck",
+    "STAGE_ORDER",
     "EvaluationPipeline",
     "EvaluationResult",
     "EvaluationMetrics",

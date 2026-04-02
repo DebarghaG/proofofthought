@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Example: Using ProofOfThought with Azure OpenAI GPT-5."""
+"""Example: Using ProofOfThought with Azure OpenAI GPT-5 and the staged query path."""
 
 import logging
 
 from azure_config import get_client_config
 
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -19,7 +19,6 @@ pot = ProofOfThought(
     model=config["model"],
     max_attempts=3,
     verify_timeout=10000,
-    optimize_timeout=100000,
 )
 
 # Ask a question
@@ -32,7 +31,7 @@ result = pot.query(
     temperature=0.1,
     max_tokens=16384,  # GPT-5 supports up to 16K output tokens
     save_program=True,
-    program_path="azure_gpt5_program.json",
+    program_path="azure_gpt5_program.smt2",
 )
 
 # Print results
@@ -48,15 +47,14 @@ print(f"UNSAT count: {result.unsat_count}")
 
 if result.error:
     print(f"\nError: {result.error}")
+if result.failure_code:
+    print(f"Failure code: {result.failure_code}")
 
-if result.json_program:
-    print("\nGenerated JSON program structure:")
-    print(f"  - Sorts: {len(result.json_program.get('sorts', []))}")
-    print(f"  - Functions: {len(result.json_program.get('functions', []))}")
-    print(f"  - Constants: {len(result.json_program.get('constants', {}))}")
-    print(f"  - Knowledge base: {len(result.json_program.get('knowledge_base', []))}")
-    print(f"  - Verifications: {len(result.json_program.get('verifications', []))}")
-    print("\nProgram saved to: azure_gpt5_program.json")
+print(f"Program format: {result.program_format}")
+print(f"Program saved to: {result.program_path}")
+
+if result.smt2_program:
+    print(f"Generated SMT-LIB lines: {len(result.smt2_program.splitlines())}")
 
 # Demonstrate batch processing with GPT-5
 print("\n" + "=" * 80)

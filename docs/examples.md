@@ -1,75 +1,62 @@
 # Examples
 
-This page demonstrates common usage patterns through example scripts.
-
-All examples are located in the `examples/` directory and should be run from the project root:
+All examples live in `examples/` and should be run from the repository root:
 
 ```bash
-python examples/{script}.py
+python examples/<script>.py
 ```
 
 ## Basic Query
 
-The simplest way to use ProofOfThought is through a single query.
-
 **File:** `examples/simple_usage.py`
+
+Use this first if you want the shortest path to a working SMT-LIB-backed query.
 
 ```python
 from openai import OpenAI
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-pot = ProofOfThought(llm_client=client, model="gpt-4o")
+client = OpenAI(api_key="...")
+pot = ProofOfThought(llm_client=client)
 
-result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-print(result.answer)  # False
+result = pot.query(
+    "Would Nancy Pelosi publicly denounce abortion?",
+    save_program=True,
+    program_path="output/simple_usage.smt2",
+    save_artifact=True,
+    artifact_path="output/simple_usage.artifact.json",
+)
+
+print(result.answer)
+print(result.program_path)
+print(result.artifact.completed_stages)
 ```
 
-## Azure OpenAI
-
-For Azure OpenAI deployments, use the provided configuration utility.
-
-**File:** `examples/azure_simple_example.py`
-
-```python
-from utils.azure_config import get_client_config
-from z3adapter.reasoning import ProofOfThought
-
-config = get_client_config()
-pot = ProofOfThought(llm_client=config["llm_client"], model=config["model"])
-
-result = pot.query("Can fish breathe underwater?")
-print(result.answer)  # True
-```
-
-## Backend Comparison
-
-You can compare how the two backends perform on the same question.
+## Incremental Staged Workflow
 
 **File:** `examples/backend_comparison.py`
 
-```python
-config = get_client_config()
-question = "Can fish breathe underwater?"
+This example now compares:
 
-pot_json = ProofOfThought(llm_client=config["llm_client"], backend="json")
-pot_smt2 = ProofOfThought(llm_client=config["llm_client"], backend="smt2")
+- the one-shot convenience path
+- the explicit staged artifact workflow
 
-result_json = pot_json.query(question)
-result_smt2 = pot_smt2.query(question)
+Use it when you want to understand how the same question can be built stage by stage and resumed later.
 
-print(f"JSON: {result_json.answer}")
-print(f"SMT2: {result_smt2.answer}")
-```
+## Azure OpenAI
+
+**File:** `examples/azure_simple_example.py`
+
+Use this for the same flow with Azure OpenAI configuration loaded from the repo helpers.
 
 ## Batch Evaluation
 
-For evaluating multiple questions from a dataset, use the evaluation pipeline.
-
 **File:** `examples/batch_evaluation.py`
 
+Evaluate a dataset with the default staged path:
+
 ```python
-from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
+from proofofthought import EvaluationPipeline, ProofOfThought
 
 pot = ProofOfThought(llm_client=client)
 evaluator = EvaluationPipeline(proof_of_thought=pot, output_dir="results/")
@@ -78,144 +65,34 @@ result = evaluator.evaluate(
     dataset="data/strategyQA_train.json",
     question_field="question",
     answer_field="answer",
-    max_samples=100
-)
-
-print(f"Accuracy: {result.metrics.accuracy:.2%}")
-print(f"F1 Score: {result.metrics.f1_score:.4f}")
-```
-
-## Azure + SMT2 Evaluation
-
-This example combines Azure OpenAI with the SMT2 backend for batch evaluation.
-
-**File:** `examples/batch_evaluation_smt2_azure.py`
-
-```python
-config = get_client_config()
-
-pot = ProofOfThought(
-    llm_client=config["llm_client"],
-    model=config["model"],
-    backend="smt2"
-)
-
-evaluator = EvaluationPipeline(proof_of_thought=pot)
-result = evaluator.evaluate("data/strategyQA_train.json", max_samples=50)
-```
-
-## Full Benchmark Suite
-
-For comprehensive benchmarking, the experiments pipeline runs all datasets with both backends.
-
-**File:** `experiments_pipeline.py`
-
-This script runs all 5 benchmarks (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA) with both backends:
-
-```bash
-python experiments_pipeline.py
-```
-
-**Implementation details:**
-
-- Modifies `benchmark/bench_*.py` files to set the backend via regex substitution
-- Runs each benchmark script as a subprocess with a 1-hour timeout
-- Collects metrics from `output/{backend}_evaluation_{benchmark}/` directories
-- Generates a markdown table and updates README.md with results
-
-**Configuration** (`experiments_pipeline.py:29-41`):
-```python
-BENCHMARKS = {
-    "prontoqa": "benchmark/bench_prontoqa.py",
-    "folio": "benchmark/bench_folio.py",
-    "proofwriter": "benchmark/bench_proofwriter.py",
-    "conditionalqa": "benchmark/bench_conditionalqa.py",
-    "strategyqa": "benchmark/bench_strategyqa.py",
-}
-BACKENDS = ["smt2", "json"]
-```
-
-## Benchmark Script Structure
-
-Individual benchmark scripts follow a common pattern, illustrated here with StrategyQA.
-
-**File:** `benchmark/bench_strategyqa.py`
-
-```python
-config = get_client_config()
-
-pot = ProofOfThought(
-    llm_client=config["llm_client"],
-    model=config["model"],
-    backend=BACKEND,  # Modified by experiments_pipeline.py
-    max_attempts=3,
-    cache_dir=f"output/{BACKEND}_programs_strategyqa",
-)
-
-evaluator = EvaluationPipeline(
-    proof_of_thought=pot,
-    output_dir=f"output/{BACKEND}_evaluation_strategyqa",
-    num_workers=10,  # ThreadPoolExecutor for parallel processing
-)
-
-result = evaluator.evaluate(
-    dataset="data/strategyQA_train.json",
-    id_field="qid",
     max_samples=100,
-    skip_existing=True,  # Resume interrupted runs
 )
 ```
 
-## Dataset Format
+## Document-Grounded Verification
 
-Datasets should be formatted as JSON arrays of objects:
+**File:** `examples/nl_smt_bench_document_verification.py`
 
-```json
-[
-  {
-    "question": "Can fish breathe underwater?",
-    "answer": true
-  },
-  {
-    "question": "Do humans have wings?",
-    "answer": false
-  }
-]
-```
+This is the advanced staged SMT-LIB workflow for document models and QA-pair verification. Use it when you need chunked document formalization rather than single-question reasoning.
 
-You can optionally include an ID field:
+## Agent Guardrails And Audits
 
-```json
-{"qid": "sample_123", "question": "...", "answer": true}
-```
+**File:** `examples/agent_guardrail_audit.py`
 
-Use the `question_field`, `answer_field`, and `id_field` parameters to specify custom field names.
+This example shows the staged foundation pattern for pre-action tool-call checks and post-hoc trajectory auditing over trace entries.
 
-## Saving Programs
+## Code Verification
 
-To save generated programs to disk for inspection:
+**File:** `examples/code_contract_verification.py`
 
-```python
-result = pot.query(
-    "Can fish breathe underwater?",
-    save_program=True,
-    program_path="output/my_program.smt2"
-)
-```
+This example shows how to build a reusable foundation from code plus contracts/invariants, then run a check against that foundation.
 
-If you don't specify a path, the default is: `{cache_dir}/{auto_generated}{ext}`
+## Postprocessors
 
-## Advanced Configuration
+**File:** `examples/postprocessor_example.py`
 
-For more control over the reasoning process, you can customize various parameters:
+Shows how to combine the staged query path with techniques such as self-refine and self-consistency.
 
-```python
-pot = ProofOfThought(
-    llm_client=client,
-    model="gpt-5",
-    backend="smt2",
-    max_attempts=5,           # More retries
-    verify_timeout=20000,     # 20s timeout
-    z3_path="/custom/z3"      # Custom Z3 binary
-)
-```
+## Legacy Line
+
+If you need the pre-major release behavior, see the archived `1.0.1` docs at `/v1.0.1/`.

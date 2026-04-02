@@ -13,7 +13,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
+from proofofthought import EvaluationPipeline, ProofOfThought
 
 project_root = Path(__file__).parent.parent
 load_dotenv(project_root / ".env")
@@ -55,9 +55,8 @@ for idx, question_data in enumerate(data[:max_questions]):
         # Manual JSON extraction
         extracted_json = extract_json_from_markdown(response.content)
 
-        # Manual Z3 execution
-        interpreter = Z3JSONInterpreter(output_json_path)
-        interpreter.run()
+        # Manual legacy-backend execution
+        run_legacy_backend(output_json_path)
 
         # Manual result parsing
         sat_occurrences = full_output.count(': SAT')
@@ -163,13 +162,14 @@ for i, query_result in enumerate(result.results[:3]):
     print(f"  Answer: {query_result.answer}")
     print(f"  Success: {query_result.success}")
     print(f"  Attempts: {query_result.num_attempts}")
+    print(f"  Program format: {query_result.program_format}")
+    if query_result.program_path:
+        print(f"  Program path: {query_result.program_path}")
+    if query_result.failure_code:
+        print(f"  Failure code: {query_result.failure_code}")
 
-    # Access generated program if needed
-    if query_result.json_program:
-        print("  Program structure:")
-        print(f"    - Sorts: {len(query_result.json_program.get('sorts', []))}")
-        print(f"    - Functions: {len(query_result.json_program.get('functions', []))}")
-        print(f"    - KB assertions: {len(query_result.json_program.get('knowledge_base', []))}")
+    if query_result.smt2_program:
+        print(f"  SMT-LIB lines: {len(query_result.smt2_program.splitlines())}")
 
 # Ground truth and predictions are also available
 print(f"\nGround truth labels: {result.y_true[:10]}")

@@ -4,7 +4,6 @@ Based on the Least-to-Most Prompting technique from:
 "Least-to-Most Prompting Enables Complex Reasoning in Large Language Models" (Zhou et al., 2022)
 """
 
-import json
 import logging
 import os
 import re
@@ -264,13 +263,14 @@ Progressive sub-problems:"""
                 return QueryResult(
                     question=sub_problem,
                     answer=None,
-                    json_program=None,
                     sat_count=0,
                     unsat_count=0,
                     output="",
                     success=False,
                     num_attempts=0,
+                    backend=generator.backend,
                     error="Failed to generate program",
+                    failure_code=gen_result.failure_code or "generation_failed",
                 )
 
             # Save and execute
@@ -284,10 +284,7 @@ Progressive sub-problems:"""
             program_path = temp_file.name
 
             with open(program_path, "w") as f:
-                if generator.backend == "json":
-                    json.dump(gen_result.program, f, indent=2)
-                else:
-                    f.write(gen_result.program)  # type: ignore
+                f.write(gen_result.program)
 
             verify_result = backend.execute(program_path)
 
@@ -300,12 +297,19 @@ Progressive sub-problems:"""
             return QueryResult(
                 question=sub_problem,
                 answer=verify_result.answer,
-                json_program=gen_result.json_program,
                 sat_count=verify_result.sat_count,
                 unsat_count=verify_result.unsat_count,
                 output=verify_result.output,
                 success=verify_result.success and verify_result.answer is not None,
                 num_attempts=1,
+                backend=generator.backend,
+                program_format=gen_result.program_format,
+                smt2_program=gen_result.smt2_program,
+                failure_code=(
+                    None
+                    if verify_result.success and verify_result.answer is not None
+                    else verify_result.failure_code or "verification_failed"
+                ),
             )
 
         except Exception as e:
@@ -313,13 +317,14 @@ Progressive sub-problems:"""
             return QueryResult(
                 question=sub_problem,
                 answer=None,
-                json_program=None,
                 sat_count=0,
                 unsat_count=0,
                 output="",
                 success=False,
                 num_attempts=0,
+                backend=generator.backend,
                 error=str(e),
+                failure_code="unexpected_exception",
             )
 
     def _synthesize_final_answer(
@@ -393,10 +398,7 @@ Now create a complete logical program that synthesizes these progressive insight
             program_path = temp_file.name
 
             with open(program_path, "w") as f:
-                if generator.backend == "json":
-                    json.dump(gen_result.program, f, indent=2)
-                else:
-                    f.write(gen_result.program)  # type: ignore
+                f.write(gen_result.program)
 
             verify_result = backend.execute(program_path)
 
@@ -415,12 +417,14 @@ Now create a complete logical program that synthesizes these progressive insight
             return QueryResult(
                 question=question,
                 answer=verify_result.answer,
-                json_program=gen_result.json_program,
                 sat_count=verify_result.sat_count,
                 unsat_count=verify_result.unsat_count,
                 output=verify_result.output,
                 success=True,
                 num_attempts=1,
+                backend=generator.backend,
+                program_format=gen_result.program_format,
+                smt2_program=gen_result.smt2_program,
             )
 
         except Exception as e:

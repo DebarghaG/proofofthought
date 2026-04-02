@@ -1,12 +1,17 @@
 # API Reference
 
-This reference documents the public API for ProofOfThought.
+This reference documents the `2.0.0` public API.
+
+Support status:
+
+- `ProofOfThought()` is the default staged entrypoint
+- `backend="staged_smt2"` is the explicit staged name
+- `backend="smt2"` is a compatibility alias to the same staged implementation
+- `backend="json"` is removed from the public API
 
 ## ProofOfThought
 
-The main entry point for the reasoning system.
-
-**Location:** `z3adapter.reasoning.proof_of_thought.ProofOfThought`
+The main public orchestrator lives at `proofofthought.ProofOfThought`.
 
 ### Constructor
 
@@ -15,106 +20,183 @@ def __init__(
     self,
     llm_client: Any,
     model: str = "gpt-5",
-    backend: Literal["json", "smt2"] = "smt2",
+    backend: Literal["smt2", "staged_smt2"] = "staged_smt2",
     max_attempts: int = 3,
     verify_timeout: int = 10000,
     optimize_timeout: int = 100000,
     cache_dir: str | None = None,
     z3_path: str = "z3",
+    postprocessors: Sequence[str | Postprocessor] | None = None,
+    postprocessor_configs: dict[str, dict] | None = None,
 ) -> None
 ```
 
-**Parameters:**
+Parameters:
 
-- `llm_client`: OpenAI/AzureOpenAI client instance
-- `model`: Deployment/model name (default: `"gpt-5"`)
-- `backend`: `"json"` or `"smt2"` (default: `"smt2"`)
-- `max_attempts`: Retry limit for generation (default: `3`)
-- `verify_timeout`: Z3 timeout in milliseconds (default: `10000`)
-- `optimize_timeout`: Optimization timeout in ms, JSON only (default: `100000`)
-- `cache_dir`: Program cache directory (default: `tempfile.gettempdir()`)
-- `z3_path`: Z3 executable path for SMT2 (default: `"z3"`)
+- `llm_client`: OpenAI-compatible client used for stage generation
+- `model`: model or deployment name
+- `backend`: staged default or `smt2` compatibility alias
+- `max_attempts`: retry limit for end-to-end staged queries
+- `verify_timeout`: Z3 timeout in milliseconds
+- `optimize_timeout`: retained for advanced compatibility paths; not part of the default staged query flow
+- `cache_dir`: default output directory for saved programs and artifacts
+- `z3_path`: explicit Z3 binary path override
+- `postprocessors`: optional postprocessor names or instances
+- `postprocessor_configs`: per-postprocessor configuration
 
-### query()
+### High-level query
 
 ```python
 def query(
     self,
     question: str,
+    text: str | None = None,
     temperature: float = 0.1,
     max_tokens: int = 16384,
     save_program: bool = False,
     program_path: str | None = None,
+    enable_postprocessing: bool = True,
+    save_artifact: bool = False,
+    artifact_path: str | Path | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> QueryResult
 ```
 
-**Parameters:**
+Behavior:
 
-- `question`: Natural language question
-- `temperature`: LLM temperature (default: `0.1`, ignored for GPT-5 which only supports `1.0`)
-- `max_tokens`: Max completion tokens (default: `16384`)
-- `save_program`: Save generated program to disk (default: `False`)
-- `program_path`: Custom save path (default: auto-generated in `cache_dir`)
+- If `text` is omitted, the question itself is used as the staged source input.
+- `query()` creates a fresh `StagedArtifact`, runs stages through `query`, executes the resulting SMT-LIB with Z3, and returns a `QueryResult`.
+- Retries happen at the staged query level. Users who want finer control should work directly with artifacts and individual stage APIs.
 
-**Returns:** `QueryResult`
+### Explicit staged workflow
 
-**Implementation details:**
+Key methods for durable staged usage:
 
-The method implements a retry loop with error feedback:
+- `create_artifact(...)`
+- `build_artifact(...)`
+- `build_foundation(...)`
+- `fork_artifact(...)`
+- `add_trace_entry(...)`
+- `run_check(...)`
+- `run_stage(...)`
+- `run_through_stage(...)`
+- `execute_artifact(...)`
+- `save_artifact(...)`
+- `load_artifact(...)`
+
+Typical flow:
 
 ```python
-for attempt in range(1, max_attempts + 1):
-    if attempt == 1:
-        gen_result = self.generator.generate(question, temperature, max_tokens)
-    else:
-        gen_result = self.generator.generate_with_feedback(
-            question, error_trace, previous_response, temperature, max_tokens
-        )
-    # ... execute and check result
+artifact = pot.build_artifact(
+    text="All humans are mortal. Socrates is a human.",
+    question="Is Socrates mortal?",
+    through_stage="knowledge_base",
+)
+
+pot.run_stage(artifact, "scenario", rerun_downstream=True)
+result = pot.execute_artifact(artifact, save_program=True)
 ```
 
 ## QueryResult
 
-Contains the results of a reasoning query.
+`QueryResult` is the product-facing execution result.
 
 ```python
 @dataclass
 class QueryResult:
-    question: str                        # Input question
-    answer: bool | None                  # True (SAT), False (UNSAT), None (ambiguous/error)
-    json_program: dict[str, Any] | None  # Generated program if JSON backend
-    sat_count: int                       # SAT occurrences in output
-    unsat_count: int                     # UNSAT occurrences
-    output: str                          # Raw Z3 output
-    success: bool                        # Execution completed
-    num_attempts: int                    # Generation attempts used
-    error: str | None                    # Error message if failed
+    question: str
+    answer: bool | None
+    sat_count: int
+    unsat_count: int
+    output: str
+    success: bool
+    num_attempts: int
+    backend: Literal["smt2", "staged_smt2"]
+    program_format: Literal["smt2"] | None
+    smt2_program: str | None
+    program_path: str | None
+    error: str | None
+    failure_code: str | None
+    artifact: StagedArtifact | None
+    artifact_kind: Literal["foundation", "check", "audit"]
+    source_kind: Literal["policy", "document", "code", "mixed"]
+    check_name: str | None
 ```
+
+Important fields:
+
+- `answer`: `True` for SAT-only results, `False` for UNSAT-only results, `None` for ambiguity or failure
+- `failure_code`: machine-readable failure classification
+- `artifact`: the staged artifact used for execution
+- `program_path`: persisted `.smt2` file path when saving is enabled
+
+## StagedArtifact
+
+`StagedArtifact` is the durable state object for incremental work.
+
+```python
+@dataclass
+class StagedArtifact:
+    source_text: str
+    question: str
+    scenario_text: str
+    artifact_kind: Literal["foundation", "check", "audit"]
+    source_kind: Literal["policy", "document", "code", "mixed"]
+    metadata: dict[str, Any]
+    annotations: dict[str, Any]
+    trace_entries: list[ArtifactTraceEntry]
+    check_history: list[ArtifactCheck]
+    stage_outputs: dict[str, str]
+    context: dict[str, Any]
+    context_summary: str
+    foundation_smt2: str
+    program_smt2: str
+    execution: ArtifactExecution
+    artifact_path: str | None
+    backend: str
+    artifact_schema_version: int
+    library_version: str
+```
+
+Core ideas:
+
+- `artifact_kind` distinguishes reusable foundations, single checks, and audits
+- `source_kind` distinguishes policy, document, code, or mixed foundations
+- `annotations` carries contracts, invariants, or other structured constraints
+- `trace_entries` carries action/observation history for audit-style checks
+- `check_history` records repeated checks run against the same foundation
+- `stage_outputs` stores raw outputs for `sorts`, `functions`, `constants`, `knowledge_base`, `scenario`, and `query`
+- `foundation_smt2` stores the composed foundation without scenario/query layers
+- `program_smt2` stores the full executable SMT-LIB program
+- `execution` stores the last solver run against the artifact
+- `completed_stages` reports the stages currently materialized on the artifact
+
+Persistence helpers:
+
+- `artifact.save(path)`
+- `StagedArtifact.load(path)`
+- `artifact.clear_from_stage(stage_name)`
+
+## ArtifactExecution
+
+```python
+@dataclass
+class ArtifactExecution:
+    success: bool
+    answer: bool | None
+    sat_count: int
+    unsat_count: int
+    output: str
+    error: str | None
+    failure_code: str | None
+    program_path: str | None
+```
+
+This records the latest execution result attached to a `StagedArtifact`.
 
 ## EvaluationPipeline
 
-Facilitates batch evaluation of reasoning questions on datasets.
-
-**Location:** `z3adapter.reasoning.evaluation.EvaluationPipeline`
-
-### Constructor
-
-```python
-def __init__(
-    self,
-    proof_of_thought: ProofOfThought,
-    output_dir: str = "evaluation_results",
-    num_workers: int = 1,
-) -> None
-```
-
-**Parameters:**
-
-- `proof_of_thought`: Configured ProofOfThought instance
-- `output_dir`: Results directory (default: `"evaluation_results"`)
-- `num_workers`: Parallel workers (default: `1`, uses `ThreadPoolExecutor` if `> 1`)
-
-### evaluate()
+`proofofthought.EvaluationPipeline` handles batch evaluation.
 
 ```python
 def evaluate(
@@ -128,151 +210,59 @@ def evaluate(
 ) -> EvaluationResult
 ```
 
-**Parameters:**
+Behavior:
 
-- `dataset`: JSON file path or list of dicts
-- `question_field`: Field name for question text (default: `"question"`)
-- `answer_field`: Field name for ground truth (default: `"answer"`)
-- `id_field`: Field for sample ID (default: `None`, auto-generates `sample_{idx}`)
-- `max_samples`: Limit samples (default: `None`, all)
-- `skip_existing`: Skip cached results (default: `True`)
-
-**Returns:** `EvaluationResult`
-
-**Caching behavior:**
-
-Results are cached by saving `{sample_id}_result.json` and `{sample_id}_program{ext}` files to `output_dir`.
-
-## EvaluationMetrics
-
-Provides comprehensive metrics for evaluation results.
-
-```python
-@dataclass
-class EvaluationMetrics:
-    accuracy: float                # sklearn.metrics.accuracy_score
-    precision: float               # sklearn.metrics.precision_score (zero_division=0)
-    recall: float                  # sklearn.metrics.recall_score (zero_division=0)
-    f1_score: float                # 2 * (P * R) / (P + R)
-    specificity: float             # TN / (TN + FP)
-    false_positive_rate: float     # FP / (FP + TN)
-    false_negative_rate: float     # FN / (FN + TP)
-    tp: int                        # True positives
-    fp: int                        # False positives
-    tn: int                        # True negatives
-    fn: int                        # False negatives
-    total_samples: int             # Correct + wrong + failed
-    correct_answers: int           # answer == ground_truth
-    wrong_answers: int             # answer != ground_truth
-    failed_answers: int            # success == False
-```
-
-Metrics are computed using `sklearn.metrics.confusion_matrix` for binary classification.
-
-## Backend
-
-Defines the abstract interface for execution backends.
-
-**Location:** `z3adapter.backends.abstract.Backend`
-
-### Interface Methods
-
-```python
-class Backend(ABC):
-    @abstractmethod
-    def execute(self, program_path: str) -> VerificationResult:
-        pass
-
-    @abstractmethod
-    def get_file_extension(self) -> str:
-        pass
-
-    @abstractmethod
-    def get_prompt_template(self) -> str:
-        pass
-
-    def determine_answer(self, sat_count: int, unsat_count: int) -> bool | None:
-        if sat_count > 0 and unsat_count == 0:
-            return True
-        elif unsat_count > 0 and sat_count == 0:
-            return False
-        else:
-            return None
-```
-
-Concrete implementations are provided by `SMT2Backend` and `JSONBackend`.
+- accepts a JSON file path or in-memory records
+- caches `{sample_id}_result.json` and `{sample_id}_program.smt2` artifacts in `output_dir`
+- reuses the staged `ProofOfThought` instance you provide
 
 ## VerificationResult
 
-Encapsulates the results of Z3 verification execution.
+Low-level backend execution returns:
 
 ```python
 @dataclass
 class VerificationResult:
-    answer: bool | None  # True (SAT), False (UNSAT), None (ambiguous/error)
+    answer: bool | None
     sat_count: int
     unsat_count: int
-    output: str          # Raw execution output
-    success: bool        # Execution completed without exception
-    error: str | None    # Error message if failed
+    output: str
+    success: bool
+    error: str | None
+    failure_code: str | None
 ```
 
-## Z3ProgramGenerator
+## Advanced staged APIs
 
-Handles LLM-based program generation with error recovery.
+Power users can go deeper through `proofofthought.backends.smt2`.
 
-**Location:** `z3adapter.reasoning.program_generator.Z3ProgramGenerator`
+Main entrypoints:
 
-### generate()
+- `StagedGenerator`
+- `StagedSMT2Backend`
+- `ConversionContext`
+- `STAGE_ORDER`
+
+The staged generator runs the ordered phases:
 
 ```python
-def generate(
-    self,
-    question: str,
-    temperature: float = 0.1,
-    max_tokens: int = 16384,
-) -> GenerationResult
+("sorts", "functions", "constants", "knowledge_base", "scenario", "query")
 ```
 
-**LLM API Call:**
+Use these APIs when you want direct control over prompt stages, context reconstruction, or document-grounded pipelines.
 
-```python
-response = self.llm_client.chat.completions.create(
-    model=self.model,
-    messages=[{"role": "user", "content": prompt}],
-    max_completion_tokens=max_tokens,
-)
-```
+## Azure helper
 
-Note that the `temperature` parameter is not passed to the API due to GPT-5 constraints.
+`utils.azure_config.get_client_config()` returns:
 
-### generate_with_feedback()
-
-Enables multi-turn conversation with error feedback:
-
-```python
-messages=[
-    {"role": "user", "content": prompt},
-    {"role": "assistant", "content": previous_response},
-    {"role": "user", "content": feedback_message},
-]
-```
-
-## Utility: Azure Config
-
-Provides convenient configuration for Azure OpenAI deployments.
-
-**Location:** `utils.azure_config.get_client_config()`
-
-**Returns:**
 ```python
 {
     "llm_client": AzureOpenAI(...),
-    "model": str  # Deployment name from env
+    "model": str,
 }
 ```
 
-**Required environment variables:**
+Required environment variables:
 
 - `AZURE_OPENAI_KEY`
 - `AZURE_OPENAI_ENDPOINT`

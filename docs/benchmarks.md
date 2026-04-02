@@ -2,6 +2,8 @@
 
 This page presents evaluation results on 5 logical reasoning datasets using Azure GPT-5.
 
+The legacy `1.0.1` line used a different public product shape. This major release treats staged SMT-LIB as the product path.
+
 ## Methodology
 
 The evaluation follows a consistent methodology across all datasets.
@@ -9,10 +11,12 @@ The evaluation follows a consistent methodology across all datasets.
 **Model:** Azure GPT-5 deployment
 
 **Configuration:**
-- `max_attempts=3` (retry with error feedback)
+- `max_attempts=3` on the staged query path
 - `verify_timeout=10000ms`
-- `optimize_timeout=100000ms` (JSON backend only)
+- `optimize_timeout=100000ms` retained only for legacy/internal compatibility
 - `num_workers=10` (ThreadPoolExecutor for parallel processing)
+
+Historical tables below include the removed `1.0.1` JSON line for comparison only. `2.0.0` itself is staged-SMT only.
 
 **Metrics** (computed via `sklearn.metrics`):
 
@@ -22,7 +26,7 @@ The evaluation follows a consistent methodology across all datasets.
 - **F1:** `2 * (precision * recall) / (precision + recall)`
 - **Success Rate:** `(total - failed) / total`
 
-**Execution:** The `experiments_pipeline.py` script runs all benchmarks sequentially, modifying the `BACKEND` variable in each `benchmark/bench_*.py` script via regex substitution.
+**Execution:** The benchmark scripts run against the staged product path. Historical JSON numbers are preserved as reference data, not as a supported runtime option.
 
 ## Results
 
@@ -185,7 +189,7 @@ To run just one benchmark:
 python benchmark/bench_strategyqa.py
 ```
 
-You'll need to modify the `BACKEND` variable in the script to either `smt2` or `json`.
+Use the default staged path, or set `backend="smt2"` only if you need the compatibility alias.
 
 ### Custom evaluation
 
@@ -193,10 +197,10 @@ For custom evaluation on your own dataset:
 
 ```python
 from utils.azure_config import get_client_config
-from z3adapter.reasoning import ProofOfThought, EvaluationPipeline
+from proofofthought import ProofOfThought, EvaluationPipeline
 
 config = get_client_config()
-pot = ProofOfThought(llm_client=config["llm_client"], backend="smt2")
+pot = ProofOfThought(llm_client=config["llm_client"])
 evaluator = EvaluationPipeline(proof_of_thought=pot)
 
 result = evaluator.evaluate(

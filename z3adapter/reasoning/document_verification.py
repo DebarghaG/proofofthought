@@ -264,18 +264,17 @@ class DocumentVerificationPipeline:
         proof_of_thought: ProofOfThought,
         output_dir: str | Path | None = None,
     ) -> None:
-        if proof_of_thought.backend_type != "staged_smt2":
-            raise ValueError(
-                "DocumentVerificationPipeline requires ProofOfThought(..., backend='staged_smt2')."
-            )
         if not isinstance(proof_of_thought.backend, StagedSMT2Backend):
-            raise TypeError("ProofOfThought backend must be a StagedSMT2Backend instance.")
+            raise TypeError(
+                "DocumentVerificationPipeline requires the staged SMT-LIB backend. "
+                "Use ProofOfThought() or ProofOfThought(..., backend='staged_smt2')."
+            )
 
         self.pot = proof_of_thought
         self.backend = proof_of_thought.backend
         self.prompt_client = PromptCompletionAdapter(
             llm_client=proof_of_thought.llm_client,
-            model=proof_of_thought.generator.model,
+            model=proof_of_thought.model,
         )
         self.output_dir = Path(output_dir) if output_dir else None
         if self.output_dir:

@@ -1,104 +1,74 @@
 # ProofOfThought
 
-ProofOfThought provides LLM-guided translation of natural language questions into formal logic, which is then verified using the Z3 theorem prover.
+ProofOfThought `2.0.0` is a staged-SMT verification library. The default workflow is now: build a staged foundation, inspect or persist it over time, and execute repeated checks with Z3 when you want an answer.
 
-## Architecture
+The shared mental model is:
 
-The system follows a multi-stage pipeline to transform questions into verifiable answers:
+**foundation + scenario/trace + checks + execution**
+
+## Release Channels
+
+- **Stable installs** use `pip install proofofthought`
+- **Nightly installs** use `pip install --pre proofofthought`
+
+Nightly builds are published from the current `main` branch and may contain breaking changes. Nightly-specific documentation is available at [the nightly docs site](https://debarghaG.github.io/proofofthought/nightly/).
+
+## Version Guide
+
+- **Latest major line**: this site (`2.0.0`)
+- **Legacy stable line**: [`1.0.1` docs](https://debarghaG.github.io/proofofthought/v1.0.1/)
+
+If you are migrating older code or looking for the removed JSON backend, use the `1.0.1` docs.
+
+## Core Architecture
 
 ```
-Question (NL)
+Question + optional source text
     ↓
-LLM Translation (few-shot prompting)
+Staged artifact construction
     ↓
-Formal Program (SMT-LIB 2.0 or JSON DSL)
+Stage outputs + resumable context
     ↓
-Z3 Execution
+Composed SMT-LIB program
     ↓
-SAT/UNSAT → Boolean Answer
+Z3 execution
+    ↓
+SAT / UNSAT / ambiguous
 ```
 
-### Components
+The simple `query()` API now runs this staged pipeline for you automatically.
 
-The architecture consists of several key components that work together:
+## Main Components
 
-**Z3ProgramGenerator** (`z3adapter.reasoning.program_generator`)
-Provides the LLM interface for program generation. It extracts formal programs from markdown code blocks using regex and supports error feedback through multi-turn conversations.
-
-**Backend** (`z3adapter.backends.abstract`)
-Defines an abstract interface with `execute(program_path) → VerificationResult`. Two concrete implementations are available:
-
-- **SMT2Backend**: Subprocess call to Z3 CLI. Parses stdout/stderr for `sat`/`unsat` via regex `(?<!un)\bsat\b` and `\bunsat\b`.
-- **JSONBackend**: Python API execution via `Z3JSONInterpreter`. Returns structured SAT/UNSAT counts.
-
-**Z3JSONInterpreter** (`z3adapter.interpreter`)
-Implements a multi-stage pipeline for processing the JSON DSL:
-
-1. **SortManager**: Performs topological sorting of type dependencies and creates Z3 sorts
-2. **ExpressionParser**: Evaluates expressions using `eval()` with restricted globals for security
-3. **Verifier**: Runs `solver.check(condition)` for each verification
-4. Finally returns SAT/UNSAT counts
-
-**ProofOfThought** (`z3adapter.reasoning.proof_of_thought`)
-Provides the high-level API with a retry loop (default `max_attempts=3`) and error feedback. Answer determination follows: `SAT only → True`, `UNSAT only → False`, `both/neither → None`.
+- **`ProofOfThought`**: high-level staged orchestrator for one-shot queries, reusable foundations, and explicit artifact workflows
+- **`StagedArtifact`**: durable state object that stores stage outputs, serialized context, and execution results
+- **`StagedSMT2Backend`**: staged execution backend used by both the high-level facade and expert workflows
+- **`EvaluationPipeline`**: batch evaluation and metrics aggregation
 
 ## Quick Start
 
 ```python
 from openai import OpenAI
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
 
 client = OpenAI(api_key="...")
-pot = ProofOfThought(llm_client=client, backend="smt2")
+pot = ProofOfThought(llm_client=client)
 result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-# result.answer: False (UNSAT)
+
+print(result.answer)
+print(result.artifact.completed_stages)
 ```
 
-## Benchmark Results
+## Main Workloads
 
-ProofOfThought has been evaluated on multiple reasoning datasets using the following configuration:
+- policy and document guardrails
+- agent action validation and trace auditing
+- code verification with contracts and invariants
 
-- **Datasets**: ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA
-- **Model**: GPT-5 (Azure deployment)
-- **Config**: `max_attempts=3`, `verify_timeout=10000ms`
+See [Verification Modes](verification-modes.md) for how these all map onto the same staged artifact API.
 
-| Backend | Avg Accuracy | Success Rate |
-|---------|--------------|--------------|
-| SMT2 | 86.8% | 99.4% |
-| JSON | 82.8% | 92.8% |
+## Benchmark Snapshot
 
-The SMT2 backend outperforms JSON on 4 out of 5 datasets. For detailed results, see [Benchmarks](benchmarks.md).
+The repository includes benchmark harnesses for ProntoQA, FOLIO, ProofWriter, ConditionalQA, and StrategyQA. The major release treats the staged pipeline as the product path, while `1.0.1` preserves the older line.
 
-## Design Rationale
-
-Several key design decisions shape the architecture:
-
-- **Why use an external theorem prover?** LLMs lack deductive closure, meaning they cannot guarantee sound logical inference. Z3 provides this soundness by formally verifying the logical reasoning.
-
-- **Why offer two backends?** The choice trades off portability (SMT-LIB is a widely-supported standard) against LLM generation reliability (structured JSON is easier for models to produce correctly).
-
-- **Why use iterative refinement?** Single-shot generation is often insufficient for complex reasoning. By incorporating error feedback, the system significantly improves its success rate.
-
-## Implementation Notes
-
-Each backend has distinct implementation characteristics:
-
-**SMT2 Backend:**
-
-- Runs Z3 as a subprocess with the `-T:timeout` flag
-- Parses output using regex patterns on stdout/stderr
-- Uses standard SMT-LIB 2.0 S-expressions
-
-**JSON Backend:**
-
-- Leverages the Python Z3 API through the `z3-solver` package
-- Evaluates expressions using restricted `eval()` with `ExpressionValidator`
-- Supports built-in sorts: `BoolSort`, `IntSort`, `RealSort`
-- Supports custom sorts: `DeclareSort`, `EnumSort`, `BitVecSort`, `ArraySort`
-- Handles quantifiers: `ForAll` and `Exists` with proper variable binding
-
-**Security:**
-
-The JSON backend employs `ExpressionValidator.safe_eval()` with a whitelist of allowed Z3 operators, preventing arbitrary code execution.
-
-For more details, see [Backends](backends.md) and [API Reference](api-reference.md).
+See [Benchmarks](benchmarks.md) for the benchmark tables and [Backends](backends.md) for the current backend guidance.

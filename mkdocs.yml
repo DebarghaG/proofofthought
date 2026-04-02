@@ -1,5 +1,5 @@
 site_name: ProofOfThought
-site_description: LLM-based reasoning using Z3 theorem proving
+site_description: Staged verification for policies, agents, and code using Z3
 site_author: Debargha Ganguly
 site_url: https://debarghaG.github.io/proofofthought
 
@@ -17,14 +17,17 @@ theme:
 
 nav:
   - Home: index.md
-  - Foreword: foreword.md
+  - Project Status: project-status.md
   - Installation: installation.md
-  - DSL Specification: dsl-specification.md
   - API Reference: api-reference.md
-  - Backends: backends.md
+  - Verification Modes: verification-modes.md
   - Examples: examples.md
-  - Benchmarks: benchmarks.md
   - Postprocessors: postprocessors.md
+  - Backends: backends.md
+  - Staged Autoformalization: staged_autoformalization.md
+  - Benchmarks: benchmarks.md
+  - DSL Specification: dsl-specification.md
+  - Foreword: foreword.md
 
 markdown_extensions:
   - admonition

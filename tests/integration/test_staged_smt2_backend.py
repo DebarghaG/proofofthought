@@ -5,17 +5,13 @@ import tempfile
 
 import pytest
 
-from z3adapter.backends.smt2 import (
-    Pipeline,
-    StagedSMT2Backend,
-)
+from z3adapter._z3 import is_z3_available
+from z3adapter.backends.smt2 import Pipeline, StagedSMT2Backend
 
 
 # Skip tests if Z3 is not installed
 def z3_available():
-    import shutil
-
-    return shutil.which("z3") is not None
+    return is_z3_available()
 
 
 @pytest.mark.skipif(not z3_available(), reason="Z3 not installed")
@@ -268,7 +264,7 @@ class TestBackendInitialization:
             pytest.skip("Z3 not installed")
         backend = StagedSMT2Backend()
         assert backend.verify_timeout == 10000
-        assert backend.z3_path == "z3"
+        assert backend.z3_path.endswith("z3")
 
     def test_init_with_custom_timeout(self):
         """Test initialization with custom timeout."""

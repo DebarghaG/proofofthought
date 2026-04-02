@@ -4,7 +4,6 @@ Based on the Decomposed Prompting technique from:
 "Decomposed Prompting: A Modular Approach for Solving Complex Tasks" (Khot et al., 2022)
 """
 
-import json
 import logging
 import os
 import re
@@ -236,13 +235,14 @@ Sub-questions:"""
                 return QueryResult(
                     question=sub_question,
                     answer=None,
-                    json_program=None,
                     sat_count=0,
                     unsat_count=0,
                     output="",
                     success=False,
                     num_attempts=0,
+                    backend=generator.backend,
                     error="Failed to generate program",
+                    failure_code=gen_result.failure_code or "generation_failed",
                 )
 
             # Save and execute
@@ -256,10 +256,7 @@ Sub-questions:"""
             program_path = temp_file.name
 
             with open(program_path, "w") as f:
-                if generator.backend == "json":
-                    json.dump(gen_result.program, f, indent=2)
-                else:
-                    f.write(gen_result.program)  # type: ignore
+                f.write(gen_result.program)
 
             verify_result = backend.execute(program_path)
 
@@ -272,12 +269,19 @@ Sub-questions:"""
             return QueryResult(
                 question=sub_question,
                 answer=verify_result.answer,
-                json_program=gen_result.json_program,
                 sat_count=verify_result.sat_count,
                 unsat_count=verify_result.unsat_count,
                 output=verify_result.output,
                 success=verify_result.success and verify_result.answer is not None,
                 num_attempts=1,
+                backend=generator.backend,
+                program_format=gen_result.program_format,
+                smt2_program=gen_result.smt2_program,
+                failure_code=(
+                    None
+                    if verify_result.success and verify_result.answer is not None
+                    else verify_result.failure_code or "verification_failed"
+                ),
             )
 
         except Exception as e:
@@ -285,13 +289,14 @@ Sub-questions:"""
             return QueryResult(
                 question=sub_question,
                 answer=None,
-                json_program=None,
                 sat_count=0,
                 unsat_count=0,
                 output="",
                 success=False,
                 num_attempts=0,
+                backend=generator.backend,
                 error=str(e),
+                failure_code="unexpected_exception",
             )
 
     def _combine_answers(
@@ -371,10 +376,7 @@ Now, create a complete logical program that uses these insights to answer the ma
             program_path = temp_file.name
 
             with open(program_path, "w") as f:
-                if generator.backend == "json":
-                    json.dump(gen_result.program, f, indent=2)
-                else:
-                    f.write(gen_result.program)  # type: ignore
+                f.write(gen_result.program)
 
             verify_result = backend.execute(program_path)
 
@@ -393,12 +395,14 @@ Now, create a complete logical program that uses these insights to answer the ma
             return QueryResult(
                 question=question,
                 answer=verify_result.answer,
-                json_program=gen_result.json_program,
                 sat_count=verify_result.sat_count,
                 unsat_count=verify_result.unsat_count,
                 output=verify_result.output,
                 success=True,
                 num_attempts=1,
+                backend=generator.backend,
+                program_format=gen_result.program_format,
+                smt2_program=gen_result.smt2_program,
             )
 
         except Exception as e:

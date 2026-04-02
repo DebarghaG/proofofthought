@@ -29,6 +29,15 @@ from z3adapter.backends.smt2.prompts import (
 
 logger = logging.getLogger(__name__)
 
+STAGE_ORDER: tuple[str, ...] = (
+    "sorts",
+    "functions",
+    "constants",
+    "knowledge_base",
+    "scenario",
+    "query",
+)
+
 
 class LLMClient(Protocol):
     """Protocol for LLM client interface."""
@@ -74,6 +83,31 @@ class StagedGenerator:
         self.llm_client = llm_client
         self.ctx = ConversionContext()
 
+    def _all_stages(self) -> list[GenerationStage]:
+        """Return the canonical stage definitions."""
+        return [
+            GenerationStage("sorts", format_sorts_prompt, self._parse_sorts),
+            GenerationStage("functions", format_functions_prompt, self._parse_functions),
+            GenerationStage("constants", format_constants_prompt, self._parse_constants),
+            GenerationStage("knowledge_base", format_kb_prompt, self._parse_kb),
+            GenerationStage(
+                "scenario",
+                lambda q, ctx: format_scenario_prompt(q, ctx),
+                self._parse_scenario,
+                requires_question=True,
+            ),
+            GenerationStage(
+                "query",
+                lambda q, ctx: format_query_prompt(q, ctx),
+                self._parse_query,
+                requires_question=True,
+            ),
+        ]
+
+    def set_context(self, context: ConversionContext) -> None:
+        """Replace the current conversion context."""
+        self.ctx = context
+
     def generate(
         self,
         text: str,
@@ -99,24 +133,7 @@ class StagedGenerator:
         errors: list[str] = []
 
         # Define the stages
-        all_stages = [
-            GenerationStage("sorts", format_sorts_prompt, self._parse_sorts),
-            GenerationStage("functions", format_functions_prompt, self._parse_functions),
-            GenerationStage("constants", format_constants_prompt, self._parse_constants),
-            GenerationStage("knowledge_base", format_kb_prompt, self._parse_kb),
-            GenerationStage(
-                "scenario",
-                lambda q, ctx: format_scenario_prompt(q, ctx),
-                self._parse_scenario,
-                requires_question=True,
-            ),
-            GenerationStage(
-                "query",
-                lambda q, ctx: format_query_prompt(q, ctx),
-                self._parse_query,
-                requires_question=True,
-            ),
-        ]
+        all_stages = self._all_stages()
 
         # Filter stages if specified
         if stages:
@@ -161,6 +178,22 @@ class StagedGenerator:
             stage_outputs=stage_outputs,
             errors=errors,
         )
+
+    def rebuild_context_from_outputs(
+        self,
+        stage_outputs: dict[str, str],
+        *,
+        through_stage: str | None = None,
+    ) -> ConversionContext:
+        """Rebuild the conversion context by replaying saved stage outputs."""
+        self.ctx = ConversionContext()
+        for stage in self._all_stages():
+            output = stage_outputs.get(stage.name, "")
+            if output:
+                stage.parser(self._clean_output(output), self.ctx)
+            if through_stage and stage.name == through_stage:
+                break
+        return self.ctx
 
     def _clean_output(self, output: str) -> str:
         """Remove markdown code blocks and clean LLM output."""

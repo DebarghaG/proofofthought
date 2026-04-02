@@ -4,7 +4,6 @@ Based on the Self-Refine technique from:
 "Self-Refine: Iterative Refinement with Self-Feedback" (Madaan et al., 2023)
 """
 
-import json
 import logging
 import os
 import tempfile
@@ -155,21 +154,13 @@ class SelfRefine(Postprocessor):
         Returns:
             Feedback string from LLM
         """
-        # Format the current program for display
-        if generator.backend == "json" and current_result.json_program:
-            format_name = "JSON DSL"
-        else:
-            # For SMT2, we'd need to read the program file, but we don't have the path
-            # For now, just describe the result
-            format_name = "SMT2"
-
         feedback_prompt = f"""You previously solved this reasoning question:
 
 Question: {question}
 
 Your answer was: {current_result.answer}
 
-Your {format_name} program produced:
+Your SMT-LIB program produced:
 - SAT count: {current_result.sat_count}
 - UNSAT count: {current_result.unsat_count}
 
@@ -243,13 +234,14 @@ Provide your analysis and feedback:"""
                 return QueryResult(
                     question=question,
                     answer=None,
-                    json_program=None,
                     sat_count=0,
                     unsat_count=0,
                     output="",
                     success=False,
                     num_attempts=0,
+                    backend=generator.backend,
                     error="Failed to generate refined program",
+                    failure_code=gen_result.failure_code or "generation_failed",
                 )
 
             # Save and execute refined program
@@ -263,10 +255,7 @@ Provide your analysis and feedback:"""
             program_path = temp_file.name
 
             with open(program_path, "w") as f:
-                if generator.backend == "json":
-                    json.dump(gen_result.program, f, indent=2)
-                else:
-                    f.write(gen_result.program)  # type: ignore
+                f.write(gen_result.program)
 
             # Execute refined program
             verify_result = backend.execute(program_path)
@@ -280,12 +269,19 @@ Provide your analysis and feedback:"""
             return QueryResult(
                 question=question,
                 answer=verify_result.answer,
-                json_program=gen_result.json_program,
                 sat_count=verify_result.sat_count,
                 unsat_count=verify_result.unsat_count,
                 output=verify_result.output,
                 success=verify_result.success and verify_result.answer is not None,
                 num_attempts=1,
+                backend=generator.backend,
+                program_format=gen_result.program_format,
+                smt2_program=gen_result.smt2_program,
+                failure_code=(
+                    None
+                    if verify_result.success and verify_result.answer is not None
+                    else verify_result.failure_code or "verification_failed"
+                ),
             )
 
         except Exception as e:
@@ -293,11 +289,12 @@ Provide your analysis and feedback:"""
             return QueryResult(
                 question=question,
                 answer=None,
-                json_program=None,
                 sat_count=0,
                 unsat_count=0,
                 output="",
                 success=False,
                 num_attempts=0,
+                backend=generator.backend,
                 error=str(e),
+                failure_code="unexpected_exception",
             )

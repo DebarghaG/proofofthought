@@ -1,6 +1,11 @@
 include README.md
 include LICENSE
 include CHANGELOG.md
+include RELEASING.md
 include requirements.txt
 include pyproject.toml
 recursive-include z3adapter *.py
+recursive-include proofofthought *.py
+include z3adapter/py.typed
+include z3adapter/VERSION
+include proofofthought/py.typed

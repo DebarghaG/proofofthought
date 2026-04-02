@@ -9,7 +9,7 @@ from pathlib import Path
 
 from azure_config import get_client_config
 
-from z3adapter.reasoning import ProofOfThought, evaluate_dataset
+from proofofthought.reasoning import ProofOfThought, evaluate_dataset
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,7 +64,6 @@ def main() -> None:
     pot = ProofOfThought(
         llm_client=client_config["llm_client"],
         model=client_config["model"],
-        backend="staged_smt2",
     )
 
     result = evaluate_dataset(

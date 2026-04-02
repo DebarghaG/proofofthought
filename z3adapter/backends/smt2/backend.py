@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 import os
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
 
+from z3adapter._z3 import resolve_z3_path
 from z3adapter.backends.abstract import Backend, VerificationResult
 from z3adapter.backends.smt2.ir import ConversionContext
 from z3adapter.backends.smt2.parser import ExecutionResult, Z3OutputParser
@@ -42,18 +42,8 @@ class StagedSMT2Backend(Backend):
             z3_path: Path to Z3 executable
         """
         self.verify_timeout = verify_timeout
-        self.z3_path = z3_path
+        self.z3_path = resolve_z3_path(z3_path)
         self.parser = Z3OutputParser()
-
-        # Validate Z3 is available
-        if not shutil.which(z3_path):
-            raise FileNotFoundError(
-                f"Z3 executable not found: '{z3_path}'\n"
-                f"Please install Z3:\n"
-                f"  - pip install z3-solver\n"
-                f"  - Or download from: https://github.com/Z3Prover/z3/releases\n"
-                f"  - Or specify custom path: StagedSMT2Backend(z3_path='/path/to/z3')"
-            )
 
         # Current pipeline and context (for incremental use)
         self._pipeline: Pipeline | None = None
@@ -89,6 +79,7 @@ class StagedSMT2Backend(Backend):
                     output=output,
                     success=False,
                     error=output.strip() or f"Z3 exited with code {result.returncode}",
+                    failure_code="no_solver_result",
                 )
 
             answer = self.determine_answer(sat_count, unsat_count)
@@ -114,6 +105,7 @@ class StagedSMT2Backend(Backend):
                 output="",
                 success=False,
                 error=error_msg,
+                failure_code="solver_timeout",
             )
         except FileNotFoundError:
             error_msg = f"Z3 executable not found: '{self.z3_path}'"
@@ -125,6 +117,7 @@ class StagedSMT2Backend(Backend):
                 output="",
                 success=False,
                 error=error_msg,
+                failure_code="z3_not_found",
             )
         except Exception as e:
             error_msg = f"Error executing SMT2 program: {e}"
@@ -136,6 +129,7 @@ class StagedSMT2Backend(Backend):
                 output="",
                 success=False,
                 error=str(e),
+                failure_code="execution_error",
             )
 
     def execute_config(

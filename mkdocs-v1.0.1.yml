@@ -1,0 +1,34 @@
+site_name: ProofOfThought v1.0.1
+site_description: Legacy 1.0.1 documentation for ProofOfThought
+site_author: Debargha Ganguly
+site_url: https://debarghaG.github.io/proofofthought/v1.0.1/
+
+repo_name: debarghaG/proofofthought
+repo_url: https://github.com/debarghaG/proofofthought
+edit_uri: edit/main/docs-v1.0.1/
+
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - python
+    - json
+    - bash
+
+docs_dir: docs-v1.0.1
+
+nav:
+  - Legacy v1.0.1: index.md
+  - Installation: installation.md
+  - Project Status: project-status.md
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+  - tables
+
+plugins:
+  - search

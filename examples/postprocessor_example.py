@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""Example: Using Postprocessors to Improve Reasoning Quality
+"""Example: Using postprocessors to improve reasoning quality.
 
 This example demonstrates how to use postprocessing techniques to enhance
 the quality and reliability of reasoning results.
-
-All postprocessors work with both JSON and SMT2 backends.
 """
 
 import sys
@@ -14,9 +12,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.azure_config import get_client_config
-from z3adapter.postprocessors import SelfRefine
-from z3adapter.postprocessors.registry import PostprocessorRegistry
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
+from proofofthought.postprocessors import SelfRefine
+from proofofthought.postprocessors.registry import PostprocessorRegistry
 
 # Get Azure OpenAI configuration
 config = get_client_config()
@@ -46,7 +44,6 @@ print("-" * 80)
 pot_baseline = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
 )
 
 result_baseline = pot_baseline.query(question)
@@ -62,7 +59,6 @@ print("-" * 80)
 pot_refine = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
     postprocessors=["self_refine"],
     postprocessor_configs={"self_refine": {"num_iterations": 2}},
 )
@@ -79,7 +75,6 @@ print("-" * 80)
 pot_consistency = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
     postprocessors=["self_consistency"],
     postprocessor_configs={"self_consistency": {"num_samples": 5}},
 )
@@ -96,7 +91,6 @@ print("-" * 80)
 pot_decomposed = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
     postprocessors=["decomposed"],
     postprocessor_configs={"decomposed": {"max_subquestions": 3}},
 )
@@ -113,7 +107,6 @@ print("-" * 80)
 pot_least_to_most = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
     postprocessors=["least_to_most"],
     postprocessor_configs={"least_to_most": {"max_steps": 3}},
 )
@@ -130,7 +123,6 @@ print("-" * 80)
 pot_combined = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
     postprocessors=["self_refine", "self_consistency"],
     postprocessor_configs={
         "self_refine": {"num_iterations": 2},
@@ -152,7 +144,6 @@ custom_refine = SelfRefine(num_iterations=3, name="CustomRefine")
 pot_custom = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
     postprocessors=[custom_refine],  # Pass instance instead of string
 )
 
@@ -178,7 +169,7 @@ print("=" * 80)
 print("Summary")
 print("=" * 80)
 print()
-print("All postprocessors are backend-agnostic and work with both JSON and SMT2.")
+print("All postprocessors operate on the staged query result surface.")
 print("They can be:")
 print("  - Enabled at ProofOfThought initialization")
 print("  - Configured with custom parameters")

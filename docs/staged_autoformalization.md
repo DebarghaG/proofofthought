@@ -2,6 +2,8 @@
 
 This document describes the staged autoformalization pipeline that converts natural language text into SMT-LIB programs for formal verification.
 
+This is now the core architecture of the product. If you want the simplest entrypoint, use `ProofOfThought.query(...)`; if you want explicit control, use the staged APIs described on this page.
+
 ## Overview
 
 The staged autoformalization pipeline generates SMT-LIB code through multiple LLM calls, where each stage focuses on a specific aspect of the formalization:
@@ -53,7 +55,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e .
 
 # Verify installation
-python -c "from z3adapter.backends.smt2 import StagedGenerator; print('OK')"
+python -c "from proofofthought.backends.smt2 import StagedGenerator; print('OK')"
 ```
 
 ## Configuration
@@ -88,7 +90,7 @@ import sys
 sys.path.insert(0, '.')
 
 from utils.azure_config import DEPLOYMENT_NAME, get_azure_client
-from z3adapter.backends.smt2 import StagedGenerator, StagedSMT2Backend
+from proofofthought.backends.smt2 import StagedGenerator, StagedSMT2Backend
 
 # 1. Create LLM client wrapper
 class AzureOpenAIClient:
@@ -136,7 +138,7 @@ print(f"Answer: {verify_result.answer}")  # True = sat, False = unsat
 
 ```python
 from openai import OpenAI
-from z3adapter.backends.smt2 import StagedGenerator
+from proofofthought.backends.smt2 import StagedGenerator
 
 class OpenAIClient:
     def __init__(self, model: str = "gpt-4o"):
@@ -163,7 +165,7 @@ result = generator.generate(
 ## Example: Policy Verification
 
 ```python
-from z3adapter.backends.smt2 import StagedGenerator, StagedSMT2Backend
+from proofofthought.backends.smt2 import StagedGenerator, StagedSMT2Backend
 
 # Policy text
 text = """
@@ -489,7 +491,7 @@ result2 = backend.execute_from_string(query2)
 ### Accessing Raw Prompts
 
 ```python
-from z3adapter.backends.smt2 import (
+from proofofthought.backends.smt2 import (
     format_sorts_prompt,
     format_functions_prompt,
     format_kb_prompt,

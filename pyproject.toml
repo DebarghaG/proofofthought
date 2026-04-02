@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "proofofthought"
-version = "1.0.1"
+dynamic = ["version"]
 description = "LLM-based reasoning using Z3 theorem proving"
 readme = "README.md"
 authors = [{name = "Debargha Ganguly", email = "debargha@case.edu"}]
@@ -14,12 +14,15 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = ["llm", "reasoning", "z3", "theorem-proving", "smt", "ai"]
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "z3-solver>=4.15.0",
     "openai>=2.0.0",
@@ -39,21 +42,24 @@ dev = [
     "pre-commit>=4.3.0",
     "pymdown-extensions>=10.0.0",
     "pytest>=8.0.0",
+    "setuptools>=61.0",
+    "tomli>=2.0.1; python_version < '3.11'",
+    "twine>=6.2.0",
 ]
 
 [project.urls]
 Homepage = "https://github.com/debarghaG/proofofthought"
-Documentation = "https://github.com/debarghaG/proofofthought#readme"
+Documentation = "https://debarghaG.github.io/proofofthought"
 Repository = "https://github.com/debarghaG/proofofthought"
 "Bug Tracker" = "https://github.com/debarghaG/proofofthought/issues"
 
 [tool.black]
 line-length = 100
-target-version = ["py313"]
+target-version = ["py310"]
 
 [tool.ruff]
 # Ruff is used for linting; Black remains the formatter.
-target-version = "py313"
+target-version = "py310"
 line-length = 100
 
 [tool.ruff.lint]
@@ -61,14 +67,18 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E203", "E501"]
 
-[tool.setuptools]
-packages = ["z3adapter", "z3adapter.backends", "z3adapter.backends.smt2", "z3adapter.dsl", "z3adapter.optimization", "z3adapter.postprocessors", "z3adapter.reasoning", "z3adapter.security", "z3adapter.solvers", "z3adapter.verification"]
+[tool.setuptools.packages.find]
+include = ["proofofthought*", "z3adapter*"]
+
+[tool.setuptools.dynamic]
+version = {file = ["z3adapter/VERSION"]}
 
 [tool.setuptools.package-data]
-z3adapter = ["py.typed"]
+z3adapter = ["py.typed", "VERSION"]
+proofofthought = ["py.typed"]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.10"
 # Reasonable strictness for a new integration
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

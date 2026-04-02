@@ -2,10 +2,10 @@
 
 import logging
 import re
-import shutil
 import subprocess
 
 from z3adapter.backends.abstract import Backend, VerificationResult
+from z3adapter._z3 import resolve_z3_path
 from z3adapter.reasoning.smt2_prompt_template import SMT2_INSTRUCTIONS
 
 logger = logging.getLogger(__name__)
@@ -25,17 +25,7 @@ class SMT2Backend(Backend):
             FileNotFoundError: If Z3 executable is not found
         """
         self.verify_timeout = verify_timeout
-        self.z3_path = z3_path
-
-        # Validate Z3 is available
-        if not shutil.which(z3_path):
-            raise FileNotFoundError(
-                f"Z3 executable not found: '{z3_path}'\n"
-                f"Please install Z3:\n"
-                f"  - pip install z3-solver\n"
-                f"  - Or download from: https://github.com/Z3Prover/z3/releases\n"
-                f"  - Or specify custom path: SMT2Backend(z3_path='/path/to/z3')"
-            )
+        self.z3_path = resolve_z3_path(z3_path)
 
     def execute(self, program_path: str) -> VerificationResult:
         """Execute an SMT2 program via Z3 CLI.
@@ -73,6 +63,7 @@ class SMT2Backend(Backend):
                     output=output,
                     success=False,
                     error=output.strip() or f"Z3 exited with code {result.returncode}",
+                    failure_code="no_solver_result",
                 )
 
             # Determine answer
@@ -100,6 +91,7 @@ class SMT2Backend(Backend):
                 output="",
                 success=False,
                 error=error_msg,
+                failure_code="solver_timeout",
             )
         except FileNotFoundError:
             error_msg = (
@@ -115,6 +107,7 @@ class SMT2Backend(Backend):
                 output="",
                 success=False,
                 error=error_msg,
+                failure_code="z3_not_found",
             )
         except Exception as e:
             error_msg = f"Error executing SMT2 program: {e}\nProgram path: {program_path}"
@@ -126,6 +119,7 @@ class SMT2Backend(Backend):
                 output="",
                 success=False,
                 error=error_msg,
+                failure_code="execution_error",
             )
 
     def _parse_z3_output(self, output: str) -> tuple[int, int]:

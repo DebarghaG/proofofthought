@@ -1,37 +1,78 @@
 # ProofOfThought
 
-[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+-](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Z3](https://img.shields.io/badge/Z3-4.15+-green.svg)](https://github.com/Z3Prover/z3)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Compatible-412991.svg)](https://platform.openai.com/)
 [![Azure](https://img.shields.io/badge/Azure-GPT--4o/GPT--5-0078D4.svg)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-LLM-based reasoning using Z3 theorem proving with multiple backend support (SMT2 and JSON).
+Staged SMT-LIB reasoning and verification with Z3.
+
+The core product model is:
+
+**foundation + scenario/trace + checks + execution**
 
 ## Features
 
-- **Dual Backend Support**: Choose between SMT2 (default) or JSON execution backends
+- **Staged By Default**: `ProofOfThought` now builds and executes a staged artifact by default
+- **Easy One-Shot Path**: `query()` still works, but it is now a convenience wrapper over the staged pipeline
+- **Deep Stage Control**: Create, save, load, inspect, and rerun individual stages over time
 - **Azure OpenAI Integration**: Native support for Azure GPT-4o and GPT-5 models
 - **Comprehensive Benchmarks**: Evaluated on 5 reasoning datasets (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA)
-- **High-level API**: Simple Python interface for reasoning tasks
+- **High-level API**: Simple Python interface for staged reasoning tasks
 - **Batch Evaluation Pipeline**: Built-in tools for dataset evaluation and metrics
 - **Postprocessing Techniques**: Self-Refine, Self-Consistency, Decomposed Prompting, and Least-to-Most Prompting for enhanced reasoning quality
 
+## Project Status
+
+- **Current release line**: `2.0.0`
+- **Core product API**: staged artifact workflow via `ProofOfThought`
+- **Compatibility alias**: `backend="smt2"` now routes to the staged implementation
+- **Removed**: `backend="json"` from the public API
+
+If you need the older stable line that is currently available, use the archived `1.0.1` docs at `/v1.0.1/`.
+
+## Release Channels
+
+- **Stable**: `pip install proofofthought`
+- **Nightly**: `pip install --pre proofofthought`
+
+Nightly releases are built from the current `main` branch and may contain breaking changes. They use PyPI prerelease versions in the form `BASE.devYYYYMMDDHHMM`.
+Release notes for the currently published nightly are documented at <https://debarghaG.github.io/proofofthought/nightly/release-notes/>.
+
 ## Installation
 
-### From PyPI (Recommended)
+### Stable From PyPI
 
-Install the latest stable version:
+Install the latest stable release:
 
 ```bash
 pip install proofofthought
 ```
 
-**Note:** Package name is `proofofthought`, but imports use `z3adapter`:
-```python
-from z3adapter.reasoning import ProofOfThought
+### Nightly From PyPI
+
+Install the latest nightly prerelease:
+
+```bash
+pip install --pre proofofthought
 ```
+
+To pin a specific nightly once it has been published:
+
+```bash
+pip install "proofofthought==2.0.0.dev202604011230"
+```
+
+Nightly builds are intentionally unstable and may change behavior without a stable compatibility guarantee.
+
+**Canonical import:**
+```python
+from proofofthought import ProofOfThought
+```
+
+`z3adapter` remains available as a compatibility alias during the migration window for this major line.
 
 ### From Source (Development)
 
@@ -47,9 +88,10 @@ pip install -e ".[dev]"
 
 ### Prerequisites
 
-- Python 3.13
+- Python 3.10+
 - An OpenAI API key or Azure OpenAI endpoint
 - Z3 solver (`z3-solver` installs the `z3` binary into the active virtual environment)
+- For nightly documentation, see <https://debarghaG.github.io/proofofthought/nightly/>
 
 ## Setup
 
@@ -74,61 +116,53 @@ You can also set these as system environment variables instead of using a `.env`
 
 ## Quick Start
 
-### Using OpenAI
+### One-Shot Convenience Path
 
 ```python
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
 
-# Load environment variables
 load_dotenv()
-
-# Create OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# Initialize ProofOfThought
 pot = ProofOfThought(llm_client=client, model="gpt-4o")
 
-# Ask a question
-result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-print(result.answer)  # False
+result = pot.query(
+    "Would Nancy Pelosi publicly denounce abortion?",
+    save_program=True,
+    save_artifact=True,
+    artifact_path="output/pelosi.artifact.json",
+)
+
+print(result.answer)
+print(result.artifact.artifact_path)
 ```
 
-### Using Azure OpenAI
+### Explicit Staged Workflow
 
 ```python
-import os
-from dotenv import load_dotenv
-from openai import AzureOpenAI
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
 
-# Load environment variables
-load_dotenv()
+pot = ProofOfThought(llm_client=client, model="gpt-4o")
 
-# Create Azure OpenAI client
-client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_KEY"),
-    api_version=os.getenv("AZURE_API_VERSION")
+artifact = pot.build_artifact(
+    text="All humans are mortal. Socrates is a human.",
+    question="Is Socrates mortal?",
+    through_stage="knowledge_base",
 )
 
-# Initialize ProofOfThought with your deployment name
-pot = ProofOfThought(
-    llm_client=client,
-    model=os.getenv("AZURE_DEPLOYMENT_NAME")  # e.g., "gpt-4o" or "gpt-5"
-)
+pot.run_stage(artifact, "scenario", rerun_downstream=True)
+pot.save_artifact(artifact, "output/socrates.artifact.json")
 
-# Ask a question
-result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-print(result.answer)  # False
+result = pot.execute_artifact(artifact, save_program=True, program_path="output/socrates.smt2")
+print(result.answer)
 ```
 
 ## Batch Evaluation
 
 ```python
-from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
+from proofofthought import EvaluationPipeline, ProofOfThought
 
 evaluator = EvaluationPipeline(proof_of_thought=pot, output_dir="results/")
 result = evaluator.evaluate(
@@ -142,17 +176,119 @@ print(f"Accuracy: {result.metrics.accuracy:.2%}")
 
 ## Backend Selection
 
-ProofOfThought supports two execution backends:
+The major release is staged-first:
 
 ```python
-# SMT2 backend (default) - Standard SMT-LIB 2.0 via Z3 CLI
-pot = ProofOfThought(llm_client=client, backend="smt2")
+# Default staged path
+pot = ProofOfThought(llm_client=client)
 
-# JSON backend - Custom DSL via Python Z3 API
-pot = ProofOfThought(llm_client=client, backend="json")
+# Explicit staged backend
+pot = ProofOfThought(llm_client=client, backend="staged_smt2")
+
+# Compatibility alias to the same staged implementation
+pot = ProofOfThought(llm_client=client, backend="smt2")
 ```
 
-See [docs/backends.md](docs/backends.md) for details on choosing a backend.
+If you need the removed JSON backend, use the legacy `1.0.1` release line and docs.
+
+## Reusable Foundations
+
+The staged artifact model is designed for repeated checks over the same foundation:
+
+```python
+from proofofthought import ProofOfThought
+
+pot = ProofOfThought(llm_client=client, model="gpt-4o")
+
+policy = pot.build_foundation(
+    text="All wire transfers above 10000 USD require dual approval.",
+    source_kind="policy",
+)
+
+first_check = pot.run_check(
+    policy,
+    question="Can the agent submit a 25000 USD wire transfer?",
+    scenario_text="The transfer has only one approval.",
+    check_name="wire_transfer_guardrail",
+)
+
+second_check = pot.run_check(
+    policy,
+    question="Can the agent submit a 25000 USD wire transfer?",
+    scenario_text="The transfer has two approvals.",
+    check_name="wire_transfer_guardrail_retry",
+)
+```
+
+## Agent Guardrails And Audits
+
+The same staged artifact model supports both pre-action agent guardrails and post-hoc trajectory audits:
+
+```python
+foundation = pot.build_foundation(
+    text="Agents may not execute withdrawals larger than the available balance.",
+    source_kind="policy",
+)
+
+guardrail = pot.run_check(
+    foundation,
+    question="May the agent call withdraw?",
+    scenario_text="The agent proposes withdraw(amount=50) with available_balance=20.",
+    check_name="withdraw_guardrail",
+)
+
+audit = pot.fork_artifact(
+    foundation,
+    artifact_kind="audit",
+    question="Did the executed trace violate policy?",
+)
+pot.add_trace_entry(audit, "available_balance=20", entry_type="observation")
+pot.add_trace_entry(audit, "withdraw(amount=50)", entry_type="action")
+
+audit_result = pot.run_check(
+    audit,
+    question="Does the trace violate the balance invariant?",
+    check_name="withdraw_audit",
+)
+```
+
+Use this shape for:
+
+- tool-call guardrails before execution
+- replay and audit of agent trajectories
+- reusable policy foundations across many checks
+
+## Code Verification
+
+Code verification uses the same staged artifact model. Build a foundation from code plus explicit contracts, then run checks against that reusable foundation:
+
+```python
+from proofofthought import ProofOfThought
+
+pot = ProofOfThought(llm_client=client, model="gpt-4o")
+
+code_foundation = pot.build_foundation(
+    text="""
+def transfer(balance: int, amount: int) -> int:
+    return balance - amount
+""",
+    source_kind="code",
+    annotations={
+        "preconditions": ["amount >= 0", "amount <= balance"],
+        "postconditions": ["result == balance - amount"],
+        "invariants": ["balance >= 0"],
+    },
+)
+
+result = pot.run_check(
+    code_foundation,
+    question="Can transfer return a negative balance?",
+    scenario_text="Assume balance = 20 and amount = 50.",
+    check_name="transfer_contract_check",
+)
+
+print(result.answer)
+```
 
 ## Postprocessing Techniques
 
@@ -190,22 +326,22 @@ See [docs/postprocessors.md](docs/postprocessors.md) for complete documentation 
 
 ## Architecture
 
-The system has two layers:
+The public product story has two layers:
 
-1. **High-level API** (`z3adapter.reasoning`) - Simple Python interface for reasoning tasks
-2. **Low-level execution** (`z3adapter.backends`) - JSON DSL or SMT2 backend for Z3
-
-Most users should use the high-level API.
+1. **High-level staged API** (`proofofthought`) for one-shot queries, reusable foundations, and persisted artifacts
+2. **Deep staged APIs** (`proofofthought.backends.smt2`) for explicit stage control, IR inspection, and document-grounded workflows
 
 ## Examples
 
 The `examples/` directory contains complete working examples for various use cases:
 
 - **simple_usage.py** - Basic usage with OpenAI
+- **code_contract_verification.py** - Reusable code foundation plus contract checks
 - **azure_simple_example.py** - Simple Azure OpenAI integration
-- **backend_comparison.py** - Comparing SMT2 vs JSON backends
 - **batch_evaluation.py** - Evaluating on datasets
+- **nl_smt_bench_document_verification.py** - Document-grounded staged SMT-LIB verification
 - **postprocessor_example.py** - Using postprocessing techniques
+- **backend_comparison.py** - Comparing one-shot convenience usage with explicit staged control
 
 ### Running Examples After pip Install
 
@@ -221,7 +357,7 @@ source venv/bin/activate
 python examples/simple_usage.py
 ```
 
-**Note:** Run examples from the repository root with the project virtual environment activated so both `z3adapter` and `venv/bin/z3` are available.
+**Note:** Run examples from the repository root with the project virtual environment activated so both `proofofthought` and `venv/bin/z3` are available.
 
 ## Running Experiments
 
@@ -235,8 +371,8 @@ python experiments_pipeline.py
 
 This will:
 - Run all 5 benchmarks (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA)
-- Test both SMT2 and JSON backends
-- Generate results tables in `results/`
+- Regenerate the benchmark tables in `results/`
+- Exercise the staged-major line rather than the removed JSON path
 - Automatically update the benchmark results section below
 
 <!-- BENCHMARK_RESULTS_START -->

@@ -4,7 +4,6 @@ Based on the Self-Consistency technique from:
 "Self-Consistency Improves Chain of Thought Reasoning in Language Models" (Wang et al., 2022)
 """
 
-import json
 import logging
 import os
 import tempfile
@@ -173,13 +172,14 @@ class SelfConsistency(Postprocessor):
                 return QueryResult(
                     question=question,
                     answer=None,
-                    json_program=None,
                     sat_count=0,
                     unsat_count=0,
                     output="",
                     success=False,
                     num_attempts=0,
+                    backend=generator.backend,
                     error="Failed to generate program",
+                    failure_code=gen_result.failure_code or "generation_failed",
                 )
 
             # Save and execute program
@@ -193,10 +193,7 @@ class SelfConsistency(Postprocessor):
             program_path = temp_file.name
 
             with open(program_path, "w") as f:
-                if generator.backend == "json":
-                    json.dump(gen_result.program, f, indent=2)
-                else:
-                    f.write(gen_result.program)  # type: ignore
+                f.write(gen_result.program)
 
             # Execute program
             verify_result = backend.execute(program_path)
@@ -210,12 +207,19 @@ class SelfConsistency(Postprocessor):
             return QueryResult(
                 question=question,
                 answer=verify_result.answer,
-                json_program=gen_result.json_program,
                 sat_count=verify_result.sat_count,
                 unsat_count=verify_result.unsat_count,
                 output=verify_result.output,
                 success=verify_result.success and verify_result.answer is not None,
                 num_attempts=1,
+                backend=generator.backend,
+                program_format=gen_result.program_format,
+                smt2_program=gen_result.smt2_program,
+                failure_code=(
+                    None
+                    if verify_result.success and verify_result.answer is not None
+                    else verify_result.failure_code or "verification_failed"
+                ),
             )
 
         except Exception as e:
@@ -223,13 +227,14 @@ class SelfConsistency(Postprocessor):
             return QueryResult(
                 question=question,
                 answer=None,
-                json_program=None,
                 sat_count=0,
                 unsat_count=0,
                 output="",
                 success=False,
                 num_attempts=0,
+                backend=generator.backend,
                 error=str(e),
+                failure_code="unexpected_exception",
             )
 
     def _is_better_result(self, result1: "QueryResult", result2: "QueryResult") -> bool:

@@ -14,6 +14,7 @@ class VerificationResult:
     output: str
     success: bool
     error: str | None = None
+    failure_code: str | None = None
 
 
 class Backend(ABC):

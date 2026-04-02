@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Example: Batch evaluation on StrategyQA using SMT2 backend with Azure OpenAI."""
+"""Example: Batch evaluation on StrategyQA using the staged backend with Azure OpenAI."""
 
 import logging
 from pathlib import Path
 
 from azure_config import get_client_config
 
-from z3adapter.reasoning import EvaluationPipeline, ProofOfThought
+from proofofthought import EvaluationPipeline, ProofOfThought
 
 project_root = Path(__file__).parent.parent
 
@@ -16,11 +16,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Get Azure OpenAI configuration
 config = get_client_config()
 
-# Create ProofOfThought instance with SMT2 backend
+# Create ProofOfThought instance.
+# `backend="smt2"` is kept here to show the compatibility alias still works.
 pot = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",  # ← Use SMT2 backend
+    backend="smt2",
     max_attempts=3,
     cache_dir=str(project_root / "output" / "programs_smt2"),
     z3_path="z3",
@@ -45,7 +46,7 @@ result = evaluator.evaluate(
 
 # Print results
 print("\n" + "=" * 80)
-print("EVALUATION METRICS (SMT2 Backend + Azure GPT-5)")
+print("EVALUATION METRICS (Staged Backend + Azure GPT-5)")
 print("=" * 80)
 print(f"Total Samples: {result.metrics.total_samples}")
 print(f"Correct: {result.metrics.correct_answers}")

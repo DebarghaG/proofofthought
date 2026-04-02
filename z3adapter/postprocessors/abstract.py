@@ -16,7 +16,7 @@ class Postprocessor(ABC):
     """Abstract base class for all postprocessing techniques.
 
     Postprocessors enhance reasoning quality by applying various strategies
-    after the initial answer is obtained. They work with both JSON and SMT2 backends.
+    after the initial staged SMT-LIB answer is obtained.
 
     Example:
         >>> from z3adapter.postprocessors import SelfRefine
@@ -54,7 +54,7 @@ class Postprocessor(ABC):
             question: Original question being answered
             initial_result: Initial QueryResult from ProofOfThought
             generator: Program generator for creating new programs
-            backend: Execution backend (JSON or SMT2)
+            backend: Execution backend
             llm_client: LLM client for additional queries
             **kwargs: Additional arguments specific to the postprocessor
 

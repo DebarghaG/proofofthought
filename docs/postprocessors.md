@@ -1,6 +1,6 @@
 # Postprocessing Techniques 
 
-This page describes the postprocessing techniques available to enhance reasoning quality and reliability. All postprocessors should work seamlessly with both JSON and SMT2 backends.
+This page describes the postprocessing techniques available to enhance reasoning quality and reliability. In `2.0.0`, postprocessors operate on the high-level staged `query()` convenience path.
 
 ## Overview
 
@@ -19,7 +19,7 @@ Postprocessors apply advanced prompting techniques to improve the quality of rea
 
 ```python
 from openai import OpenAI
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
 
 client = OpenAI(api_key="...")
 
@@ -184,7 +184,7 @@ pot = ProofOfThought(
 For more control, create postprocessor instances directly:
 
 ```python
-from z3adapter.postprocessors import SelfRefine, SelfConsistency
+from proofofthought.postprocessors import SelfRefine, SelfConsistency
 
 custom_refine = SelfRefine(num_iterations=3, name="CustomRefine")
 custom_consistency = SelfConsistency(num_samples=10, name="CustomConsistency")
@@ -200,7 +200,7 @@ pot = ProofOfThought(
 Query available postprocessors and their defaults:
 
 ```python
-from z3adapter.postprocessors import PostprocessorRegistry
+from proofofthought.postprocessors.registry import PostprocessorRegistry
 
 # List all available
 available = PostprocessorRegistry.list_available()
@@ -230,27 +230,18 @@ pot = ProofOfThought(llm_client=client, postprocessors=postprocessors)
 
 ## Backend Compatibility
 
-All postprocessors are **backend-agnostic** and work with:
-- **JSON backend** (`backend="json"`)
-- **SMT2 backend** (`backend="smt2"`)
+Postprocessors are designed to operate on `QueryResult` and backend execution results rather than a single serialized format.
 
-Example with both backends:
+Recommended usage:
 
 ```python
-# JSON backend with postprocessing
-pot_json = ProofOfThought(
+pot = ProofOfThought(
     llm_client=client,
-    backend="json",
-    postprocessors=["self_refine"]
-)
-
-# SMT2 backend with postprocessing
-pot_smt2 = ProofOfThought(
-    llm_client=client,
-    backend="smt2",
-    postprocessors=["self_refine"]
+    postprocessors=["self_refine"],
 )
 ```
+
+Use postprocessors with the default staged facade rather than with any removed legacy JSON path.
 
 ## Performance Considerations
 
@@ -276,7 +267,6 @@ You can test postprocessors on benchmarks by modifying the benchmark scripts:
 pot = ProofOfThought(
     llm_client=config["llm_client"],
     model=config["model"],
-    backend="smt2",
     postprocessors=["self_refine"],  # Add this
     postprocessor_configs={"self_refine": {"num_iterations": 2}}  # Add this
 )
@@ -290,7 +280,7 @@ pot = ProofOfThought(
 ProofOfThought(
     llm_client: Any,
     model: str = "gpt-5",
-    backend: Literal["json", "smt2"] = "smt2",
+    backend: Literal["smt2", "staged_smt2"] = "staged_smt2",
     postprocessors: list[str] | list[Postprocessor] | None = None,
     postprocessor_configs: dict[str, dict] | None = None,
     ...
@@ -326,4 +316,4 @@ The postprocessor architecture is designed to be extensible. To add new postproc
 2. Implement the `process()` method
 3. Register in `PostprocessorRegistry._POSTPROCESSOR_MAP`
 
-See `z3adapter/postprocessors/abstract.py` for the base interface.
+See `proofofthought/postprocessors/abstract.py` in the compatibility tree for the base interface.

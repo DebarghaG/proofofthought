@@ -1,9 +1,7 @@
 """Postprocessing techniques for improving reasoning quality.
 
-This module provides various postprocessing strategies that can be applied
-to enhance the quality and reliability of reasoning results from ProofOfThought.
-
-All postprocessors work with both JSON and SMT2 backends.
+This module provides postprocessing strategies that operate on the staged
+`ProofOfThought` query-result surface.
 """
 
 from z3adapter.postprocessors.abstract import Postprocessor

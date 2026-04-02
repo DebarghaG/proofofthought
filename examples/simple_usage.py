@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Example: Simple usage of ProofOfThought API."""
+"""Example: Simple staged usage of ProofOfThought."""
 
 import logging
 import os
@@ -8,7 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from z3adapter.reasoning import ProofOfThought
+from proofofthought import ProofOfThought
 
 project_root = Path(__file__).parent.parent
 load_dotenv(project_root / ".env")
@@ -34,7 +34,16 @@ pot = ProofOfThought(llm_client=client, model="gpt-4o")
 
 # Ask a question
 question = "Would Nancy Pelosi publicly denounce abortion?"
-result = pot.query(question)
+output_path = project_root / "output" / "simple_usage.smt2"
+artifact_path = project_root / "output" / "simple_usage.artifact.json"
+output_path.parent.mkdir(exist_ok=True)
+result = pot.query(
+    question,
+    save_program=True,
+    program_path=str(output_path),
+    save_artifact=True,
+    artifact_path=str(artifact_path),
+)
 
 # Print results
 print("\n" + "=" * 80)
@@ -49,11 +58,12 @@ print(f"UNSAT count: {result.unsat_count}")
 
 if result.error:
     print(f"Error: {result.error}")
+if result.failure_code:
+    print(f"Failure code: {result.failure_code}")
 
-if result.json_program:
-    print("\nGenerated JSON program structure:")
-    print(f"  - Sorts: {len(result.json_program.get('sorts', []))}")
-    print(f"  - Functions: {len(result.json_program.get('functions', []))}")
-    print(f"  - Constants: {len(result.json_program.get('constants', {}))}")
-    print(f"  - Knowledge base: {len(result.json_program.get('knowledge_base', []))}")
-    print(f"  - Verifications: {len(result.json_program.get('verifications', []))}")
+print(f"Program format: {result.program_format}")
+print(f"Program path: {result.program_path}")
+print(f"Artifact path: {result.artifact.artifact_path if result.artifact else None}")
+
+if result.smt2_program:
+    print(f"SMT-LIB lines: {len(result.smt2_program.splitlines())}")

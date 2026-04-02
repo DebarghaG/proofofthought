@@ -1,0 +1,42 @@
+site_name: ProofOfThought Nightly
+site_description: Unstable nightly documentation for ProofOfThought
+site_author: Debargha Ganguly
+site_url: https://debarghaG.github.io/proofofthought/nightly/
+
+repo_name: debarghaG/proofofthought
+repo_url: https://github.com/debarghaG/proofofthought
+edit_uri: edit/main/docs-nightly/
+
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - python
+    - json
+    - bash
+
+docs_dir: docs-nightly
+
+nav:
+  - Nightly: index.md
+  - Installation: installation.md
+  - Release Notes: release-notes.md
+  - Release Policy: release-policy.md
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+  - tables
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/debarghaG/proofofthought
+
+copyright: Copyright &copy; 2025 Debargha Ganguly
