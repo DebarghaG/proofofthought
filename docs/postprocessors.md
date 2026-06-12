@@ -230,9 +230,11 @@ pot = ProofOfThought(llm_client=client, postprocessors=postprocessors)
 
 ## Backend Compatibility
 
-All postprocessors are **backend-agnostic** and work with:
+Postprocessors work with both **single-shot** backends:
 - **JSON backend** (`backend="json"`)
 - **SMT2 backend** (`backend="smt2"`)
+
+They are not supported with the agentic backend (the v2.0 default) — they drive the single-shot generator/backend pair and have no defined meaning inside the tool loop. Configuring postprocessors together with `backend="agentic"` raises `ValueError` at construction.
 
 Example with both backends:
 

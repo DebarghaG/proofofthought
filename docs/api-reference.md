@@ -15,25 +15,32 @@ def __init__(
     self,
     llm_client: Any,
     model: str = "gpt-5",
-    backend: Literal["json", "smt2"] = "smt2",
+    backend: Literal["agentic", "json", "smt2"] = "agentic",
     max_attempts: int = 3,
+    max_iterations: int = 10,
     verify_timeout: int = 10000,
     optimize_timeout: int = 100000,
     cache_dir: str | None = None,
     z3_path: str = "z3",
+    postprocessors: Sequence[str | Postprocessor] | None = None,
+    postprocessor_configs: dict[str, dict] | None = None,
+    agentic_config: AgenticConfig | None = None,
 ) -> None
 ```
 
 **Parameters:**
 
-- `llm_client`: OpenAI/AzureOpenAI client instance
+- `llm_client`: OpenAI/AzureOpenAI client instance (any OpenAI-compatible client)
 - `model`: Deployment/model name (default: `"gpt-5"`)
-- `backend`: `"json"` or `"smt2"` (default: `"smt2"`)
-- `max_attempts`: Retry limit for generation (default: `3`)
-- `verify_timeout`: Z3 timeout in milliseconds (default: `10000`)
+- `backend`: `"agentic"`, `"smt2"`, or `"json"` (default: `"agentic"` — see [Agentic Reasoning](agentic.md))
+- `max_attempts`: Retry limit for single-shot generation, json/smt2 only (default: `3`)
+- `max_iterations`: Tool-loop turn limit, agentic only (default: `10`)
+- `verify_timeout`: Z3 timeout in milliseconds — governs all backends, including the agentic loop's in-process Z3 (default: `10000`)
 - `optimize_timeout`: Optimization timeout in ms, JSON only (default: `100000`)
 - `cache_dir`: Program cache directory (default: `tempfile.gettempdir()`)
-- `z3_path`: Z3 executable path for SMT2 (default: `"z3"`)
+- `z3_path`: Z3 executable path for the SMT2 backend (default: `"z3"`; the agentic backend needs no CLI binary)
+- `postprocessors`: Postprocessor names/instances — json/smt2 only; combining with the agentic backend raises `ValueError` at construction
+- `agentic_config`: Optional `z3adapter.agentic.AgenticConfig` with full control over the loop. When provided it is **authoritative** — set the model on it (a conflict with `model` logs a warning)
 
 ### query()
 
@@ -41,37 +48,26 @@ def __init__(
 def query(
     self,
     question: str,
-    temperature: float = 0.1,
+    temperature: float | None = None,
     max_tokens: int = 16384,
     save_program: bool = False,
     program_path: str | None = None,
+    enable_postprocessing: bool = True,
 ) -> QueryResult
 ```
 
 **Parameters:**
 
 - `question`: Natural language question
-- `temperature`: LLM temperature (default: `0.1`, ignored for GPT-5 which only supports `1.0`)
-- `max_tokens`: Max completion tokens (default: `16384`)
-- `save_program`: Save generated program to disk (default: `False`)
-- `program_path`: Custom save path (default: auto-generated in `cache_dir`)
+- `temperature`: Sampling temperature, honored on **every** backend. `None` (default) sends nothing and uses the provider default — required for models like GPT-5 that reject non-default temperatures
+- `max_tokens`: Max completion tokens per LLM response (default: `16384`)
+- `save_program`: Save the generated program to disk — for the agentic backend, the final trajectory program (default: `False`)
+- `program_path`: Custom save path (default: auto-generated, uniquified, in `cache_dir`)
+- `enable_postprocessing`: Apply configured postprocessors, json/smt2 only (default: `True`)
 
 **Returns:** `QueryResult`
 
-**Implementation details:**
-
-The method implements a retry loop with error feedback:
-
-```python
-for attempt in range(1, max_attempts + 1):
-    if attempt == 1:
-        gen_result = self.generator.generate(question, temperature, max_tokens)
-    else:
-        gen_result = self.generator.generate_with_feedback(
-            question, error_trace, previous_response, temperature, max_tokens
-        )
-    # ... execute and check result
-```
+On the agentic backend, `query()` runs the iterative `z3_solve` ⇄ `finish` tool loop (see [Agentic Reasoning](agentic.md)). On json/smt2 it runs the classic generate → execute → feedback retry loop bounded by `max_attempts`.
 
 ## QueryResult
 
@@ -81,15 +77,58 @@ Contains the results of a reasoning query.
 @dataclass
 class QueryResult:
     question: str                        # Input question
-    answer: bool | None                  # True (SAT), False (UNSAT), None (ambiguous/error)
+    answer: bool | None                  # Boolean view of answer_text; None when
+                                         #   non-boolean OR no answer (check success)
     json_program: dict[str, Any] | None  # Generated program if JSON backend
-    sat_count: int                       # SAT occurrences in output
-    unsat_count: int                     # UNSAT occurrences
-    output: str                          # Raw Z3 output
-    success: bool                        # Execution completed
-    num_attempts: int                    # Generation attempts used
+    sat_count: int                       # SAT occurrences (agentic: last verdict)
+    unsat_count: int                     # UNSAT occurrences (agentic: last verdict)
+    output: str                          # Raw Z3 output (agentic: last verdict's)
+    success: bool                        # An answer was produced
+    num_attempts: int                    # Attempts (json/smt2) / iterations (agentic)
     error: str | None                    # Error message if failed
+    answer_text: str | None              # CANONICAL answer, every backend
+    smt_history: list | None             # Agentic trajectory: every program + verdict
+    iterations: int                      # Agentic tool-loop turns
+    verified: bool                       # Agentic: finish backed by a decisive verdict
+    proof_status: str | None             # Agentic: "proof_by_contradiction" /
+                                         #   "sat_witness" / "unverified"
 ```
+
+**Field contract** (uniform across backends):
+
+- `answer_text` is the canonical answer — always populated when an answer was produced (`"True"`/`"False"` for json/smt2, the raw `finish()` value for agentic). Prefer it for anything that isn't strictly boolean.
+- `answer` is the boolean coercion of `answer_text` via a small unambiguous vocabulary (yes/no/true/false/valid/invalid/verified/violated). Multiple-choice letters, numbers, and raw Z3 verdicts coerce to `None`.
+- `success` means "an answer was produced" — it does **not** imply formal verification. Verification strength lives in `verified` and `proof_status`.
+
+## ProofStatus
+
+**Location:** `z3adapter.agentic.ProofStatus` (a `StrEnum`; values serialize as plain strings)
+
+| value | meaning |
+|---|---|
+| `proof_by_contradiction` | last decisive verdict was a clean `unsat` of the negated candidate — a proof |
+| `sat_witness` | last decisive verdict was a clean `sat` — a consistency witness, weaker |
+| `unverified` | answer recorded without a usable verdict — an ordinary LLM guess |
+
+See [Agentic Reasoning](agentic.md) for the full protocol, including finish rejection.
+
+## AgenticSolver / AgenticConfig / AgenticResult
+
+The low-level agentic API, usable without `ProofOfThought`.
+
+**Location:** `z3adapter.agentic`
+
+```python
+from z3adapter.agentic import AgenticSolver, AgenticConfig
+
+solver = AgenticSolver(client, AgenticConfig(model="gpt-5"))
+result = solver.solve(question, answer_format="Answer with one of: Yes, No.",
+                      temperature=None, max_tokens=None)  # per-call overrides
+```
+
+`AgenticConfig` fields: `model`, `max_tokens`, `temperature` (None = don't send), `max_iterations`, `max_consecutive_nudges`, `max_finish_rejections`, `z3_timeout_ms`, `lenient_extraction`, `system_prompt`.
+
+`AgenticResult` fields: `question`, `answer`, `explanation`, `verified`, `proof_status`, `smt_history`, `messages` (full transcript incl. reasoning channel), `iterations`, `token_usage`, `error`, `extraction_method` (`tool_call_finish` / `tool_call_finish_unverified` / `text_pattern_extracted` / `none`).
 
 ## EvaluationPipeline
 
@@ -139,9 +178,11 @@ def evaluate(
 
 **Returns:** `EvaluationResult`
 
+**Scoring:** boolean-like ground truths (bool, 0/1, "true"/"yes"/...) compare via the boolean answer; everything else — multiple choice, free form — compares whitespace/case-normalized `answer_text`. A sample is `failed` only when no answer was produced.
+
 **Caching behavior:**
 
-Results are cached by saving `{sample_id}_result.json` and `{sample_id}_program{ext}` files to `output_dir`.
+Results are cached by saving `{sample_id}_result.json` and `{sample_id}_program{ext}` files to `output_dir`. Each result file records `answer`, `answer_text`, `verified`, and `proof_status`, so verified-accuracy can be computed separately from raw accuracy.
 
 ## EvaluationMetrics
 
@@ -150,24 +191,24 @@ Provides comprehensive metrics for evaluation results.
 ```python
 @dataclass
 class EvaluationMetrics:
-    accuracy: float                # sklearn.metrics.accuracy_score
-    precision: float               # sklearn.metrics.precision_score (zero_division=0)
-    recall: float                  # sklearn.metrics.recall_score (zero_division=0)
-    f1_score: float                # 2 * (P * R) / (P + R)
-    specificity: float             # TN / (TN + FP)
-    false_positive_rate: float     # FP / (FP + TN)
-    false_negative_rate: float     # FN / (FN + TP)
-    tp: int                        # True positives
-    fp: int                        # False positives
-    tn: int                        # True negatives
-    fn: int                        # False negatives
-    total_samples: int             # Correct + wrong + failed
-    correct_answers: int           # answer == ground_truth
-    wrong_answers: int             # answer != ground_truth
-    failed_answers: int            # success == False
+    accuracy: float                # correct / (correct + wrong)
+    precision: float               # binary metrics: boolean-coercible pairs only
+    recall: float
+    f1_score: float
+    specificity: float
+    false_positive_rate: float
+    false_negative_rate: float
+    tp: int
+    fp: int
+    tn: int
+    fn: int
+    total_samples: int             # correct + wrong + failed
+    correct_answers: int
+    wrong_answers: int
+    failed_answers: int            # no answer produced
 ```
 
-Metrics are computed using `sklearn.metrics.confusion_matrix` for binary classification.
+Binary classification metrics (`precision`/`recall`/`f1_score`/the confusion matrix) accumulate **only** for samples where both the answer and the ground truth coerce to booleans; non-boolean datasets still get `accuracy` via text comparison.
 
 ## Backend
 
@@ -200,7 +241,15 @@ class Backend(ABC):
             return None
 ```
 
-Concrete implementations are provided by `SMT2Backend` and `JSONBackend`.
+Concrete implementations: `AgenticBackend`, `SMT2Backend`, and `JSONBackend`.
+
+### AgenticBackend.reverify()
+
+```python
+def reverify(self, program_path: str, proof_status: ProofStatus | str | None) -> bool
+```
+
+Re-runs a saved trajectory program and returns True when it still yields the verdict that backed the original answer (`unsat` for `proof_by_contradiction`, `sat` for `sat_witness`; always False for `unverified`/None). This encapsulates the negation polarity — `execute()`'s `answer` field reports *program-level* satisfiability (`sat → True`), which for a contradiction proof is **not** the question's answer.
 
 ## VerificationResult
 
@@ -209,7 +258,7 @@ Encapsulates the results of Z3 verification execution.
 ```python
 @dataclass
 class VerificationResult:
-    answer: bool | None  # True (SAT), False (UNSAT), None (ambiguous/error)
+    answer: bool | None  # Program-level: True (SAT), False (UNSAT), None (ambiguous/error)
     sat_count: int
     unsat_count: int
     output: str          # Raw execution output
@@ -219,7 +268,7 @@ class VerificationResult:
 
 ## Z3ProgramGenerator
 
-Handles LLM-based program generation with error recovery.
+Handles LLM-based single-shot program generation with error recovery (json/smt2 backends).
 
 **Location:** `z3adapter.reasoning.program_generator.Z3ProgramGenerator`
 
@@ -229,22 +278,12 @@ Handles LLM-based program generation with error recovery.
 def generate(
     self,
     question: str,
-    temperature: float = 0.1,
+    temperature: float | None = None,
     max_tokens: int = 16384,
 ) -> GenerationResult
 ```
 
-**LLM API Call:**
-
-```python
-response = self.llm_client.chat.completions.create(
-    model=self.model,
-    messages=[{"role": "user", "content": prompt}],
-    max_completion_tokens=max_tokens,
-)
-```
-
-Note that the `temperature` parameter is not passed to the API due to GPT-5 constraints.
+`temperature` is only sent to the API when explicitly set; `None` uses the provider default (GPT-5-safe).
 
 ### generate_with_feedback()
 

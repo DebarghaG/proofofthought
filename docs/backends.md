@@ -233,7 +233,7 @@ Error handling varies significantly between backends.
 
 ### Timeout Configuration
 
-Timeout handling differs between the two backends.
+Timeout handling differs between the two single-shot backends. (The agentic backend injects a per-script `(set-option :timeout ...)` on a fresh context — see [Agentic Reasoning](agentic.md).)
 
 **SMT2:**
 - Uses a single timeout parameter: `verify_timeout` (ms)
