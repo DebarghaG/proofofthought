@@ -2,9 +2,23 @@
 
 ProofOfThought provides LLM-guided translation of natural language questions into formal logic, which is then verified using the Z3 theorem prover.
 
+**As of v2.0.0 the default mode is agentic**: the model iteratively interacts with an SMT-LIB scratchpad through `z3_solve` tool calls and terminates with an explicit `finish` call once Z3 has verified the answer. This is the paradigm the library is moving towards going forward — see [Agentic Reasoning](agentic.md). The classic single-shot pipeline below remains fully supported via `backend="smt2"` / `backend="json"`.
+
 ## Architecture
 
-The system follows a multi-stage pipeline to transform questions into verifiable answers:
+The agentic loop (default):
+
+```
+Question (NL)
+    ↓
+LLM ⇄ SMT-LIB scratchpad (z3_solve tool, iterative repair)
+    ↓
+clean UNSAT of negated candidate (proof)
+    ↓
+finish(answer) → verified answer + full trajectory
+```
+
+The classic single-shot pipeline (`smt2` / `json` backends):
 
 ```
 Question (NL)
@@ -25,9 +39,13 @@ The architecture consists of several key components that work together:
 **Z3ProgramGenerator** (`z3adapter.reasoning.program_generator`)
 Provides the LLM interface for program generation. It extracts formal programs from markdown code blocks using regex and supports error feedback through multi-turn conversations.
 
-**Backend** (`z3adapter.backends.abstract`)
-Defines an abstract interface with `execute(program_path) → VerificationResult`. Two concrete implementations are available:
+**AgenticSolver** (`z3adapter.agentic.agent`)
+Runs the iterative `z3_solve` ⇄ `finish` tool loop with verdict-aware nudges, in-process Z3 execution, and robust recovery of textual tool calls from open-model servers.
 
+**Backend** (`z3adapter.backends.abstract`)
+Defines an abstract interface with `execute(program_path) → VerificationResult`. Three concrete implementations are available:
+
+- **AgenticBackend**: In-process re-execution of saved `.smt2` programs via the Z3 Python API (no CLI binary needed).
 - **SMT2Backend**: Subprocess call to Z3 CLI. Parses stdout/stderr for `sat`/`unsat` via regex `(?<!un)\bsat\b` and `\bunsat\b`.
 - **JSONBackend**: Python API execution via `Z3JSONInterpreter`. Returns structured SAT/UNSAT counts.
 
@@ -49,9 +67,12 @@ from openai import OpenAI
 from z3adapter.reasoning import ProofOfThought
 
 client = OpenAI(api_key="...")
-pot = ProofOfThought(llm_client=client, backend="smt2")
+pot = ProofOfThought(llm_client=client)  # agentic scratchpad by default
 result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-# result.answer: False (UNSAT)
+# result.answer: False  |  result.answer_text: "No"  |  result.smt_history: trajectory
+
+# Classic single-shot pipeline:
+pot = ProofOfThought(llm_client=client, backend="smt2")
 ```
 
 ## Benchmark Results
@@ -75,7 +96,9 @@ Several key design decisions shape the architecture:
 
 - **Why use an external theorem prover?** LLMs lack deductive closure, meaning they cannot guarantee sound logical inference. Z3 provides this soundness by formally verifying the logical reasoning.
 
-- **Why offer two backends?** The choice trades off portability (SMT-LIB is a widely-supported standard) against LLM generation reliability (structured JSON is easier for models to produce correctly).
+- **Why move to an agentic loop?** Single-shot generation treats the solver as a batch compiler; the agentic scratchpad treats it as an interactive partner. Each verdict lands back in the conversation, so the model accumulates formal experiments instead of restarting on every error, and every answer carries a machine-checkable trajectory.
+
+- **Why offer multiple backends?** The choice trades off portability (SMT-LIB is a widely-supported standard) against LLM generation reliability (structured JSON is easier for models to produce correctly); the agentic loop adds iterative repair on top of standard SMT-LIB.
 
 - **Why use iterative refinement?** Single-shot generation is often insufficient for complex reasoning. By incorporating error feedback, the system significantly improves its success rate.
 

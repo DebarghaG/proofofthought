@@ -128,6 +128,7 @@ class EvaluationPipeline:
             "question": question,
             "ground_truth": ground_truth,
             "answer": result.answer,
+            "answer_text": result.answer_text,
             "success": result.success,
             "num_attempts": result.num_attempts,
             "sat_count": result.sat_count,
@@ -201,8 +202,10 @@ class EvaluationPipeline:
 
                 ground_truth = result_data["ground_truth"]
 
-                # Update metrics from cached or new result
-                if result_data.get("success"):
+                # Update metrics from cached or new result. Note: a verified
+                # agentic answer can be non-boolean (e.g. "A" for multiple
+                # choice); binary metrics only apply when answer is a bool.
+                if result_data.get("success") and result_data.get("answer") is not None:
                     y_true.append(int(ground_truth))
                     y_pred.append(int(result_data["answer"]))
                     if result_data["answer"] == ground_truth:
@@ -257,8 +260,8 @@ class EvaluationPipeline:
                         result_data, result = future.result()
                         ground_truth = result_data["ground_truth"]
 
-                        # Update metrics
-                        if result_data.get("success"):
+                        # Update metrics (see note above on non-boolean answers)
+                        if result_data.get("success") and result_data.get("answer") is not None:
                             y_true.append(int(ground_truth))
                             y_pred.append(int(result_data["answer"]))
                             if result_data["answer"] == ground_truth:

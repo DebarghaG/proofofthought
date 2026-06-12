@@ -19,7 +19,22 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-BackendType = Literal["json", "smt2"]
+BackendType = Literal["agentic", "json", "smt2"]
+
+_TRUE_ANSWERS = {"yes", "true", "sat", "valid", "verified"}
+_FALSE_ANSWERS = {"no", "false", "unsat", "invalid", "violated"}
+
+
+def _answer_text_to_bool(answer: str | None) -> bool | None:
+    """Map a free-form verified answer to a boolean when it is boolean-like."""
+    if answer is None:
+        return None
+    a = answer.strip().lower().rstrip(".")
+    if a in _TRUE_ANSWERS:
+        return True
+    if a in _FALSE_ANSWERS:
+        return False
+    return None
 
 
 @dataclass
@@ -35,20 +50,29 @@ class QueryResult:
     success: bool
     num_attempts: int
     error: str | None = None
+    # Agentic-paradigm fields (None / defaults for json and smt2 backends).
+    # `answer_text` is the raw verified answer from the finish() call - use
+    # it for multiple-choice or free-form answers where bool doesn't fit.
+    answer_text: str | None = None
+    smt_history: list[dict[str, Any]] | None = None
+    iterations: int = 0
+    verified: bool = False
 
 
 class ProofOfThought:
     """High-level API for Z3-based reasoning.
 
-    Provides a simple interface that hides the complexity of:
-    - JSON DSL program generation
-    - Z3 solver execution
-    - Result parsing and interpretation
+    The default backend is **agentic**: the model iteratively interacts with
+    an SMT-LIB scratchpad through ``z3_solve`` tool calls, inspects Z3's
+    verdict, repairs its encoding, and terminates with an explicit ``finish``
+    call once the answer is formally verified. This is the paradigm the
+    library is moving towards going forward. The classic single-shot
+    ``smt2`` and ``json`` backends remain fully supported.
 
     Example:
         >>> from openai import OpenAI
         >>> client = OpenAI(api_key="...")
-        >>> pot = ProofOfThought(llm_client=client)
+        >>> pot = ProofOfThought(llm_client=client)  # agentic by default
         >>> result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
         >>> print(result.answer)  # False
     """
@@ -57,45 +81,69 @@ class ProofOfThought:
         self,
         llm_client: Any,
         model: str = "gpt-5",
-        backend: BackendType = "smt2",
+        backend: BackendType = "agentic",
         max_attempts: int = 3,
+        max_iterations: int = 10,
         verify_timeout: int = 10000,
         optimize_timeout: int = 100000,
         cache_dir: str | None = None,
         z3_path: str = "z3",
         postprocessors: Sequence[str | Postprocessor] | None = None,
         postprocessor_configs: dict[str, dict] | None = None,
+        agentic_config: Any | None = None,
     ) -> None:
         """Initialize ProofOfThought.
 
         Args:
             llm_client: LLM client (OpenAI, AzureOpenAI, Anthropic, etc.)
             model: LLM model/deployment name (default: "gpt-5")
-            backend: Execution backend ("json" or "smt2", default: "smt2")
+            backend: Execution backend ("agentic", "smt2" or "json";
+                default: "agentic")
             max_attempts: Maximum retry attempts for program generation
+                (json/smt2 backends)
+            max_iterations: Maximum tool-loop iterations (agentic backend)
             verify_timeout: Z3 verification timeout in milliseconds
             optimize_timeout: Z3 optimization timeout in milliseconds
             cache_dir: Directory to cache generated programs (None = temp dir)
             z3_path: Path to Z3 executable (for SMT2 backend)
             postprocessors: List of postprocessor names or instances to apply
+                (json/smt2 backends only)
             postprocessor_configs: Configuration for postprocessors (if names provided)
+            agentic_config: Optional ``z3adapter.agentic.AgenticConfig`` for
+                full control over the agentic loop (overrides ``model`` /
+                ``max_iterations``)
 
         Example with postprocessors:
             >>> pot = ProofOfThought(
             ...     llm_client=client,
+            ...     backend="smt2",
             ...     postprocessors=["self_refine", "self_consistency"],
             ...     postprocessor_configs={"self_refine": {"num_iterations": 3}}
             ... )
         """
         self.backend_type = backend
         self.llm_client = llm_client
-        self.generator = Z3ProgramGenerator(llm_client=llm_client, model=model, backend=backend)
+        # The agentic loop emits standard SMT2 programs; keep the generator
+        # on the smt2 prompt so postprocessor plumbing stays coherent.
+        generator_backend: Literal["json", "smt2"] = "json" if backend == "json" else "smt2"
+        self.generator = Z3ProgramGenerator(
+            llm_client=llm_client, model=model, backend=generator_backend
+        )
 
         # Initialize appropriate backend (import here to avoid circular imports)
-        if backend == "json":
+        self.agentic_solver = None
+        if backend == "agentic":
+            from z3adapter.agentic.agent import AgenticConfig, AgenticSolver
+            from z3adapter.backends.agentic_backend import AgenticBackend
+
+            if agentic_config is None:
+                agentic_config = AgenticConfig(model=model, max_iterations=max_iterations)
+            self.agentic_solver = AgenticSolver(llm_client=llm_client, config=agentic_config)
+            backend_instance: Backend = AgenticBackend(verify_timeout=agentic_config.z3_timeout_ms)
+        elif backend == "json":
             from z3adapter.backends.json_backend import JSONBackend
 
-            backend_instance: Backend = JSONBackend(
+            backend_instance = JSONBackend(
                 verify_timeout=verify_timeout, optimize_timeout=optimize_timeout
             )
         else:  # smt2
@@ -174,6 +222,14 @@ class ProofOfThought:
             QueryResult with answer and execution details
         """
         logger.info(f"Processing question: {question}")
+
+        if self.backend_type == "agentic":
+            return self._query_agentic(
+                question=question,
+                save_program=save_program,
+                program_path=program_path,
+                enable_postprocessing=enable_postprocessing,
+            )
 
         previous_response: str | None = None
         error_trace: str | None = None
@@ -295,6 +351,55 @@ class ProofOfThought:
             success=False,
             num_attempts=self.max_attempts,
             error=f"Failed after {self.max_attempts} attempts. Last error: {error_trace}",
+        )
+
+    def _query_agentic(
+        self,
+        question: str,
+        save_program: bool,
+        program_path: str | None,
+        enable_postprocessing: bool,
+    ) -> QueryResult:
+        """Answer a question via the agentic SMT-LIB scratchpad loop."""
+        assert self.agentic_solver is not None
+
+        if enable_postprocessing and self.postprocessors:
+            logger.warning(
+                "Postprocessors are currently only applied with the json/smt2 "
+                "backends; skipping them for the agentic backend."
+            )
+
+        result = self.agentic_solver.solve(question)
+
+        # Persist the final (or last) SMT program of the trajectory so it can
+        # be inspected / independently re-verified like any smt2 program.
+        if (save_program or program_path) and result.smt_history:
+            path = program_path or os.path.join(
+                self.cache_dir, f"agentic_program{self.backend.get_file_extension()}"
+            )
+            try:
+                with open(path, "w") as f:
+                    f.write(result.smt_history[-1]["smt_code"])
+                logger.info(f"Agentic program saved to: {path}")
+            except OSError as e:
+                logger.warning(f"Failed to save agentic program: {e}")
+
+        last_z3 = result.smt_history[-1]["z3_output"] if result.smt_history else {}
+        sat_result = last_z3.get("sat_result")
+        return QueryResult(
+            question=question,
+            answer=_answer_text_to_bool(result.answer),
+            json_program=None,
+            sat_count=1 if sat_result == "sat" else 0,
+            unsat_count=1 if sat_result == "unsat" else 0,
+            output=last_z3.get("output") or "",
+            success=result.verified,
+            num_attempts=result.iterations,
+            error=result.error if not result.verified else None,
+            answer_text=result.answer,
+            smt_history=result.smt_history,
+            iterations=result.iterations,
+            verified=result.verified,
         )
 
     def _apply_postprocessors(

@@ -19,6 +19,7 @@ nav:
   - Home: index.md
   - Foreword: foreword.md
   - Installation: installation.md
+  - Agentic Reasoning: agentic.md
   - DSL Specification: dsl-specification.md
   - API Reference: api-reference.md
   - Backends: backends.md

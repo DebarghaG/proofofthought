@@ -1,6 +1,12 @@
 # Backends
 
-ProofOfThought supports two execution backends for Z3: the standard SMT-LIB 2.0 format and a custom JSON DSL.
+ProofOfThought supports three execution backends for Z3:
+
+- **agentic** (default since v2.0.0) — the model iteratively interacts with an SMT-LIB scratchpad through tool calls; see [Agentic Reasoning](agentic.md). This is the paradigm the library is moving towards going forward.
+- **smt2** — single-shot generation of a standard SMT-LIB 2.0 program, executed via the Z3 CLI.
+- **json** — single-shot generation of a custom JSON DSL, executed via the Z3 Python API.
+
+This page documents the two classic single-shot backends.
 
 ## SMT2Backend
 
