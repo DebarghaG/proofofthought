@@ -31,9 +31,10 @@ def main() -> None:
     pot = ProofOfThought(llm_client=client, model="gpt-5")
 
     result = pot.query("Is there an integer that is both greater than 5 and less than 3?")
-    print(f"Answer (bool):  {result.answer}")
     print(f"Answer (text):  {result.answer_text}")
+    print(f"Answer (bool):  {result.answer}")
     print(f"Verified:       {result.verified}")
+    print(f"Proof status:   {result.proof_status}")  # e.g. "proof_by_contradiction"
     print(f"Iterations:     {result.iterations}")
     print("Trajectory:")
     for i, step in enumerate(result.smt_history or [], 1):
@@ -49,7 +50,9 @@ def main() -> None:
         "are all bloops definitely lazzies?",
         answer_format="Answer with exactly one of: Yes, No.",
     )
-    print(f"\nDirect solve: {direct.answer} (via {direct.extraction_method})")
+    print(
+        f"\nDirect solve: {direct.answer} ({direct.proof_status}, via {direct.extraction_method})"
+    )
     print(f"Token usage: {sum(u.get('total_tokens', 0) for u in direct.token_usage)} total")
 
 

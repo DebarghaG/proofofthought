@@ -11,7 +11,7 @@ LLM-based reasoning using Z3 theorem proving — now built around an **agentic S
 
 ## The agentic paradigm (v2.0)
 
-**Going forward, ProofOfThought is moving to an agentic paradigm**: instead of generating one program and hoping it runs, the model iteratively interacts with an SMT-LIB scratchpad — it calls a `z3_solve` tool, reads Z3's verdict (`sat` / `unsat` / errors), repairs or strengthens its encoding, and terminates with an explicit `finish` tool call only once the answer is formally verified (canonically, a clean UNSAT of the negated candidate answer — a proof). Every answer comes with a machine-checkable trajectory of SMT programs and Z3 verdicts.
+**Going forward, ProofOfThought is moving to an agentic paradigm**: instead of generating one program and hoping it runs, the model iteratively interacts with an SMT-LIB scratchpad — it calls a `z3_solve` tool, reads Z3's verdict (`sat` / `unsat` / errors), repairs or strengthens its encoding, and terminates with an explicit `finish` tool call. Canonically the answer is established by **proof by contradiction**: assert the negation of the candidate, and a clean UNSAT proves it. Every answer carries a `proof_status` (`proof_by_contradiction` / `sat_witness` / `unverified`) and the machine-checkable trajectory of SMT programs and Z3 verdicts that backs it — a premature `finish` with no decisive verdict is rejected, so `verified=True` is never just the model's say-so. Saved trajectory programs can be independently re-checked with `AgenticBackend.reverify()`.
 
 This loop was developed and battle-tested in our SMT evaluation harness across tens of thousands of agent trajectories, and it is the default backend as of v2.0.0. The previous single-shot backends remain fully supported. See [docs/agentic.md](docs/agentic.md).
 
@@ -98,9 +98,10 @@ pot = ProofOfThought(llm_client=client, model="gpt-4o")
 
 # Ask a question
 result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-print(result.answer)       # False
-print(result.answer_text)  # "No" — raw verified answer from the finish() call
-print(result.iterations)   # tool-loop turns the agent needed
+print(result.answer_text)   # "No" — canonical answer (any shape: Yes/No, MCQ letter, value)
+print(result.answer)        # False — boolean view; None for non-boolean answers
+print(result.proof_status)  # "proof_by_contradiction" — how the trajectory backs it
+print(result.iterations)    # tool-loop turns the agent needed
 for step in result.smt_history or []:
     print(step["z3_output"]["sat_result"])  # the full SMT scratchpad trajectory
 ```
@@ -199,7 +200,7 @@ pot = ProofOfThought(
 )
 ```
 
-Postprocessors currently apply to the single-shot backends (`smt2`/`json`); pass `backend="smt2"` when using them.
+Postprocessors apply to the single-shot backends (`smt2`/`json`) only — configuring them with the agentic backend raises `ValueError` at construction. Pass `backend="smt2"` when using them.
 
 Available techniques:
 - **Self-Refine**: Iterative refinement through self-critique

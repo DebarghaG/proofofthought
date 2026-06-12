@@ -15,9 +15,62 @@ from sklearn.metrics import (
     recall_score,
 )
 
-from z3adapter.reasoning.proof_of_thought import ProofOfThought, QueryResult
+from z3adapter.reasoning.proof_of_thought import (
+    ProofOfThought,
+    QueryResult,
+    answer_text_to_bool,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_text(s: Any) -> str:
+    return str(s).strip().casefold()
+
+
+def _ground_truth_bool(ground_truth: Any) -> bool | None:
+    """Coerce a dataset ground truth to a boolean when it is boolean-like."""
+    if isinstance(ground_truth, bool):
+        return ground_truth
+    if isinstance(ground_truth, int) and ground_truth in (0, 1):
+        return bool(ground_truth)
+    if isinstance(ground_truth, str):
+        return answer_text_to_bool(ground_truth)
+    return None
+
+
+def _score_sample(result_data: dict[str, Any], y_true: list[int], y_pred: list[int]) -> str:
+    """Score one sample -> "correct" | "wrong" | "failed".
+
+    Boolean-like ground truths are compared via the boolean answer; everything
+    else (multiple choice, free form) is compared as normalized text against
+    ``answer_text``. The binary-metric vectors (precision/recall/F1) only
+    accumulate when BOTH sides coerce to booleans - never via int() on raw
+    dataset values.
+    """
+    if not result_data.get("success"):
+        return "failed"
+    answer_bool = result_data.get("answer")
+    answer_text = result_data.get("answer_text")
+    if answer_bool is None and (answer_text is None or not str(answer_text).strip()):
+        return "failed"
+
+    ground_truth = result_data["ground_truth"]
+    gt_bool = _ground_truth_bool(ground_truth)
+    if gt_bool is not None:
+        pred_bool = (
+            answer_bool if answer_bool is not None else answer_text_to_bool(str(answer_text))
+        )
+        if pred_bool is not None:
+            y_true.append(int(gt_bool))
+            y_pred.append(int(pred_bool))
+            return "correct" if pred_bool == gt_bool else "wrong"
+        # Boolean ground truth but an answer outside the boolean vocabulary:
+        # fall through to a (correctly failing) text comparison.
+
+    # Cached pre-2.0 result files carry only the boolean `answer`.
+    text = answer_text if answer_text is not None else str(answer_bool)
+    return "correct" if _normalize_text(text) == _normalize_text(ground_truth) else "wrong"
 
 
 @dataclass
@@ -129,6 +182,8 @@ class EvaluationPipeline:
             "ground_truth": ground_truth,
             "answer": result.answer,
             "answer_text": result.answer_text,
+            "verified": result.verified,
+            "proof_status": result.proof_status,
             "success": result.success,
             "num_attempts": result.num_attempts,
             "sat_count": result.sat_count,
@@ -181,8 +236,8 @@ class EvaluationPipeline:
         logger.info(f"Evaluating {len(dataset_list)} samples with {self.num_workers} workers")
 
         results = []
-        y_true = []
-        y_pred = []
+        y_true: list[int] = []
+        y_pred: list[int] = []
         correct = 0
         wrong = 0
         failed = 0
@@ -200,20 +255,13 @@ class EvaluationPipeline:
                     skip_existing,
                 )
 
-                ground_truth = result_data["ground_truth"]
-
-                # Update metrics from cached or new result. Note: a verified
-                # agentic answer can be non-boolean (e.g. "A" for multiple
-                # choice); binary metrics only apply when answer is a bool.
-                if result_data.get("success") and result_data.get("answer") is not None:
-                    y_true.append(int(ground_truth))
-                    y_pred.append(int(result_data["answer"]))
-                    if result_data["answer"] == ground_truth:
-                        correct += 1
-                        logger.info("✓ Correct answer")
-                    else:
-                        wrong += 1
-                        logger.info("✗ Wrong answer")
+                outcome = _score_sample(result_data, y_true, y_pred)
+                if outcome == "correct":
+                    correct += 1
+                    logger.info("✓ Correct answer")
+                elif outcome == "wrong":
+                    wrong += 1
+                    logger.info("✗ Wrong answer")
                 else:
                     failed += 1
                     logger.warning(f"✗ Failed: {result_data.get('error')}")
@@ -258,16 +306,12 @@ class EvaluationPipeline:
                     completed += 1
                     try:
                         result_data, result = future.result()
-                        ground_truth = result_data["ground_truth"]
 
-                        # Update metrics (see note above on non-boolean answers)
-                        if result_data.get("success") and result_data.get("answer") is not None:
-                            y_true.append(int(ground_truth))
-                            y_pred.append(int(result_data["answer"]))
-                            if result_data["answer"] == ground_truth:
-                                correct += 1
-                            else:
-                                wrong += 1
+                        outcome = _score_sample(result_data, y_true, y_pred)
+                        if outcome == "correct":
+                            correct += 1
+                        elif outcome == "wrong":
+                            wrong += 1
                         else:
                             failed += 1
 

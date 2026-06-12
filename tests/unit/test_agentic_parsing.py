@@ -98,6 +98,12 @@ class TestAnswerExtraction(unittest.TestCase):
     def test_answer_phrase(self) -> None:
         self.assertEqual(extract_answer_from_text("So the answer is False."), "False")
 
+    def test_answer_phrase_strips_wrapper_punctuation(self) -> None:
+        # Regression: '(A).' used to come back as 'A)'.
+        self.assertEqual(extract_answer_from_text("The answer is (A)."), "A")
+        self.assertEqual(extract_answer_from_text("Thus the answer is B:"), "B")
+        self.assertEqual(extract_answer_from_text("final answer: **Yes**"), "Yes")
+
     def test_terminal_letter(self) -> None:
         self.assertEqual(extract_answer_from_text("blah blah\n(B)"), "B")
 

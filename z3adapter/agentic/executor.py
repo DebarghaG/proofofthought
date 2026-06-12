@@ -6,6 +6,12 @@ Takes SMT-LIB 2.6 code strings, evaluates them through the Z3 Python API
 ``z3-solver`` package — and supports the full command surface
 (``check-sat``, ``get-model``, ``push``/``pop``, ...).
 
+Each execution runs in a fresh ``z3.Context`` with the timeout set via a
+per-script ``(set-option :timeout ...)`` — never via the process-global
+``z3.set_param`` — so concurrent executions (e.g. EvaluationPipeline with
+``num_workers > 1``) cannot race on each other's timeouts, and nothing leaks
+into the user's own Z3 solvers.
+
 Ported from the NL2SMTLIB-Benchmark evaluation harness, where the result
 classification logic (``z3_result_is_useful``) was hardened against the
 failure modes long agentic loops actually hit: errors *before* the verdict
@@ -16,6 +22,7 @@ being mistaken for an ``unknown`` solver verdict.
 
 from __future__ import annotations
 
+import ast
 import traceback
 from typing import Any
 
@@ -75,14 +82,45 @@ def z3_result_is_useful(z3_result: dict[str, Any] | None) -> bool:
     return not _has_error_before_result(output)
 
 
+def z3_result_has_error(z3_result: dict[str, Any]) -> bool:
+    """True when Z3 produced syntactic/tool errors, even alongside sat output.
+
+    The complement of :func:`z3_result_is_useful` restricted to error-shaped
+    failures; used by the agent's nudge policy to decide between "fix your
+    SMT code" and "your encoding ran but didn't prove anything".
+    """
+    if z3_result_is_useful(z3_result):
+        return False
+    output = str(z3_result.get("output") or "")
+    error = str(z3_result.get("error") or "")
+    combined = f"{output}\n{error}".lower()
+    return (
+        not z3_result.get("success")
+        or bool(z3_result.get("error"))
+        or "(error" in combined
+        or "unsupported" in combined
+    )
+
+
 def last_smt_result_is_useful(smt_history: list[dict[str, Any]] | None) -> bool:
     """Return whether the last recorded SMT history entry is useful.
 
     Entries are ``{"smt_code": ..., "z3_output": ...}`` dicts everywhere.
+    This is the guard the agent uses to decide whether a finish() call is
+    backed by a decisive verdict.
     """
     if not smt_history:
         return False
     return z3_result_is_useful(smt_history[-1].get("z3_output"))
+
+
+def verdict_counts(sat_result: str | None) -> tuple[int, int]:
+    """Map a single sat_result to ``(sat_count, unsat_count)``.
+
+    Single source of the verdict→counts presentation used by both the
+    high-level QueryResult and AgenticBackend's VerificationResult.
+    """
+    return (1 if sat_result == "sat" else 0, 1 if sat_result == "unsat" else 0)
 
 
 class Z3Executor:
@@ -95,6 +133,9 @@ class Z3Executor:
         """Execute SMT-LIB code that may contain (check-sat), (get-model), etc.
 
         Uses Z3's low-level SMT-LIB command evaluation for full compatibility.
+        The timeout is injected as a leading ``(set-option :timeout ...)`` so
+        it is scoped to this execution's context; a ``set-option`` inside the
+        user's script comes later and therefore overrides ours.
 
         Returns:
             {
@@ -106,11 +147,10 @@ class Z3Executor:
         """
         try:
             ctx = z3.Context()
-            # Set timeout via global params (applies to the evaluation below)
-            z3.set_param("timeout", self.timeout_ms)
+            script = f"(set-option :timeout {int(self.timeout_ms)})\n{smt_code}"
 
             try:
-                output = z3.Z3_eval_smtlib2_string(ctx.ref(), smt_code)
+                output = z3.Z3_eval_smtlib2_string(ctx.ref(), script)
             except z3.Z3Exception as e:
                 # Z3 throws on errors but the message may contain useful output
                 # e.g., "unsat\n(error ...)" when get-model is called after unsat
@@ -118,9 +158,9 @@ class Z3Executor:
                 clean = err_str
                 if clean.startswith("b'") or clean.startswith('b"'):
                     try:
-                        decoded = eval(clean)  # noqa: S307 - decoding bytes repr from Z3
+                        decoded = ast.literal_eval(clean)
                         clean = decoded.decode() if isinstance(decoded, bytes) else decoded
-                    except Exception:
+                    except (ValueError, SyntaxError):
                         pass
 
                 # Try to extract an exact sat/unsat/unknown result line from
@@ -162,13 +202,7 @@ class Z3Executor:
             # present (e.g., "unsat\n(error ...)" is common when get-model is
             # called after unsat).
             has_error = "(error" in output or _has_error_before_result(output)
-
-            sat_result = None
-            for line in output.split("\n"):
-                stripped = line.strip()
-                if stripped in _SMT_RESULTS:
-                    sat_result = stripped
-                    break
+            sat_result = _first_smt_result(output)
 
             # If we found a useful sat/unsat result, treat as success even if
             # there was a non-fatal post-verdict error (e.g., get-model after
@@ -203,10 +237,11 @@ class Z3Executor:
             }
 
 
-# Convenience singleton
-_default_executor = Z3Executor()
+def run_smt(smt_code: str, timeout_ms: int = 30000) -> dict[str, Any]:
+    """Run SMT-LIB code and return a result dict.
 
-
-def run_smt(smt_code: str) -> dict[str, Any]:
-    """Run SMT-LIB code and return result dict."""
-    return _default_executor.execute(smt_code)
+    Convenience wrapper constructing a fresh :class:`Z3Executor` per call;
+    executor construction is trivially cheap and this keeps the timeout
+    explicit instead of frozen in a module-level singleton.
+    """
+    return Z3Executor(timeout_ms=timeout_ms).execute(smt_code)

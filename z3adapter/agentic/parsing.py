@@ -274,6 +274,16 @@ _TERMINAL_WORD_RE = re.compile(
 )
 
 
+def _strip_recovered_answer(s: str) -> str:
+    """Trim wrapper punctuation the phrase regex can capture.
+
+    'The answer is (A).' captures 'A)' — the leading '(' is consumed by the
+    pattern but the closer lands inside the group. Strip emphasis markers and
+    trailing closers/punctuation so recovered answers compare cleanly.
+    """
+    return s.strip().strip("*").lstrip("([").rstrip(" .:!)]")
+
+
 def extract_answer_from_text(text: str) -> str | None:
     """Try to recover an answer from natural-language model output.
 
@@ -295,7 +305,7 @@ def extract_answer_from_text(text: str) -> str | None:
     # 2. Phrase: "the answer is X" / "final answer: X"
     m = _ANSWER_PHRASE_RE.search(tail)
     if m:
-        return m.group(1).strip().rstrip(".")
+        return _strip_recovered_answer(m.group(1))
 
     # 3. Terminal single-letter line (very last line is just "A" / "B" / "(C)")
     last_lines = [line for line in tail.splitlines() if line.strip()]

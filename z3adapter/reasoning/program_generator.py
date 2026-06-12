@@ -60,14 +60,16 @@ class Z3ProgramGenerator:
     def generate(
         self,
         question: str,
-        temperature: float = 0.1,
+        temperature: float | None = None,
         max_tokens: int = 16384,
     ) -> GenerationResult:
         """Generate a Z3 DSL program from a question.
 
         Args:
             question: Natural language question
-            temperature: LLM temperature
+            temperature: LLM temperature. None (default) sends nothing and
+                uses the provider default - required for models like GPT-5
+                that reject non-default temperatures.
             max_tokens: Maximum tokens for response (default 16384 for GPT-5)
 
         Returns:
@@ -80,14 +82,17 @@ class Z3ProgramGenerator:
             else:  # smt2
                 prompt = build_smt2_prompt(question)
 
-            # Make LLM API call (compatible with both OpenAI and Azure OpenAI)
-            # Azure OpenAI requires content as string, not list
-            # GPT-5 only supports temperature=1 (default), so don't pass it
-            response = self.llm_client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                max_completion_tokens=max_tokens,
-            )
+            # Make LLM API call (compatible with both OpenAI and Azure OpenAI).
+            # temperature is only sent when explicitly set - GPT-5 rejects
+            # non-default temperatures, so None means "provider default".
+            request_kwargs: dict[str, Any] = {
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_completion_tokens": max_tokens,
+            }
+            if temperature is not None:
+                request_kwargs["temperature"] = temperature
+            response = self.llm_client.chat.completions.create(**request_kwargs)
 
             raw_response = response.choices[0].message.content
 
@@ -132,7 +137,7 @@ class Z3ProgramGenerator:
         question: str,
         error_trace: str,
         previous_response: str,
-        temperature: float = 0.1,
+        temperature: float | None = None,
         max_tokens: int = 16384,
     ) -> GenerationResult:
         """Regenerate program with error feedback.
@@ -160,18 +165,21 @@ class Z3ProgramGenerator:
                 f"There was an error processing your response:\n{error_trace}\n{format_msg}"
             )
 
-            # Multi-turn conversation with error feedback
-            # Compatible with both OpenAI and Azure OpenAI
-            # GPT-5 only supports temperature=1 (default), so don't pass it
-            response = self.llm_client.chat.completions.create(
-                model=self.model,
-                messages=[
+            # Multi-turn conversation with error feedback.
+            # Compatible with both OpenAI and Azure OpenAI; temperature is
+            # only sent when explicitly set (see generate()).
+            request_kwargs: dict[str, Any] = {
+                "model": self.model,
+                "messages": [
                     {"role": "user", "content": prompt},
                     {"role": "assistant", "content": previous_response},
                     {"role": "user", "content": feedback_message},
                 ],
-                max_completion_tokens=max_tokens,
-            )
+                "max_completion_tokens": max_tokens,
+            }
+            if temperature is not None:
+                request_kwargs["temperature"] = temperature
+            response = self.llm_client.chat.completions.create(**request_kwargs)
 
             raw_response = response.choices[0].message.content
 
