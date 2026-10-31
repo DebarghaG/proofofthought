@@ -35,10 +35,10 @@ Install the latest stable version:
 pip install proofofthought
 ```
 
-To use the agentic v2 release candidate:
+To upgrade an existing installation to the agentic v2 release:
 
 ```bash
-pip install --pre proofofthought
+pip install --upgrade proofofthought
 ```
 
 **Note:** Package name is `proofofthought`, but imports use `z3adapter`:
