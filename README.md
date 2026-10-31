@@ -35,6 +35,12 @@ Install the latest stable version:
 pip install proofofthought
 ```
 
+To use the agentic v2 release candidate:
+
+```bash
+pip install --pre proofofthought
+```
+
 **Note:** Package name is `proofofthought`, but imports use `z3adapter`:
 ```python
 from z3adapter.reasoning import ProofOfThought
@@ -47,7 +53,7 @@ For contributing or using the latest development version:
 ```bash
 git clone https://github.com/debarghaG/proofofthought.git
 cd proofofthought
-pip install -r requirements.txt
+pip install -e '.[dev]'
 ```
 
 ### Prerequisites
@@ -182,6 +188,7 @@ Enhance reasoning quality with advanced postprocessing techniques:
 # Enable Self-Refine for iterative refinement
 pot = ProofOfThought(
     llm_client=client,
+    backend="smt2",
     postprocessors=["self_refine"],
     postprocessor_configs={"self_refine": {"num_iterations": 2}}
 )
@@ -189,6 +196,7 @@ pot = ProofOfThought(
 # Use Self-Consistency for improved reliability via majority voting
 pot = ProofOfThought(
     llm_client=client,
+    backend="smt2",
     postprocessors=["self_consistency"],
     postprocessor_configs={"self_consistency": {"num_samples": 5}}
 )
@@ -196,6 +204,7 @@ pot = ProofOfThought(
 # Chain multiple postprocessors
 pot = ProofOfThought(
     llm_client=client,
+    backend="smt2",
     postprocessors=["self_refine", "self_consistency"]
 )
 ```

@@ -20,6 +20,7 @@ nav:
   - Foreword: foreword.md
   - Installation: installation.md
   - Agentic Reasoning: agentic.md
+  - Trajectory Guardrails: guardrails.md
   - DSL Specification: dsl-specification.md
   - API Reference: api-reference.md
   - Backends: backends.md
