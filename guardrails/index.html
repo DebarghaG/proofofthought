@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Debargha Ganguly" /><link rel="canonical" href="https://debarghaG.github.io/proofofthought/guardrails/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Trajectory Guardrails - ProofOfThought</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Trajectory Guardrails";
+        var mkdocs_page_input_path = "guardrails.md";
+        var mkdocs_page_url = "/proofofthought/guardrails/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ProofOfThought
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../foreword/">Foreword</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Trajectory Guardrails</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#how-it-works">How it works</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick start</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#online-gating-of-tool-calls">Online gating of tool calls</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#re-checking-audits">Re-checking audits</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#honest-semantics-what-is-and-isnt-proven">Honest semantics — what is and isn't proven</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#end-to-end-example">End-to-end example</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../dsl-specification/">DSL Specification</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../api-reference/">API Reference</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../backends/">Backends</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">Examples</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../benchmarks/">Benchmarks</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../postprocessors/">Postprocessors</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ProofOfThought</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Trajectory Guardrails</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/debarghaG/proofofthought/edit/main/docs/guardrails.md">Edit on debarghaG/proofofthought</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="trajectory-guardrails">Trajectory Guardrails<a class="headerlink" href="#trajectory-guardrails" title="Permanent link">&para;</a></h1>
+<p><code>z3adapter.guardrails</code> turns the agentic SMT-LIB backend into a <strong>formal guardrail for tool-calling agents</strong>: it verifies that an agent's tool-call trajectory — every call individually <em>and</em> the composition across calls — complies with a domain policy, and it can gate a proposed tool call online before it executes. It works out of the box on the <a href="https://github.com/sierra-research/tau-bench">TauBench</a> and <a href="https://github.com/sierra-research/tau2-bench">tau2-bench (τ²)</a> trajectory formats.</p>
+<h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<p>Everything reuses the existing agentic machinery — the guardrail is two <code>AgenticSolver</code> runs with different system prompts:</p>
+<ol>
+<li>
+<p><strong>Autoformalization</strong> (once per policy). <code>formalize_policy()</code> points the standard agentic loop at the natural-language rulebook (a tau-bench <code>wiki.md</code> or tau2 <code>policy.md</code>) and asks it to build a <em>step-indexed</em> SMT-LIB theory: an enumerated datatype of the domain's tools, uninterpreted functions over step indices (<code>tool_at</code>, <code>user_authenticated_by</code>, <code>explicit_confirmation_before</code>, order status observed at call time, ...), one <code>rule_k_violated(i)</code> predicate per enforceable rule, and a top-level <code>any_violation</code>. The loop iterates <code>z3_solve</code> until Z3 accepts the theory as <strong>consistent (<code>sat</code>)</strong>; the last Z3-validated program becomes the formal artifact, persisted with <code>policy.save()</code>.</p>
+</li>
+<li>
+<p><strong>Audit</strong> (per trajectory or per proposed call). <code>TrajectoryGuardrail</code> runs the agentic loop with the theory and a rendered transcript of the trajectory. The verifier asserts the theory, the concrete facts of each step (which tool ran, what state its result revealed, which confirmations are on the record), and then <code>(assert any_violation)</code>:</p>
+</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Z3 verdict</th>
+<th>meaning</th>
+<th>verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>unsat</code></td>
+<td>no step — alone or in composition — can violate any rule</td>
+<td><code>SAFE</code>, <code>proof_status = proof_by_contradiction</code></td>
+</tr>
+<tr>
+<td><code>sat</code></td>
+<td>Z3 found a concrete model of a violated rule at a specific step</td>
+<td><code>VIOLATION</code>, <code>proof_status = sat_witness</code></td>
+</tr>
+<tr>
+<td>anything else</td>
+<td>no decisive verdict</td>
+<td><code>INCONCLUSIVE</code>, <code>allowed = None</code></td>
+</tr>
+</tbody>
+</table>
+<p>Because the theory quantifies over steps and the whole tool-call sequence is asserted at once, <strong>compositional rules are part of the same satisfiability question as per-call preconditions</strong>: authenticate-before-account-actions, explicit-confirmation-before-every-write, at-most-once tools (e.g. tau-bench's "exchange or modify order tools can only be called once"), and preconditions established or destroyed by earlier calls (a second exchange is invalid <em>because</em> the first one changed the order status).</p>
+<p>The finish discipline carries over unchanged, plus one extra check: the verifier's finish answer is cross-checked against its own proof status (<code>SAFE</code>⇔<code>unsat</code>, <code>VIOLATION</code>⇔<code>sat</code>); a mismatched or unverified verdict is downgraded to <code>INCONCLUSIVE</code> rather than trusted, and the caller decides whether to fail open or closed.</p>
+<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.guardrails</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TrajectoryGuardrail</span><span class="p">,</span> <span class="n">formalize_policy</span><span class="p">,</span> <span class="n">taubench_policy</span><span class="p">,</span>
+    <span class="n">load_taubench_trajectories</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+
+<span class="c1"># 1. Formalize the domain policy once and cache it.</span>
+<span class="n">policy</span> <span class="o">=</span> <span class="n">taubench_policy</span><span class="p">(</span><span class="s2">"retail"</span><span class="p">,</span> <span class="s2">"external/tau-bench"</span><span class="p">)</span>
+<span class="n">policy</span> <span class="o">=</span> <span class="n">formalize_policy</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+<span class="n">policy</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"retail_policy.json"</span><span class="p">)</span>            <span class="c1"># later: Policy.load(...)</span>
+
+<span class="c1"># 2. Audit recorded benchmark trajectories.</span>
+<span class="n">guard</span> <span class="o">=</span> <span class="n">TrajectoryGuardrail</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">policy</span><span class="p">)</span>
+<span class="n">trajectories</span> <span class="o">=</span> <span class="n">load_taubench_trajectories</span><span class="p">(</span>
+    <span class="s2">"external/tau-bench/historical_trajectories/gpt-4o-retail.json"</span>
+<span class="p">)</span>
+<span class="n">verdict</span> <span class="o">=</span> <span class="n">guard</span><span class="o">.</span><span class="n">check_trajectory</span><span class="p">(</span><span class="n">trajectories</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">verdict</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>        <span class="c1"># "safe" | "violation" | "inconclusive"</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">verdict</span><span class="o">.</span><span class="n">allowed</span><span class="p">)</span>       <span class="c1"># True | False | None</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">verdict</span><span class="o">.</span><span class="n">proof_status</span><span class="p">)</span>  <span class="c1"># "proof_by_contradiction" for safe trajectories</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">verdict</span><span class="o">.</span><span class="n">explanation</span><span class="p">)</span>   <span class="c1"># names the violated rule / step for violations</span>
+</code></pre></div>
+
+<p>tau2-bench results files (<code>{timestamp, info, tasks, simulations}</code>) load the same way with <code>load_tau2_trajectories(...)</code> and <code>tau2_policy("retail" | "airline" | "telecom", repo_root)</code>.</p>
+<h2 id="online-gating-of-tool-calls">Online gating of tool calls<a class="headerlink" href="#online-gating-of-tool-calls" title="Permanent link">&para;</a></h2>
+<p><code>check_tool_call</code> audits a <em>proposed</em> call as the next step on top of the conversation so far — before it executes. Violations it would commit in composition with earlier calls are caught, not just bad arguments:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">verdict</span> <span class="o">=</span> <span class="n">guard</span><span class="o">.</span><span class="n">check_tool_call</span><span class="p">(</span>
+    <span class="n">messages</span><span class="p">,</span>                          <span class="c1"># the OpenAI message list so far</span>
+    <span class="s2">"exchange_delivered_order_items"</span><span class="p">,</span>  <span class="c1"># what the agent wants to call</span>
+    <span class="p">{</span><span class="s2">"order_id"</span><span class="p">:</span> <span class="s2">"#W2378156"</span><span class="p">,</span> <span class="s2">"item_ids"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"3"</span><span class="p">],</span> <span class="o">...</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="n">verdict</span><span class="o">.</span><span class="n">allowed</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+    <span class="o">...</span>  <span class="c1"># block the call; verdict.explanation names the rule it would break</span>
+<span class="k">elif</span> <span class="n">verdict</span><span class="o">.</span><span class="n">allowed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="o">...</span>  <span class="c1"># inconclusive: fail open or closed per your risk posture</span>
+</code></pre></div>
+
+<h2 id="re-checking-audits">Re-checking audits<a class="headerlink" href="#re-checking-audits" title="Permanent link">&para;</a></h2>
+<p>Every verdict carries <code>smt_program</code> — the final SMT program of the audit, a standard <code>.smt2</code> artifact that re-yields the verdict. It re-checks under the library's standard contract, independently of any LLM:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"audit.smt2"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">verdict</span><span class="o">.</span><span class="n">smt_program</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">guard</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">reverify</span><span class="p">(</span><span class="s2">"audit.smt2"</span><span class="p">,</span> <span class="n">verdict</span><span class="o">.</span><span class="n">proof_status</span><span class="p">)</span>
+</code></pre></div>
+
+<p><code>verify_theory(policy)</code> likewise re-checks that a saved policy theory is still consistent (<code>sat</code>) — a theory drifted to <code>unsat</code> would prove any verdict vacuously.</p>
+<h2 id="honest-semantics-what-is-and-isnt-proven">Honest semantics — what is and isn't proven<a class="headerlink" href="#honest-semantics-what-is-and-isnt-proven" title="Permanent link">&para;</a></h2>
+<p>The UNSAT/SAT verdict is a genuine machine-checked proof <strong>relative to the facts the verifier asserted</strong>. Extracting those facts from the transcript (did the user's "yes" confirm <em>this specific</em> action?) is LLM judgment, same as autoformalization everywhere. The guardrail narrows that trust surface: the verifier is instructed to assert <em>absence</em> of confirmations it cannot see (defaulting to violation rather than compliance), polarity mismatches are rejected mechanically, and both the theory and every audit are persisted as re-checkable SMT-LIB. Treat <code>INCONCLUSIVE</code> as its own outcome — it is deliberately never coerced to safe.</p>
+<h2 id="end-to-end-example">End-to-end example<a class="headerlink" href="#end-to-end-example" title="Permanent link">&para;</a></h2>
+<p><code>examples/guardrail_taubench.py</code> runs the full pipeline (formalize → cache → batch audit → online gate) against the trajectory fixtures checked into either benchmark repo:</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://github.com/sierra-research/tau-bench<span class="w"> </span>external/tau-bench
+git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://github.com/sierra-research/tau2-bench<span class="w"> </span>external/tau2-bench
+python<span class="w"> </span>examples/guardrail_taubench.py<span class="w"> </span>--benchmark<span class="w"> </span>taubench<span class="w"> </span>--domain<span class="w"> </span>retail<span class="w"> </span>--max-trajectories<span class="w"> </span><span class="m">3</span>
+python<span class="w"> </span>examples/guardrail_taubench.py<span class="w"> </span>--benchmark<span class="w"> </span>tau2<span class="w"> </span>--domain<span class="w"> </span>airline
+</code></pre></div>
+
+<p>Observed behavior with Claude Sonnet 4.5 on tau-bench retail: real recorded trajectories (both reward-1 and reward-0 runs whose failures were answer-quality, not policy breaches) prove <code>SAFE</code> by contradiction in ~2 verifier iterations; an unauthenticated + unconfirmed <code>cancel_pending_order</code> is flagged <code>VIOLATION</code> with the exact rules named; a second <code>exchange_delivered_order_items</code> call — where each call is individually well-formed — is flagged as a compositional violation both offline and via the online gate, and every audit artifact re-verifies with <code>AgenticBackend.reverify</code>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../agentic/" class="btn btn-neutral float-left" title="Agentic Reasoning"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../dsl-specification/" class="btn btn-neutral float-right" title="DSL Specification">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright &copy; 2025 Debargha Ganguly</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/debarghaG/proofofthought" class="fa fa-code-fork" style="color: #fcfcfc"> debarghaG/proofofthought</a>
+        </span>
+    
+    
+      <span><a href="../agentic/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../dsl-specification/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

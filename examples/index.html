@@ -55,6 +55,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guardrails/">Trajectory Guardrails</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../dsl-specification/">DSL Specification</a>
                 </li>
               </ul>
@@ -136,10 +144,10 @@
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">))</span>
-<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o&quot;</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"OPENAI_API_KEY"</span><span class="p">))</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">)</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;Would Nancy Pelosi publicly denounce abortion?&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"Would Nancy Pelosi publicly denounce abortion?"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span>  <span class="c1"># False</span>
 </code></pre></div>
 
@@ -150,26 +158,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
-<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span> <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">])</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span> <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"model"</span><span class="p">])</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;Can fish breathe underwater?&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"Can fish breathe underwater?"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span>  <span class="c1"># True</span>
 </code></pre></div>
 
 <h2 id="backend-comparison">Backend Comparison<a class="headerlink" href="#backend-comparison" title="Permanent link">&para;</a></h2>
-<p>You can compare how the two backends perform on the same question.</p>
+<p>You can compare how the two single-shot backends perform on the same question. (The agentic backend — the v2.0 default — is covered in <a href="../agentic/">Agentic Reasoning</a>; see <code>examples/agentic_usage.py</code>.)</p>
 <p><strong>File:</strong> <code>examples/backend_comparison.py</code></p>
 <div class="codehilite"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
-<span class="n">question</span> <span class="o">=</span> <span class="s2">&quot;Can fish breathe underwater?&quot;</span>
+<span class="n">question</span> <span class="o">=</span> <span class="s2">"Can fish breathe underwater?"</span>
 
-<span class="n">pot_json</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">)</span>
-<span class="n">pot_smt2</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">)</span>
+<span class="n">pot_json</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+<span class="n">pot_smt2</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"smt2"</span><span class="p">)</span>
 
 <span class="n">result_json</span> <span class="o">=</span> <span class="n">pot_json</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
 <span class="n">result_smt2</span> <span class="o">=</span> <span class="n">pot_smt2</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;JSON: </span><span class="si">{</span><span class="n">result_json</span><span class="o">.</span><span class="n">answer</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SMT2: </span><span class="si">{</span><span class="n">result_smt2</span><span class="o">.</span><span class="n">answer</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"JSON: </span><span class="si">{</span><span class="n">result_json</span><span class="o">.</span><span class="n">answer</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SMT2: </span><span class="si">{</span><span class="n">result_smt2</span><span class="o">.</span><span class="n">answer</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="batch-evaluation">Batch Evaluation<a class="headerlink" href="#batch-evaluation" title="Permanent link">&para;</a></h2>
@@ -178,17 +186,17 @@
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationPipeline</span><span class="p">,</span> <span class="n">ProofOfThought</span>
 
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-<span class="n">evaluator</span> <span class="o">=</span> <span class="n">EvaluationPipeline</span><span class="p">(</span><span class="n">proof_of_thought</span><span class="o">=</span><span class="n">pot</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;results/&quot;</span><span class="p">)</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">EvaluationPipeline</span><span class="p">(</span><span class="n">proof_of_thought</span><span class="o">=</span><span class="n">pot</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">"results/"</span><span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-    <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;data/strategyQA_train.json&quot;</span><span class="p">,</span>
-    <span class="n">question_field</span><span class="o">=</span><span class="s2">&quot;question&quot;</span><span class="p">,</span>
-    <span class="n">answer_field</span><span class="o">=</span><span class="s2">&quot;answer&quot;</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="s2">"data/strategyQA_train.json"</span><span class="p">,</span>
+    <span class="n">question_field</span><span class="o">=</span><span class="s2">"question"</span><span class="p">,</span>
+    <span class="n">answer_field</span><span class="o">=</span><span class="s2">"answer"</span><span class="p">,</span>
     <span class="n">max_samples</span><span class="o">=</span><span class="mi">100</span>
 <span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Accuracy: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;F1 Score: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">f1_score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Accuracy: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"F1 Score: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">f1_score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="azure-smt2-evaluation">Azure + SMT2 Evaluation<a class="headerlink" href="#azure-smt2-evaluation" title="Permanent link">&para;</a></h2>
@@ -197,13 +205,13 @@
 <div class="codehilite"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
 
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
-    <span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">],</span>
-    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"model"</span><span class="p">],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"smt2"</span>
 <span class="p">)</span>
 
 <span class="n">evaluator</span> <span class="o">=</span> <span class="n">EvaluationPipeline</span><span class="p">(</span><span class="n">proof_of_thought</span><span class="o">=</span><span class="n">pot</span><span class="p">)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="s2">&quot;data/strategyQA_train.json&quot;</span><span class="p">,</span> <span class="n">max_samples</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="s2">"data/strategyQA_train.json"</span><span class="p">,</span> <span class="n">max_samples</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="full-benchmark-suite">Full Benchmark Suite<a class="headerlink" href="#full-benchmark-suite" title="Permanent link">&para;</a></h2>
@@ -222,13 +230,13 @@
 </ul>
 <p><strong>Configuration</strong> (<code>experiments_pipeline.py:29-41</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">BENCHMARKS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;prontoqa&quot;</span><span class="p">:</span> <span class="s2">&quot;benchmark/bench_prontoqa.py&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;folio&quot;</span><span class="p">:</span> <span class="s2">&quot;benchmark/bench_folio.py&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;proofwriter&quot;</span><span class="p">:</span> <span class="s2">&quot;benchmark/bench_proofwriter.py&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;conditionalqa&quot;</span><span class="p">:</span> <span class="s2">&quot;benchmark/bench_conditionalqa.py&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;strategyqa&quot;</span><span class="p">:</span> <span class="s2">&quot;benchmark/bench_strategyqa.py&quot;</span><span class="p">,</span>
+    <span class="s2">"prontoqa"</span><span class="p">:</span> <span class="s2">"benchmark/bench_prontoqa.py"</span><span class="p">,</span>
+    <span class="s2">"folio"</span><span class="p">:</span> <span class="s2">"benchmark/bench_folio.py"</span><span class="p">,</span>
+    <span class="s2">"proofwriter"</span><span class="p">:</span> <span class="s2">"benchmark/bench_proofwriter.py"</span><span class="p">,</span>
+    <span class="s2">"conditionalqa"</span><span class="p">:</span> <span class="s2">"benchmark/bench_conditionalqa.py"</span><span class="p">,</span>
+    <span class="s2">"strategyqa"</span><span class="p">:</span> <span class="s2">"benchmark/bench_strategyqa.py"</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="n">BACKENDS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;smt2&quot;</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">]</span>
+<span class="n">BACKENDS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"smt2"</span><span class="p">,</span> <span class="s2">"json"</span><span class="p">]</span>
 </code></pre></div>
 
 <h2 id="benchmark-script-structure">Benchmark Script Structure<a class="headerlink" href="#benchmark-script-structure" title="Permanent link">&para;</a></h2>
@@ -237,22 +245,22 @@
 <div class="codehilite"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
 
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
-    <span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">],</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"model"</span><span class="p">],</span>
     <span class="n">backend</span><span class="o">=</span><span class="n">BACKEND</span><span class="p">,</span>  <span class="c1"># Modified by experiments_pipeline.py</span>
     <span class="n">max_attempts</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-    <span class="n">cache_dir</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;output/</span><span class="si">{</span><span class="n">BACKEND</span><span class="si">}</span><span class="s2">_programs_strategyqa&quot;</span><span class="p">,</span>
+    <span class="n">cache_dir</span><span class="o">=</span><span class="sa">f</span><span class="s2">"output/</span><span class="si">{</span><span class="n">BACKEND</span><span class="si">}</span><span class="s2">_programs_strategyqa"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">evaluator</span> <span class="o">=</span> <span class="n">EvaluationPipeline</span><span class="p">(</span>
     <span class="n">proof_of_thought</span><span class="o">=</span><span class="n">pot</span><span class="p">,</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;output/</span><span class="si">{</span><span class="n">BACKEND</span><span class="si">}</span><span class="s2">_evaluation_strategyqa&quot;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="sa">f</span><span class="s2">"output/</span><span class="si">{</span><span class="n">BACKEND</span><span class="si">}</span><span class="s2">_evaluation_strategyqa"</span><span class="p">,</span>
     <span class="n">num_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># ThreadPoolExecutor for parallel processing</span>
 <span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-    <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;data/strategyQA_train.json&quot;</span><span class="p">,</span>
-    <span class="n">id_field</span><span class="o">=</span><span class="s2">&quot;qid&quot;</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="s2">"data/strategyQA_train.json"</span><span class="p">,</span>
+    <span class="n">id_field</span><span class="o">=</span><span class="s2">"qid"</span><span class="p">,</span>
     <span class="n">max_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
     <span class="n">skip_existing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Resume interrupted runs</span>
 <span class="p">)</span>
@@ -262,27 +270,27 @@
 <p>Datasets should be formatted as JSON arrays of objects:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">[</span>
 <span class="w">  </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;question&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Can fish breathe underwater?&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;answer&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">    </span><span class="nt">"question"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Can fish breathe underwater?"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"answer"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
 <span class="w">  </span><span class="p">},</span>
 <span class="w">  </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;question&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Do humans have wings?&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;answer&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="nt">"question"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Do humans have wings?"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"answer"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">]</span>
 </code></pre></div>
 
 <p>You can optionally include an ID field:</p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;qid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sample_123&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;question&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;answer&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"qid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sample_123"</span><span class="p">,</span><span class="w"> </span><span class="nt">"question"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="p">,</span><span class="w"> </span><span class="nt">"answer"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">}</span>
 </code></pre></div>
 
 <p>Use the <code>question_field</code>, <code>answer_field</code>, and <code>id_field</code> parameters to specify custom field names.</p>
 <h2 id="saving-programs">Saving Programs<a class="headerlink" href="#saving-programs" title="Permanent link">&para;</a></h2>
 <p>To save generated programs to disk for inspection:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="s2">&quot;Can fish breathe underwater?&quot;</span><span class="p">,</span>
+    <span class="s2">"Can fish breathe underwater?"</span><span class="p">,</span>
     <span class="n">save_program</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">program_path</span><span class="o">=</span><span class="s2">&quot;output/my_program.smt2&quot;</span>
+    <span class="n">program_path</span><span class="o">=</span><span class="s2">"output/my_program.smt2"</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -291,11 +299,11 @@
 <p>For more control over the reasoning process, you can customize various parameters:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-5&quot;</span><span class="p">,</span>
-    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"gpt-5"</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"smt2"</span><span class="p">,</span>
     <span class="n">max_attempts</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>           <span class="c1"># More retries</span>
     <span class="n">verify_timeout</span><span class="o">=</span><span class="mi">20000</span><span class="p">,</span>     <span class="c1"># 20s timeout</span>
-    <span class="n">z3_path</span><span class="o">=</span><span class="s2">&quot;/custom/z3&quot;</span>      <span class="c1"># Custom Z3 binary</span>
+    <span class="n">z3_path</span><span class="o">=</span><span class="s2">"/custom/z3"</span>      <span class="c1"># Custom Z3 binary</span>
 <span class="p">)</span>
 </code></pre></div>
               

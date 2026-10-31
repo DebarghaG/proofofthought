@@ -55,6 +55,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guardrails/">Trajectory Guardrails</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../dsl-specification/">DSL Specification</a>
                 </li>
               </ul>
@@ -297,8 +305,8 @@
 <h3 id="prontoqa">ProntoQA<a class="headerlink" href="#prontoqa" title="Permanent link">&para;</a></h3>
 <p>ProntoQA features synthetic first-order logic problems with deterministic inference.</p>
 <p><strong>Example:</strong></p>
-<div class="codehilite"><pre><span></span><code>Facts: &quot;Stella is a lion. All lions are brown.&quot;
-Question: &quot;Is Stella brown?&quot;
+<div class="codehilite"><pre><span></span><code>Facts: "Stella is a lion. All lions are brown."
+Question: "Is Stella brown?"
 Answer: True
 </code></pre></div>
 
@@ -320,8 +328,8 @@ Answer: True
 <h3 id="proofwriter">ProofWriter<a class="headerlink" href="#proofwriter" title="Permanent link">&para;</a></h3>
 <p>ProofWriter tests deductive reasoning over explicit facts and rules.</p>
 <p><strong>Example:</strong></p>
-<div class="codehilite"><pre><span></span><code>Facts: &quot;The bear is red. If something is red, then it is kind.&quot;
-Question: &quot;Is the bear kind?&quot;
+<div class="codehilite"><pre><span></span><code>Facts: "The bear is red. If something is red, then it is kind."
+Question: "Is the bear kind?"
 Answer: True
 </code></pre></div>
 
@@ -342,7 +350,7 @@ Answer: True
 <h3 id="strategyqa">StrategyQA<a class="headerlink" href="#strategyqa" title="Permanent link">&para;</a></h3>
 <p>StrategyQA tests multi-hop reasoning that requires implicit world knowledge.</p>
 <p><strong>Example:</strong></p>
-<div class="codehilite"><pre><span></span><code>Question: &quot;Would a vegetarian eat a burger made of plants?&quot;
+<div class="codehilite"><pre><span></span><code>Question: "Would a vegetarian eat a burger made of plants?"
 Answer: True (requires knowing: vegetarians avoid meat, plant burgers have no meat)
 </code></pre></div>
 
@@ -406,18 +414,18 @@ Answer: True (requires knowing: vegetarians avoid meat, plant burgers have no me
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span><span class="p">,</span> <span class="n">EvaluationPipeline</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>
-<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">)</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"smt2"</span><span class="p">)</span>
 <span class="n">evaluator</span> <span class="o">=</span> <span class="n">EvaluationPipeline</span><span class="p">(</span><span class="n">proof_of_thought</span><span class="o">=</span><span class="n">pot</span><span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-    <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;data/strategyQA_train.json&quot;</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="o">=</span><span class="s2">"data/strategyQA_train.json"</span><span class="p">,</span>
     <span class="n">max_samples</span><span class="o">=</span><span class="mi">100</span>
 <span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Accuracy: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Precision: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">precision</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Recall: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">recall</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;F1: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">f1_score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Accuracy: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Precision: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">precision</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Recall: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">recall</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"F1: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">f1_score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="dataset-sources">Dataset Sources<a class="headerlink" href="#dataset-sources" title="Permanent link">&para;</a></h2>

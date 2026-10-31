@@ -55,6 +55,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guardrails/">Trajectory Guardrails</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../dsl-specification/">DSL Specification</a>
                 </li>
               </ul>
@@ -180,16 +188,16 @@
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">"..."</span><span class="p">)</span>
 
 <span class="c1"># Enable Self-Refine postprocessor</span>
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">],</span>
-    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_refine"</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">"self_refine"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_iterations"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>
 <span class="p">)</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;Your complex reasoning question here&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"Your complex reasoning question here"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span>
 </code></pre></div>
 
@@ -197,10 +205,10 @@
 <p>Postprocessors can be chained together:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">,</span> <span class="s2">&quot;self_consistency&quot;</span><span class="p">],</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_refine"</span><span class="p">,</span> <span class="s2">"self_consistency"</span><span class="p">],</span>
     <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
-        <span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+        <span class="s2">"self_refine"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_iterations"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+        <span class="s2">"self_consistency"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_samples"</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
     <span class="p">}</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -221,8 +229,8 @@
 4. Repeats until convergence or max iterations</p>
 <p><strong>Configuration:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
-    <span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span>  <span class="c1"># Number of refinement iterations (default: 2)</span>
+    <span class="s2">"self_refine"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"num_iterations"</span><span class="p">:</span> <span class="mi">2</span>  <span class="c1"># Number of refinement iterations (default: 2)</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -231,8 +239,8 @@
 <p><strong>Example:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">],</span>
-    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}}</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_refine"</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">"self_refine"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_iterations"</span><span class="p">:</span> <span class="mi">3</span><span class="p">}}</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -244,8 +252,8 @@
 3. Selects most consistent answer via majority voting</p>
 <p><strong>Configuration:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
-    <span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Number of independent samples (default: 5)</span>
+    <span class="s2">"self_consistency"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"num_samples"</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Number of independent samples (default: 5)</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -254,8 +262,8 @@
 <p><strong>Example:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_consistency&quot;</span><span class="p">],</span>
-    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">}}</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_consistency"</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">"self_consistency"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_samples"</span><span class="p">:</span> <span class="mi">7</span><span class="p">}}</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -267,8 +275,8 @@
 3. Combines sub-answers to solve main question</p>
 <p><strong>Configuration:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
-    <span class="s2">&quot;decomposed&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;max_subquestions&quot;</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Maximum sub-questions to generate (default: 5)</span>
+    <span class="s2">"decomposed"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"max_subquestions"</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Maximum sub-questions to generate (default: 5)</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -277,8 +285,8 @@
 <p><strong>Example:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;decomposed&quot;</span><span class="p">],</span>
-    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;decomposed&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;max_subquestions&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}}</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"decomposed"</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">"decomposed"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"max_subquestions"</span><span class="p">:</span> <span class="mi">4</span><span class="p">}}</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -290,8 +298,8 @@
 3. Uses solutions from simpler problems to inform complex ones</p>
 <p><strong>Configuration:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span>
-    <span class="s2">&quot;least_to_most&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;max_steps&quot;</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Maximum progressive steps (default: 5)</span>
+    <span class="s2">"least_to_most"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"max_steps"</span><span class="p">:</span> <span class="mi">5</span>  <span class="c1"># Maximum progressive steps (default: 5)</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -300,8 +308,8 @@
 <p><strong>Example:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;least_to_most&quot;</span><span class="p">],</span>
-    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;least_to_most&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;max_steps&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}}</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"least_to_most"</span><span class="p">],</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">"least_to_most"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"max_steps"</span><span class="p">:</span> <span class="mi">4</span><span class="p">}}</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -310,8 +318,8 @@
 <p>For more control, create postprocessor instances directly:</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.postprocessors</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelfRefine</span><span class="p">,</span> <span class="n">SelfConsistency</span>
 
-<span class="n">custom_refine</span> <span class="o">=</span> <span class="n">SelfRefine</span><span class="p">(</span><span class="n">num_iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;CustomRefine&quot;</span><span class="p">)</span>
-<span class="n">custom_consistency</span> <span class="o">=</span> <span class="n">SelfConsistency</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;CustomConsistency&quot;</span><span class="p">)</span>
+<span class="n">custom_refine</span> <span class="o">=</span> <span class="n">SelfRefine</span><span class="p">(</span><span class="n">num_iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"CustomRefine"</span><span class="p">)</span>
+<span class="n">custom_consistency</span> <span class="o">=</span> <span class="n">SelfConsistency</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"CustomConsistency"</span><span class="p">)</span>
 
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
@@ -325,22 +333,22 @@
 
 <span class="c1"># List all available</span>
 <span class="n">available</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">list_available</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">available</span><span class="p">)</span>  <span class="c1"># [&#39;self_refine&#39;, &#39;self_consistency&#39;, &#39;decomposed&#39;, &#39;least_to_most&#39;]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">available</span><span class="p">)</span>  <span class="c1"># ['self_refine', 'self_consistency', 'decomposed', 'least_to_most']</span>
 
 <span class="c1"># Get default configuration</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get_default_config</span><span class="p">(</span><span class="s1">&#39;self_refine&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># {&#39;num_iterations&#39;: 2}</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get_default_config</span><span class="p">(</span><span class="s1">'self_refine'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># {'num_iterations': 2}</span>
 
 <span class="c1"># Create postprocessor</span>
-<span class="n">postprocessor</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;self_refine&#39;</span><span class="p">,</span> <span class="n">num_iterations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">postprocessor</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'self_refine'</span><span class="p">,</span> <span class="n">num_iterations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 </code></pre></div>
 
 <h3 id="creating-multiple-postprocessors">Creating Multiple Postprocessors<a class="headerlink" href="#creating-multiple-postprocessors" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="n">postprocessors</span> <span class="o">=</span> <span class="n">PostprocessorRegistry</span><span class="o">.</span><span class="n">get_multiple</span><span class="p">(</span>
-    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">,</span> <span class="s2">&quot;self_consistency&quot;</span><span class="p">],</span>
+    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_refine"</span><span class="p">,</span> <span class="s2">"self_consistency"</span><span class="p">],</span>
     <span class="n">configs</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-        <span class="s2">&quot;self_consistency&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">}</span>
+        <span class="s2">"self_refine"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_iterations"</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+        <span class="s2">"self_consistency"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_samples"</span><span class="p">:</span> <span class="mi">7</span><span class="p">}</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
@@ -348,22 +356,23 @@
 </code></pre></div>
 
 <h2 id="backend-compatibility">Backend Compatibility<a class="headerlink" href="#backend-compatibility" title="Permanent link">&para;</a></h2>
-<p>All postprocessors are <strong>backend-agnostic</strong> and work with:
+<p>Postprocessors work with both <strong>single-shot</strong> backends:
 - <strong>JSON backend</strong> (<code>backend="json"</code>)
 - <strong>SMT2 backend</strong> (<code>backend="smt2"</code>)</p>
+<p>They are not supported with the agentic backend (the v2.0 default) — they drive the single-shot generator/backend pair and have no defined meaning inside the tool loop. Configuring postprocessors together with <code>backend="agentic"</code> raises <code>ValueError</code> at construction.</p>
 <p>Example with both backends:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># JSON backend with postprocessing</span>
 <span class="n">pot_json</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">]</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"json"</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_refine"</span><span class="p">]</span>
 <span class="p">)</span>
 
 <span class="c1"># SMT2 backend with postprocessing</span>
 <span class="n">pot_smt2</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">]</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"smt2"</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_refine"</span><span class="p">]</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -400,11 +409,11 @@
 <p>You can test postprocessors on benchmarks by modifying the benchmark scripts:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># In benchmark/bench_folio.py</span>
 <span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span>
-    <span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">],</span>
-    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
-    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;self_refine&quot;</span><span class="p">],</span>  <span class="c1"># Add this</span>
-    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;self_refine&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;num_iterations&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>  <span class="c1"># Add this</span>
+    <span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"model"</span><span class="p">],</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"smt2"</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="o">=</span><span class="p">[</span><span class="s2">"self_refine"</span><span class="p">],</span>  <span class="c1"># Add this</span>
+    <span class="n">postprocessor_configs</span><span class="o">=</span><span class="p">{</span><span class="s2">"self_refine"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"num_iterations"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>  <span class="c1"># Add this</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -412,8 +421,8 @@
 <h3 id="proofofthought-parameters">ProofOfThought Parameters<a class="headerlink" href="#proofofthought-parameters" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="n">ProofOfThought</span><span class="p">(</span>
     <span class="n">llm_client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gpt-5&quot;</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;smt2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"gpt-5"</span><span class="p">,</span>
+    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"smt2"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"smt2"</span><span class="p">,</span>
     <span class="n">postprocessors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Postprocessor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">postprocessor_configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">...</span>

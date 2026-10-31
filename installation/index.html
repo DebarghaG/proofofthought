@@ -61,6 +61,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#z3-verification-setup">Z3 Verification Setup</a>
         <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#agentic-backend-default">Agentic Backend (Default)</a>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#json-backend">JSON Backend</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#smt2-backend">SMT2 Backend</a>
@@ -90,6 +92,14 @@
     <li class="toctree-l2"><a class="reference internal" href="#version-constraints">Version Constraints</a>
     </li>
     </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guardrails/">Trajectory Guardrails</a>
                 </li>
               </ul>
               <ul>
@@ -144,11 +154,17 @@
 <h2 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h2>
 <p>ProofOfThought requires Python 3.12 or higher (as specified in <code>pyproject.toml</code>).</p>
 <h3 id="core-dependencies">Core Dependencies<a class="headerlink" href="#core-dependencies" title="Permanent link">&para;</a></h3>
-<p>Install the core dependencies using:</p>
-<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<p>Install the agentic v2 release candidate from PyPI:</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>--pre<span class="w"> </span>proofofthought
+</code></pre></div>
+
+<p>For development, install the package and development dependencies from the repository root:</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[dev]'</span>
 </code></pre></div>
 
 <h2 id="z3-verification-setup">Z3 Verification Setup<a class="headerlink" href="#z3-verification-setup" title="Permanent link">&para;</a></h2>
+<h3 id="agentic-backend-default">Agentic Backend (Default)<a class="headerlink" href="#agentic-backend-default" title="Permanent link">&para;</a></h3>
+<p>The agentic backend runs SMT-LIB programs in-process through <code>z3-solver</code>, which is installed with ProofOfThought. No separate Z3 CLI setup is required. See <a href="../agentic/">Agentic Reasoning</a> for the tool loop and proof results.</p>
 <h3 id="json-backend">JSON Backend<a class="headerlink" href="#json-backend" title="Permanent link">&para;</a></h3>
 <p>The JSON backend requires no additional setup beyond installing <code>z3-solver</code>, which includes the Python API.</p>
 <h3 id="smt2-backend">SMT2 Backend<a class="headerlink" href="#smt2-backend" title="Permanent link">&para;</a></h3>
@@ -157,12 +173,12 @@
 </code></pre></div>
 
 <p>If Z3 is not found, note that the <code>z3-solver</code> package includes a CLI binary in <code>site-packages</code>. You can locate it with:</p>
-<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import z3; print(z3.__file__)&quot;</span>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import z3; print(z3.__file__)"</span>
 <span class="c1"># The CLI is typically located at: .../site-packages/z3/bin/z3</span>
 </code></pre></div>
 
 <p>On macOS/Linux, you can either add it to your PATH or specify the path in your code:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">ProofOfThought</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">z3_path</span><span class="o">=</span><span class="s2">&quot;/path/to/z3&quot;</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">ProofOfThought</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">z3_path</span><span class="o">=</span><span class="s2">"/path/to/z3"</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="api-keys">API Keys<a class="headerlink" href="#api-keys" title="Permanent link">&para;</a></h2>
@@ -183,8 +199,8 @@
 <p>Then use it in your code:</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.azure_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_client_config</span>
 
-<span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>  <span class="c1"># Returns {&quot;llm_client&quot;: AzureOpenAI(...), &quot;model&quot;: str}</span>
-<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;llm_client&quot;</span><span class="p">],</span> <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">])</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">get_client_config</span><span class="p">()</span>  <span class="c1"># Returns {"llm_client": AzureOpenAI(...), "model": str}</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"llm_client"</span><span class="p">],</span> <span class="n">model</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">"model"</span><span class="p">])</span>
 </code></pre></div>
 
 <h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
@@ -203,12 +219,12 @@ Attempts: 1
 <p>Common issues and their solutions:</p>
 <h3 id="z3-cli-not-found-smt2-backend">Z3 CLI not found (SMT2 backend)<a class="headerlink" href="#z3-cli-not-found-smt2-backend" title="Permanent link">&para;</a></h3>
 <p><strong>Error:</strong></p>
-<div class="codehilite"><pre><span></span><code>FileNotFoundError: Z3 executable not found: &#39;z3&#39;
+<div class="codehilite"><pre><span></span><code>FileNotFoundError: Z3 executable not found: 'z3'
 </code></pre></div>
 
 <p><strong>Solutions:</strong></p>
 <ol>
-<li>Switch to JSON backend: <code>ProofOfThought(backend="json")</code></li>
+<li>Use the default agentic backend, which executes Z3 in-process.</li>
 <li>Specify the Z3 path explicitly: <code>ProofOfThought(z3_path="/path/to/z3")</code></li>
 <li>Add Z3 to your PATH: <code>export PATH=$PATH:/path/to/z3/bin</code></li>
 </ol>
@@ -244,7 +260,7 @@ python<span class="w"> </span>examples/simple_usage.py<span class="w">  </span><
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../foreword/" class="btn btn-neutral float-left" title="Foreword"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../dsl-specification/" class="btn btn-neutral float-right" title="DSL Specification">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../agentic/" class="btn btn-neutral float-right" title="Agentic Reasoning">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -275,7 +291,7 @@ python<span class="w"> </span>examples/simple_usage.py<span class="w">  </span><
       <span><a href="../foreword/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../dsl-specification/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../agentic/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

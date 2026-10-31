@@ -54,6 +54,14 @@
                 <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
                 </li>
               </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guardrails/">Trajectory Guardrails</a>
+                </li>
+              </ul>
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">DSL Specification</a>
     <ul class="current">
@@ -186,10 +194,10 @@
 
 <p><strong>Structure:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;forall&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;p&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">}],</span>
-<span class="w">  </span><span class="nt">&quot;implies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;antecedent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;is_democrat(p)&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;consequent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(p)&quot;</span>
+<span class="w">  </span><span class="nt">"forall"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Person"</span><span class="p">}],</span>
+<span class="w">  </span><span class="nt">"implies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"antecedent"</span><span class="p">:</span><span class="w"> </span><span class="s2">"is_democrat(p)"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"consequent"</span><span class="p">:</span><span class="w"> </span><span class="s2">"supports_abortion(p)"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -216,8 +224,8 @@
 </ul>
 <p><strong>Structure:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test_pelosi&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;publicly_denounce(nancy, abortion)&quot;</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test_pelosi"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"constraint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"publicly_denounce(nancy, abortion)"</span>
 <span class="p">}</span>
 </code></pre></div>
 
@@ -225,15 +233,15 @@
 <h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
 <p>Here's a complete example showing the interaction between rules and verifications:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"rules"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;forall&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;p&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">}],</span>
-<span class="w">      </span><span class="nt">&quot;implies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;antecedent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;is_democrat(p)&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;consequent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(p)&quot;</span><span class="p">}</span>
+<span class="w">      </span><span class="nt">"forall"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Person"</span><span class="p">}],</span>
+<span class="w">      </span><span class="nt">"implies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"antecedent"</span><span class="p">:</span><span class="w"> </span><span class="s2">"is_democrat(p)"</span><span class="p">,</span><span class="w"> </span><span class="nt">"consequent"</span><span class="p">:</span><span class="w"> </span><span class="s2">"supports_abortion(p)"</span><span class="p">}</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;knowledge_base&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;is_democrat(nancy)&quot;</span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;verifications&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(nancy)&quot;</span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"knowledge_base"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"is_democrat(nancy)"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"verifications"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test"</span><span class="p">,</span><span class="w"> </span><span class="nt">"constraint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"supports_abortion(nancy)"</span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -247,7 +255,7 @@
 <p><strong>Implementation:</strong> <code>z3adapter/dsl/expressions.py:69-107</code></p>
 <h3 id="free-variables">Free Variables<a class="headerlink" href="#free-variables" title="Permanent link">&para;</a></h3>
 <p>Free variables are declared in the global <code>"variables"</code> section and remain available throughout the program.</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">&quot;variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Int&quot;</span><span class="p">}]</span>
+<div class="codehilite"><pre><span></span><code><span class="nt">"variables"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Int"</span><span class="p">}]</span>
 </code></pre></div>
 
 <p>These are added to the evaluation context at line 91:</p>
@@ -256,7 +264,7 @@
 
 <h3 id="quantified-variables">Quantified Variables<a class="headerlink" href="#quantified-variables" title="Permanent link">&para;</a></h3>
 <p>Quantified variables are bound by <code>ForAll</code> or <code>Exists</code> operators and temporarily shadow free variables within their scope.</p>
-<div class="codehilite"><pre><span></span><code><span class="nt">&quot;knowledge_base&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;ForAll([x], x &gt; 0)&quot;</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="nt">"knowledge_base"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"ForAll([x], x &gt; 0)"</span><span class="p">]</span>
 </code></pre></div>
 
 <p>In this example, <code>x</code> must already exist in the context (from <code>"variables"</code>) to be bound by the <code>ForAll</code> operator.</p>
@@ -265,7 +273,7 @@
 <div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">quantified_vars</span><span class="p">:</span>
     <span class="n">var_name</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">decl</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">context</span> <span class="ow">and</span> <span class="n">var_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="o">...</span><span class="p">]:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Quantified variable &#39;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2">&#39; shadows existing symbol&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Quantified variable '</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2">' shadows existing symbol"</span><span class="p">)</span>
     <span class="n">context</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
 </code></pre></div>
 
@@ -290,8 +298,8 @@
 <p><strong>Handling:</strong> The system treats <code>None</code> as an error and retries with feedback (see <code>proof_of_thought.py:183-191</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">verify_result</span><span class="o">.</span><span class="n">answer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">error_trace</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Ambiguous verification result: &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;SAT=</span><span class="si">{</span><span class="n">verify_result</span><span class="o">.</span><span class="n">sat_count</span><span class="si">}</span><span class="s2">, UNSAT=</span><span class="si">{</span><span class="n">verify_result</span><span class="o">.</span><span class="n">unsat_count</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">"Ambiguous verification result: "</span>
+        <span class="sa">f</span><span class="s2">"SAT=</span><span class="si">{</span><span class="n">verify_result</span><span class="o">.</span><span class="n">sat_count</span><span class="si">}</span><span class="s2">, UNSAT=</span><span class="si">{</span><span class="n">verify_result</span><span class="o">.</span><span class="n">unsat_count</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span>
     <span class="k">continue</span>  <span class="c1"># Retry with error feedback</span>
 </code></pre></div>
@@ -310,7 +318,7 @@
 <h3 id="restricted-evaluation">Restricted Evaluation<a class="headerlink" href="#restricted-evaluation" title="Permanent link">&para;</a></h3>
 <p>The evaluation environment is carefully sandboxed:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Line 66</span>
-<span class="nb">eval</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;__builtins__&quot;</span><span class="p">:</span> <span class="p">{}},</span> <span class="p">{</span><span class="o">**</span><span class="n">safe_globals</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">})</span>
+<span class="nb">eval</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="p">{</span><span class="s2">"__builtins__"</span><span class="p">:</span> <span class="p">{}},</span> <span class="p">{</span><span class="o">**</span><span class="n">safe_globals</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">})</span>
 </code></pre></div>
 
 <p>Three layers of protection:</p>
@@ -321,8 +329,8 @@
 </ul>
 <p><strong>Whitelisted operators</strong> (from <code>expressions.py:33-47</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">Z3_OPERATORS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;And&quot;</span><span class="p">,</span> <span class="s2">&quot;Or&quot;</span><span class="p">,</span> <span class="s2">&quot;Not&quot;</span><span class="p">,</span> <span class="s2">&quot;Implies&quot;</span><span class="p">,</span> <span class="s2">&quot;If&quot;</span><span class="p">,</span> <span class="s2">&quot;Distinct&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Sum&quot;</span><span class="p">,</span> <span class="s2">&quot;Product&quot;</span><span class="p">,</span> <span class="s2">&quot;ForAll&quot;</span><span class="p">,</span> <span class="s2">&quot;Exists&quot;</span><span class="p">,</span> <span class="s2">&quot;Function&quot;</span><span class="p">,</span> <span class="s2">&quot;Array&quot;</span><span class="p">,</span> <span class="s2">&quot;BitVecVal&quot;</span>
+    <span class="s2">"And"</span><span class="p">,</span> <span class="s2">"Or"</span><span class="p">,</span> <span class="s2">"Not"</span><span class="p">,</span> <span class="s2">"Implies"</span><span class="p">,</span> <span class="s2">"If"</span><span class="p">,</span> <span class="s2">"Distinct"</span><span class="p">,</span>
+    <span class="s2">"Sum"</span><span class="p">,</span> <span class="s2">"Product"</span><span class="p">,</span> <span class="s2">"ForAll"</span><span class="p">,</span> <span class="s2">"Exists"</span><span class="p">,</span> <span class="s2">"Function"</span><span class="p">,</span> <span class="s2">"Array"</span><span class="p">,</span> <span class="s2">"BitVecVal"</span>
 <span class="p">}</span>
 </code></pre></div>
 
@@ -332,14 +340,14 @@
 <p>The system uses <strong>Kahn's algorithm</strong> for topological sorting of type definitions.</p>
 <h3 id="dependency-extraction">Dependency Extraction<a class="headerlink" href="#dependency-extraction" title="Permanent link">&para;</a></h3>
 <p>ArraySort declarations create dependencies that must be resolved (lines 59-62):</p>
-<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">sort_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;ArraySort(&quot;</span><span class="p">):</span>
-    <span class="n">domain_range</span> <span class="o">=</span> <span class="n">sort_type</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;ArraySort(&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">domain_range</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">sort_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"ArraySort("</span><span class="p">):</span>
+    <span class="n">domain_range</span> <span class="o">=</span> <span class="n">sort_type</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"ArraySort("</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">domain_range</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)]</span>
     <span class="n">deps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 </code></pre></div>
 
 <p>For example:</p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;MyArray&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ArraySort(IntSort, Person)&quot;</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"MyArray"</span><span class="p">,</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ArraySort(IntSort, Person)"</span><span class="p">}</span>
 </code></pre></div>
 
 <p>This depends on: <code>IntSort</code> (built-in, can skip) and <code>Person</code> (must be defined first).</p>
@@ -354,7 +362,7 @@
 <p><strong>Circular dependency detection:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_names</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dependencies</span><span class="p">):</span>
     <span class="n">remaining</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dependencies</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">sorted_names</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Circular dependency detected in sorts: </span><span class="si">{</span><span class="n">remaining</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Circular dependency detected in sorts: </span><span class="si">{</span><span class="n">remaining</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="optimizer-independence">Optimizer Independence<a class="headerlink" href="#optimizer-independence" title="Permanent link">&para;</a></h2>
@@ -380,32 +388,32 @@ This is intentional to allow independent optimization problems.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/interpreter.py:135-197</code></p>
 <p><strong>8-step execution sequence:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Step 1: Create sorts</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_sorts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;sorts&quot;</span><span class="p">])</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_sorts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"sorts"</span><span class="p">])</span>
 
 <span class="c1"># Step 2: Create functions</span>
-<span class="n">functions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_functions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;functions&quot;</span><span class="p">])</span>
+<span class="n">functions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_functions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"functions"</span><span class="p">])</span>
 
 <span class="c1"># Step 3: Create constants</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_constants</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;constants&quot;</span><span class="p">])</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_constants</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"constants"</span><span class="p">])</span>
 
 <span class="c1"># Step 4: Create variables</span>
-<span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;variables&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_manager</span><span class="o">.</span><span class="n">create_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"variables"</span><span class="p">,</span> <span class="p">[]))</span>
 
 <span class="c1"># Step 5: Initialize expression parser</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span> <span class="o">=</span> <span class="n">ExpressionParser</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">constants</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">mark_symbols_loaded</span><span class="p">()</span>  <span class="c1"># Enable context caching</span>
 
 <span class="c1"># Step 6: Add knowledge base</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">add_knowledge_base</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;knowledge_base&quot;</span><span class="p">])</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">add_knowledge_base</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"knowledge_base"</span><span class="p">])</span>
 
 <span class="c1"># Step 7: Add rules</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">add_rules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;rules&quot;</span><span class="p">],</span> <span class="n">sorts</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="o">.</span><span class="n">add_rules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"rules"</span><span class="p">],</span> <span class="n">sorts</span><span class="p">)</span>
 
 <span class="c1"># Step 8: Initialize verifier and add verifications</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">verifier</span> <span class="o">=</span> <span class="n">Verifier</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expression_parser</span><span class="p">,</span> <span class="n">sorts</span><span class="p">)</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">verifier</span><span class="o">.</span><span class="n">add_verifications</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;verifications&quot;</span><span class="p">])</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">verifier</span><span class="o">.</span><span class="n">add_verifications</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">"verifications"</span><span class="p">])</span>
 
-<span class="c1"># Step 9: Perform actions (e.g., &quot;verify_conditions&quot;)</span>
+<span class="c1"># Step 9: Perform actions (e.g., "verify_conditions")</span>
 <span class="bp">self</span><span class="o">.</span><span class="n">perform_actions</span><span class="p">()</span>
 </code></pre></div>
 
@@ -449,9 +457,9 @@ This is intentional to allow independent optimization problems.</p>
 </ol>
 <p><strong>Error feedback mechanism:</strong> Uses multi-turn conversation (see <code>program_generator.py:130-174</code>):</p>
 <div class="codehilite"><pre><span></span><code><span class="n">messages</span><span class="o">=</span><span class="p">[</span>
-    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">previous_response</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">feedback_message</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"assistant"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">previous_response</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">feedback_message</span><span class="p">},</span>
 <span class="p">]</span>
 </code></pre></div>
 
@@ -483,7 +491,7 @@ This is intentional to allow independent optimization problems.</p>
 <p>The DSL includes three pre-initialized built-in sorts.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/dsl/sorts.py:31-34</code></p>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_initialize_builtin_sorts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">built_in_sorts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;BoolSort&quot;</span><span class="p">:</span> <span class="n">BoolSort</span><span class="p">(),</span> <span class="s2">&quot;IntSort&quot;</span><span class="p">:</span> <span class="n">IntSort</span><span class="p">(),</span> <span class="s2">&quot;RealSort&quot;</span><span class="p">:</span> <span class="n">RealSort</span><span class="p">()}</span>
+    <span class="n">built_in_sorts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"BoolSort"</span><span class="p">:</span> <span class="n">BoolSort</span><span class="p">(),</span> <span class="s2">"IntSort"</span><span class="p">:</span> <span class="n">IntSort</span><span class="p">(),</span> <span class="s2">"RealSort"</span><span class="p">:</span> <span class="n">RealSort</span><span class="p">()}</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">sorts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">built_in_sorts</span><span class="p">)</span>
 </code></pre></div>
 
@@ -496,16 +504,16 @@ This is intentional to allow independent optimization problems.</p>
 <h3 id="line-228-implication-rules">Line 228: Implication Rules<a class="headerlink" href="#line-228-implication-rules" title="Permanent link">&para;</a></h3>
 <p>Rules with <code>"implies"</code> MUST have non-empty <code>"forall"</code> field:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># expressions.py:184-186</span>
-<span class="k">if</span> <span class="s2">&quot;implies&quot;</span> <span class="ow">in</span> <span class="n">rule</span><span class="p">:</span>
+<span class="k">if</span> <span class="s2">"implies"</span> <span class="ow">in</span> <span class="n">rule</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">variables</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Implication rules require quantified variables&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Implication rules require quantified variables"</span><span class="p">)</span>
 </code></pre></div>
 
 <h3 id="line-298-quantifier-lists">Line 298: Quantifier Lists<a class="headerlink" href="#line-298-quantifier-lists" title="Permanent link">&para;</a></h3>
 <p>Empty quantifier lists are forbidden:</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># verifier.py:42-43, 55-56</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">exists_vars</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Empty &#39;exists&#39; list in verification&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Empty 'exists' list in verification"</span><span class="p">)</span>
 </code></pre></div>
 
 <h3 id="line-416-single-verification">Line 416: Single Verification<a class="headerlink" href="#line-416-single-verification" title="Permanent link">&para;</a></h3>
@@ -523,7 +531,7 @@ This is intentional to allow independent optimization problems.</p>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../installation/" class="btn btn-neutral float-left" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../guardrails/" class="btn btn-neutral float-left" title="Trajectory Guardrails"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../api-reference/" class="btn btn-neutral float-right" title="API Reference">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -552,7 +560,7 @@ This is intentional to allow independent optimization problems.</p>
         </span>
     
     
-      <span><a href="../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../guardrails/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../api-reference/" style="color: #fcfcfc">Next &raquo;</a></span>

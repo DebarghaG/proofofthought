@@ -71,6 +71,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="guardrails/">Trajectory Guardrails</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="dsl-specification/">DSL Specification</a>
                 </li>
               </ul>
@@ -120,8 +128,19 @@
               
                 <h1 id="proofofthought">ProofOfThought<a class="headerlink" href="#proofofthought" title="Permanent link">&para;</a></h1>
 <p>ProofOfThought provides LLM-guided translation of natural language questions into formal logic, which is then verified using the Z3 theorem prover.</p>
+<p><strong>As of v2.0.0 the default mode is agentic</strong>: the model iteratively interacts with an SMT-LIB scratchpad through <code>z3_solve</code> tool calls and terminates with an explicit <code>finish</code> call once Z3 has verified the answer. This is the paradigm the library is moving towards going forward — see <a href="agentic/">Agentic Reasoning</a>. The classic single-shot pipeline below remains fully supported via <code>backend="smt2"</code> / <code>backend="json"</code>.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p>The system follows a multi-stage pipeline to transform questions into verifiable answers:</p>
+<p>The agentic loop (default):</p>
+<div class="codehilite"><pre><span></span><code>Question (NL)
+    ↓
+LLM ⇄ SMT-LIB scratchpad (z3_solve tool, iterative repair)
+    ↓
+clean UNSAT of negated candidate (proof)
+    ↓
+finish(answer) → verified answer + full trajectory
+</code></pre></div>
+
+<p>The classic single-shot pipeline (<code>smt2</code> / <code>json</code> backends):</p>
 <div class="codehilite"><pre><span></span><code>Question (NL)
     ↓
 LLM Translation (few-shot prompting)
@@ -137,9 +156,12 @@ SAT/UNSAT → Boolean Answer
 <p>The architecture consists of several key components that work together:</p>
 <p><strong>Z3ProgramGenerator</strong> (<code>z3adapter.reasoning.program_generator</code>)
 Provides the LLM interface for program generation. It extracts formal programs from markdown code blocks using regex and supports error feedback through multi-turn conversations.</p>
+<p><strong>AgenticSolver</strong> (<code>z3adapter.agentic.agent</code>)
+Runs the iterative <code>z3_solve</code> ⇄ <code>finish</code> tool loop with verdict-aware nudges, in-process Z3 execution, and robust recovery of textual tool calls from open-model servers.</p>
 <p><strong>Backend</strong> (<code>z3adapter.backends.abstract</code>)
-Defines an abstract interface with <code>execute(program_path) → VerificationResult</code>. Two concrete implementations are available:</p>
+Defines an abstract interface with <code>execute(program_path) → VerificationResult</code>. Three concrete implementations are available:</p>
 <ul>
+<li><strong>AgenticBackend</strong>: In-process re-execution of saved <code>.smt2</code> programs via the Z3 Python API (no CLI binary needed).</li>
 <li><strong>SMT2Backend</strong>: Subprocess call to Z3 CLI. Parses stdout/stderr for <code>sat</code>/<code>unsat</code> via regex <code>(?&lt;!un)\bsat\b</code> and <code>\bunsat\b</code>.</li>
 <li><strong>JSONBackend</strong>: Python API execution via <code>Z3JSONInterpreter</code>. Returns structured SAT/UNSAT counts.</li>
 </ul>
@@ -157,10 +179,13 @@ Provides the high-level API with a retry loop (default <code>max_attempts=3</cod
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProofOfThought</span>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
-<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;smt2&quot;</span><span class="p">)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;Would Nancy Pelosi publicly denounce abortion?&quot;</span><span class="p">)</span>
-<span class="c1"># result.answer: False (UNSAT)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">"..."</span><span class="p">)</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>  <span class="c1"># agentic scratchpad by default</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">pot</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"Would Nancy Pelosi publicly denounce abortion?"</span><span class="p">)</span>
+<span class="c1"># result.answer: False  |  result.answer_text: "No"  |  result.smt_history: trajectory</span>
+
+<span class="c1"># Classic single-shot pipeline:</span>
+<span class="n">pot</span> <span class="o">=</span> <span class="n">ProofOfThought</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">"smt2"</span><span class="p">)</span>
 </code></pre></div>
 
 <h2 id="benchmark-results">Benchmark Results<a class="headerlink" href="#benchmark-results" title="Permanent link">&para;</a></h2>
@@ -199,7 +224,10 @@ Provides the high-level API with a retry loop (default <code>max_attempts=3</cod
 <p><strong>Why use an external theorem prover?</strong> LLMs lack deductive closure, meaning they cannot guarantee sound logical inference. Z3 provides this soundness by formally verifying the logical reasoning.</p>
 </li>
 <li>
-<p><strong>Why offer two backends?</strong> The choice trades off portability (SMT-LIB is a widely-supported standard) against LLM generation reliability (structured JSON is easier for models to produce correctly).</p>
+<p><strong>Why move to an agentic loop?</strong> Single-shot generation treats the solver as a batch compiler; the agentic scratchpad treats it as an interactive partner. Each verdict lands back in the conversation, so the model accumulates formal experiments instead of restarting on every error, and every answer carries a machine-checkable trajectory.</p>
+</li>
+<li>
+<p><strong>Why offer multiple backends?</strong> The choice trades off portability (SMT-LIB is a widely-supported standard) against LLM generation reliability (structured JSON is easier for models to produce correctly); the agentic loop adds iterative repair on top of standard SMT-LIB.</p>
 </li>
 <li>
 <p><strong>Why use iterative refinement?</strong> Single-shot generation is often insufficient for complex reasoning. By incorporating error feedback, the system significantly improves its success rate.</p>
@@ -277,5 +305,5 @@ Provides the high-level API with a retry loop (default <code>max_attempts=3</cod
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-10-18 00:29:05.498074+00:00
+Build Date UTC : 2026-10-31 01:33:12.868566+00:00
 -->

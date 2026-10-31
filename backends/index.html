@@ -55,6 +55,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guardrails/">Trajectory Guardrails</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../dsl-specification/">DSL Specification</a>
                 </li>
               </ul>
@@ -145,12 +153,18 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="backends">Backends<a class="headerlink" href="#backends" title="Permanent link">&para;</a></h1>
-<p>ProofOfThought supports two execution backends for Z3: the standard SMT-LIB 2.0 format and a custom JSON DSL.</p>
+<p>ProofOfThought supports three execution backends for Z3:</p>
+<ul>
+<li><strong>agentic</strong> (default since v2.0.0) — the model iteratively interacts with an SMT-LIB scratchpad through tool calls; see <a href="../agentic/">Agentic Reasoning</a>. This is the paradigm the library is moving towards going forward.</li>
+<li><strong>smt2</strong> — single-shot generation of a standard SMT-LIB 2.0 program, executed via the Z3 CLI.</li>
+<li><strong>json</strong> — single-shot generation of a custom JSON DSL, executed via the Z3 Python API.</li>
+</ul>
+<p>This page documents the two classic single-shot backends.</p>
 <h2 id="smt2backend">SMT2Backend<a class="headerlink" href="#smt2backend" title="Permanent link">&para;</a></h2>
 <p>The SMT2 backend leverages Z3's standard command-line interface.</p>
 <p><strong>Implementation:</strong> <code>z3adapter/backends/smt2_backend.py</code></p>
 <h3 id="execution">Execution<a class="headerlink" href="#execution" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">z3_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;-T:</span><span class="si">{</span><span class="n">timeout_seconds</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">program_path</span><span class="p">])</span>
+<div class="codehilite"><pre><span></span><code><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">z3_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"-T:</span><span class="si">{</span><span class="n">timeout_seconds</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">program_path</span><span class="p">])</span>
 </code></pre></div>
 
 <p>The execution process involves:</p>
@@ -160,8 +174,8 @@
 <li>Capturing output from both stdout and stderr</li>
 </ul>
 <h3 id="result-parsing">Result Parsing<a class="headerlink" href="#result-parsing" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><code><span class="n">sat_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;(?&lt;!un)\bsat\b&quot;</span>      <span class="c1"># Negative lookbehind to exclude &quot;unsat&quot;</span>
-<span class="n">unsat_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;\bunsat\b&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">sat_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"(?&lt;!un)\bsat\b"</span>      <span class="c1"># Negative lookbehind to exclude "unsat"</span>
+<span class="n">unsat_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"\bunsat\b"</span>
 </code></pre></div>
 
 <p>The parser counts occurrences in Z3 output and applies the following answer logic:</p>
@@ -198,7 +212,7 @@
 <li>Custom: <code>DeclareSort(name)</code>, <code>EnumSort(name, values)</code>, <code>BitVecSort(n)</code>, <code>ArraySort(domain, range)</code></li>
 </ul>
 <p>For example, an ArraySort creates dependencies:</p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;IntArray&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ArraySort(IntSort, IntSort)&quot;</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"IntArray"</span><span class="p">,</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ArraySort(IntSort, IntSort)"</span><span class="p">}</span>
 </code></pre></div>
 
 <p>This requires <code>IntSort</code> to be defined first (fortunately, it's built-in) before creating <code>IntArray</code>.</p>
@@ -211,8 +225,8 @@
 
 <p>Only whitelisted operators are permitted:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">Z3_OPERATORS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;And&quot;</span><span class="p">,</span> <span class="s2">&quot;Or&quot;</span><span class="p">,</span> <span class="s2">&quot;Not&quot;</span><span class="p">,</span> <span class="s2">&quot;Implies&quot;</span><span class="p">,</span> <span class="s2">&quot;If&quot;</span><span class="p">,</span> <span class="s2">&quot;Distinct&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Sum&quot;</span><span class="p">,</span> <span class="s2">&quot;Product&quot;</span><span class="p">,</span> <span class="s2">&quot;ForAll&quot;</span><span class="p">,</span> <span class="s2">&quot;Exists&quot;</span><span class="p">,</span> <span class="s2">&quot;Function&quot;</span><span class="p">,</span> <span class="s2">&quot;Array&quot;</span><span class="p">,</span> <span class="s2">&quot;BitVecVal&quot;</span>
+    <span class="s2">"And"</span><span class="p">,</span> <span class="s2">"Or"</span><span class="p">,</span> <span class="s2">"Not"</span><span class="p">,</span> <span class="s2">"Implies"</span><span class="p">,</span> <span class="s2">"If"</span><span class="p">,</span> <span class="s2">"Distinct"</span><span class="p">,</span>
+    <span class="s2">"Sum"</span><span class="p">,</span> <span class="s2">"Product"</span><span class="p">,</span> <span class="s2">"ForAll"</span><span class="p">,</span> <span class="s2">"Exists"</span><span class="p">,</span> <span class="s2">"Function"</span><span class="p">,</span> <span class="s2">"Array"</span><span class="p">,</span> <span class="s2">"BitVecVal"</span>
 <span class="p">}</span>
 </code></pre></div>
 
@@ -236,24 +250,24 @@ When calling <code>solver.check(φ)</code>, the system asks: "Is KB ∧ φ satis
 <p><strong>Source:</strong> <code>z3adapter/reasoning/prompt_template.py</code></p>
 <p>This 546-line specification of the JSON DSL includes these key sections:</p>
 <p><strong>Sorts:</strong></p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DeclareSort&quot;</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Person"</span><span class="p">,</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DeclareSort"</span><span class="p">}</span>
 </code></pre></div>
 
 <p><strong>Functions:</strong></p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Person&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Issue&quot;</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;range&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BoolSort&quot;</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"supports"</span><span class="p">,</span><span class="w"> </span><span class="nt">"domain"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Person"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Issue"</span><span class="p">],</span><span class="w"> </span><span class="nt">"range"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BoolSort"</span><span class="p">}</span>
 </code></pre></div>
 
 <p><strong>Constants:</strong></p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;persons&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;members&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;nancy_pelosi&quot;</span><span class="p">]}}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"persons"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Person"</span><span class="p">,</span><span class="w"> </span><span class="nt">"members"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"nancy_pelosi"</span><span class="p">]}}</span>
 </code></pre></div>
 
 <p><strong>Variables:</strong>
 Free variables for quantifier binding:</p>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;p&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Person&quot;</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Person"</span><span class="p">}</span>
 </code></pre></div>
 
 <p><strong>Knowledge Base:</strong></p>
-<div class="codehilite"><pre><span></span><code><span class="p">[</span><span class="s2">&quot;ForAll([p], Implies(is_democrat(p), supports_abortion(p)))&quot;</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="p">[</span><span class="s2">"ForAll([p], Implies(is_democrat(p), supports_abortion(p)))"</span><span class="p">]</span>
 </code></pre></div>
 
 <p><strong>Verifications:</strong>
@@ -261,20 +275,20 @@ The DSL supports three types of verifications:</p>
 <ol>
 <li><strong>Simple constraint:</strong></li>
 </ol>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;supports_abortion(nancy)&quot;</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test"</span><span class="p">,</span><span class="w"> </span><span class="nt">"constraint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"supports_abortion(nancy)"</span><span class="p">}</span>
 </code></pre></div>
 
 <ol>
 <li><strong>Existential:</strong></li>
 </ol>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;exists&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Int&quot;</span><span class="p">}],</span><span class="w"> </span><span class="nt">&quot;constraint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x &gt; 0&quot;</span><span class="p">}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test"</span><span class="p">,</span><span class="w"> </span><span class="nt">"exists"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Int"</span><span class="p">}],</span><span class="w"> </span><span class="nt">"constraint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x &gt; 0"</span><span class="p">}</span>
 </code></pre></div>
 
 <ol>
 <li><strong>Universal:</strong></li>
 </ol>
-<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;forall&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Int&quot;</span><span class="p">}],</span>
-<span class="w"> </span><span class="nt">&quot;implies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;antecedent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x &gt; 0&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;consequent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;x &gt;= 1&quot;</span><span class="p">}}</span>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"test"</span><span class="p">,</span><span class="w"> </span><span class="nt">"forall"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Int"</span><span class="p">}],</span>
+<span class="w"> </span><span class="nt">"implies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"antecedent"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x &gt; 0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"consequent"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x &gt;= 1"</span><span class="p">}}</span>
 </code></pre></div>
 
 <p><strong>Critical constraint:</strong> The prompt enforces a single verification per question to avoid ambiguous results from testing both φ and ¬φ.</p>
@@ -337,11 +351,11 @@ The DSL supports three types of verifications:</p>
 <p>The backends differ in several implementation details.</p>
 <h3 id="program-generation">Program Generation<a class="headerlink" href="#program-generation" title="Permanent link">&para;</a></h3>
 <p><strong>SMT2:</strong> Extracts programs from markdown via:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;```smt2\s*([\s\S]*?)\s*```&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"```smt2\s*([\s\S]*?)\s*```"</span>
 </code></pre></div>
 
 <p><strong>JSON:</strong> Extracts and parses via:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;```json\s*(\{[\s\S]*?\})\s*```&quot;</span>
+<div class="codehilite"><pre><span></span><code><span class="n">pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"```json\s*(\{[\s\S]*?\})\s*```"</span>
 <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 </code></pre></div>
 
@@ -357,7 +371,7 @@ The DSL supports three types of verifications:</p>
 - Invalid sort reference → <code>ValueError</code> during SortManager
 - Expression eval error → <code>ValueError</code> during ExpressionParser</p>
 <h3 id="timeout-configuration">Timeout Configuration<a class="headerlink" href="#timeout-configuration" title="Permanent link">&para;</a></h3>
-<p>Timeout handling differs between the two backends.</p>
+<p>Timeout handling differs between the two single-shot backends. (The agentic backend injects a per-script <code>(set-option :timeout ...)</code> on a fresh context — see <a href="../agentic/">Agentic Reasoning</a>.)</p>
 <p><strong>SMT2:</strong>
 - Uses a single timeout parameter: <code>verify_timeout</code> (ms)
 - Converts to seconds for Z3 CLI: <code>verify_timeout // 1000</code>
@@ -368,7 +382,7 @@ The DSL supports three types of verifications:</p>
 - Timeout applies per individual <code>solver.check()</code> call</p>
 <h2 id="backend-selection-code">Backend Selection Code<a class="headerlink" href="#backend-selection-code" title="Permanent link">&para;</a></h2>
 <p>The system selects backends at runtime based on configuration:</p>
-<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.backends.json_backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONBackend</span>
     <span class="n">backend_instance</span> <span class="o">=</span> <span class="n">JSONBackend</span><span class="p">(</span><span class="n">verify_timeout</span><span class="p">,</span> <span class="n">optimize_timeout</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>  <span class="c1"># smt2</span>
@@ -379,7 +393,7 @@ The DSL supports three types of verifications:</p>
 <p><strong>File:</strong> <code>z3adapter/reasoning/proof_of_thought.py:78-90</code></p>
 <h2 id="prompt-selection">Prompt Selection<a class="headerlink" href="#prompt-selection" title="Permanent link">&para;</a></h2>
 <p>The appropriate prompt template is chosen based on the selected backend:</p>
-<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
     <span class="n">prompt</span> <span class="o">=</span> <span class="n">build_prompt</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>  <span class="c1"># smt2</span>
     <span class="n">prompt</span> <span class="o">=</span> <span class="n">build_smt2_prompt</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>

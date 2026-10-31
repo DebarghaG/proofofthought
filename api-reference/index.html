@@ -55,6 +55,14 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../agentic/">Agentic Reasoning</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../guardrails/">Trajectory Guardrails</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../dsl-specification/">DSL Specification</a>
                 </li>
               </ul>
@@ -71,6 +79,10 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#queryresult">QueryResult</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#proofstatus">ProofStatus</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#agenticsolver-agenticconfig-agenticresult">AgenticSolver / AgenticConfig / AgenticResult</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#evaluationpipeline">EvaluationPipeline</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#constructor_1">Constructor</a>
@@ -84,6 +96,8 @@
     <li class="toctree-l2"><a class="reference internal" href="#backend">Backend</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#interface-methods">Interface Methods</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#agenticbackendreverify">AgenticBackend.reverify()</a>
     </li>
         </ul>
     </li>
@@ -151,74 +165,122 @@
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">llm_client</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gpt-5&quot;</span><span class="p">,</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;smt2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;smt2&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"gpt-5"</span><span class="p">,</span>
+    <span class="n">backend</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"agentic"</span><span class="p">,</span> <span class="s2">"json"</span><span class="p">,</span> <span class="s2">"smt2"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"agentic"</span><span class="p">,</span>
     <span class="n">max_attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">verify_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
     <span class="n">optimize_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100000</span><span class="p">,</span>
     <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">z3_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;z3&quot;</span><span class="p">,</span>
+    <span class="n">z3_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"z3"</span><span class="p">,</span>
+    <span class="n">postprocessors</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">Postprocessor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">postprocessor_configs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">agentic_config</span><span class="p">:</span> <span class="n">AgenticConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
 <p><strong>Parameters:</strong></p>
 <ul>
-<li><code>llm_client</code>: OpenAI/AzureOpenAI client instance</li>
+<li><code>llm_client</code>: OpenAI/AzureOpenAI client instance (any OpenAI-compatible client)</li>
 <li><code>model</code>: Deployment/model name (default: <code>"gpt-5"</code>)</li>
-<li><code>backend</code>: <code>"json"</code> or <code>"smt2"</code> (default: <code>"smt2"</code>)</li>
-<li><code>max_attempts</code>: Retry limit for generation (default: <code>3</code>)</li>
-<li><code>verify_timeout</code>: Z3 timeout in milliseconds (default: <code>10000</code>)</li>
+<li><code>backend</code>: <code>"agentic"</code>, <code>"smt2"</code>, or <code>"json"</code> (default: <code>"agentic"</code> — see <a href="../agentic/">Agentic Reasoning</a>)</li>
+<li><code>max_attempts</code>: Retry limit for single-shot generation, json/smt2 only (default: <code>3</code>)</li>
+<li><code>max_iterations</code>: Tool-loop turn limit, agentic only (default: <code>10</code>)</li>
+<li><code>verify_timeout</code>: Z3 timeout in milliseconds — governs all backends, including the agentic loop's in-process Z3 (default: <code>10000</code>)</li>
 <li><code>optimize_timeout</code>: Optimization timeout in ms, JSON only (default: <code>100000</code>)</li>
 <li><code>cache_dir</code>: Program cache directory (default: <code>tempfile.gettempdir()</code>)</li>
-<li><code>z3_path</code>: Z3 executable path for SMT2 (default: <code>"z3"</code>)</li>
+<li><code>z3_path</code>: Z3 executable path for the SMT2 backend (default: <code>"z3"</code>; the agentic backend needs no CLI binary)</li>
+<li><code>postprocessors</code>: Postprocessor names/instances — json/smt2 only; combining with the agentic backend raises <code>ValueError</code> at construction</li>
+<li><code>agentic_config</code>: Optional <code>z3adapter.agentic.AgenticConfig</code> with full control over the loop. When provided it is <strong>authoritative</strong> — set the model on it (a conflict with <code>model</code> logs a warning)</li>
 </ul>
 <h3 id="query">query()<a class="headerlink" href="#query" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16384</span><span class="p">,</span>
     <span class="n">save_program</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">program_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">enable_postprocessing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QueryResult</span>
 </code></pre></div>
 
 <p><strong>Parameters:</strong></p>
 <ul>
 <li><code>question</code>: Natural language question</li>
-<li><code>temperature</code>: LLM temperature (default: <code>0.1</code>, ignored for GPT-5 which only supports <code>1.0</code>)</li>
-<li><code>max_tokens</code>: Max completion tokens (default: <code>16384</code>)</li>
-<li><code>save_program</code>: Save generated program to disk (default: <code>False</code>)</li>
-<li><code>program_path</code>: Custom save path (default: auto-generated in <code>cache_dir</code>)</li>
+<li><code>temperature</code>: Sampling temperature, honored on <strong>every</strong> backend. <code>None</code> (default) sends nothing and uses the provider default — required for models like GPT-5 that reject non-default temperatures</li>
+<li><code>max_tokens</code>: Max completion tokens per LLM response (default: <code>16384</code>)</li>
+<li><code>save_program</code>: Save the generated program to disk — for the agentic backend, the final trajectory program (default: <code>False</code>)</li>
+<li><code>program_path</code>: Custom save path (default: auto-generated, uniquified, in <code>cache_dir</code>)</li>
+<li><code>enable_postprocessing</code>: Apply configured postprocessors, json/smt2 only (default: <code>True</code>)</li>
 </ul>
 <p><strong>Returns:</strong> <code>QueryResult</code></p>
-<p><strong>Implementation details:</strong></p>
-<p>The method implements a retry loop with error feedback:</p>
-<div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_attempts</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">gen_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">max_tokens</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">gen_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator</span><span class="o">.</span><span class="n">generate_with_feedback</span><span class="p">(</span>
-            <span class="n">question</span><span class="p">,</span> <span class="n">error_trace</span><span class="p">,</span> <span class="n">previous_response</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">max_tokens</span>
-        <span class="p">)</span>
-    <span class="c1"># ... execute and check result</span>
-</code></pre></div>
-
+<p>On the agentic backend, <code>query()</code> runs the iterative <code>z3_solve</code> ⇄ <code>finish</code> tool loop (see <a href="../agentic/">Agentic Reasoning</a>). On json/smt2 it runs the classic generate → execute → feedback retry loop bounded by <code>max_attempts</code>.</p>
 <h2 id="queryresult">QueryResult<a class="headerlink" href="#queryresult" title="Permanent link">&para;</a></h2>
 <p>Contains the results of a reasoning query.</p>
 <div class="codehilite"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">QueryResult</span><span class="p">:</span>
     <span class="n">question</span><span class="p">:</span> <span class="nb">str</span>                        <span class="c1"># Input question</span>
-    <span class="n">answer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span>                  <span class="c1"># True (SAT), False (UNSAT), None (ambiguous/error)</span>
+    <span class="n">answer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span>                  <span class="c1"># Boolean view of answer_text; None when</span>
+                                         <span class="c1">#   non-boolean OR no answer (check success)</span>
     <span class="n">json_program</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># Generated program if JSON backend</span>
-    <span class="n">sat_count</span><span class="p">:</span> <span class="nb">int</span>                       <span class="c1"># SAT occurrences in output</span>
-    <span class="n">unsat_count</span><span class="p">:</span> <span class="nb">int</span>                     <span class="c1"># UNSAT occurrences</span>
-    <span class="n">output</span><span class="p">:</span> <span class="nb">str</span>                          <span class="c1"># Raw Z3 output</span>
-    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>                        <span class="c1"># Execution completed</span>
-    <span class="n">num_attempts</span><span class="p">:</span> <span class="nb">int</span>                    <span class="c1"># Generation attempts used</span>
+    <span class="n">sat_count</span><span class="p">:</span> <span class="nb">int</span>                       <span class="c1"># SAT occurrences (agentic: last verdict)</span>
+    <span class="n">unsat_count</span><span class="p">:</span> <span class="nb">int</span>                     <span class="c1"># UNSAT occurrences (agentic: last verdict)</span>
+    <span class="n">output</span><span class="p">:</span> <span class="nb">str</span>                          <span class="c1"># Raw Z3 output (agentic: last verdict's)</span>
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>                        <span class="c1"># An answer was produced</span>
+    <span class="n">num_attempts</span><span class="p">:</span> <span class="nb">int</span>                    <span class="c1"># Attempts (json/smt2) / iterations (agentic)</span>
     <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>                    <span class="c1"># Error message if failed</span>
+    <span class="n">answer_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>              <span class="c1"># CANONICAL answer, every backend</span>
+    <span class="n">smt_history</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span>             <span class="c1"># Agentic trajectory: every program + verdict</span>
+    <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span>                      <span class="c1"># Agentic tool-loop turns</span>
+    <span class="n">verified</span><span class="p">:</span> <span class="nb">bool</span>                       <span class="c1"># Agentic: finish backed by a decisive verdict</span>
+    <span class="n">proof_status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>             <span class="c1"># Agentic: "proof_by_contradiction" /</span>
+                                         <span class="c1">#   "sat_witness" / "unverified"</span>
 </code></pre></div>
 
+<p><strong>Field contract</strong> (uniform across backends):</p>
+<ul>
+<li><code>answer_text</code> is the canonical answer — always populated when an answer was produced (<code>"True"</code>/<code>"False"</code> for json/smt2, the raw <code>finish()</code> value for agentic). Prefer it for anything that isn't strictly boolean.</li>
+<li><code>answer</code> is the boolean coercion of <code>answer_text</code> via a small unambiguous vocabulary (yes/no/true/false/valid/invalid/verified/violated). Multiple-choice letters, numbers, and raw Z3 verdicts coerce to <code>None</code>.</li>
+<li><code>success</code> means "an answer was produced" — it does <strong>not</strong> imply formal verification. Verification strength lives in <code>verified</code> and <code>proof_status</code>.</li>
+</ul>
+<h2 id="proofstatus">ProofStatus<a class="headerlink" href="#proofstatus" title="Permanent link">&para;</a></h2>
+<p><strong>Location:</strong> <code>z3adapter.agentic.ProofStatus</code> (a <code>StrEnum</code>; values serialize as plain strings)</p>
+<table>
+<thead>
+<tr>
+<th>value</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>proof_by_contradiction</code></td>
+<td>last decisive verdict was a clean <code>unsat</code> of the negated candidate — a proof</td>
+</tr>
+<tr>
+<td><code>sat_witness</code></td>
+<td>last decisive verdict was a clean <code>sat</code> — a consistency witness, weaker</td>
+</tr>
+<tr>
+<td><code>unverified</code></td>
+<td>answer recorded without a usable verdict — an ordinary LLM guess</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../agentic/">Agentic Reasoning</a> for the full protocol, including finish rejection.</p>
+<h2 id="agenticsolver-agenticconfig-agenticresult">AgenticSolver / AgenticConfig / AgenticResult<a class="headerlink" href="#agenticsolver-agenticconfig-agenticresult" title="Permanent link">&para;</a></h2>
+<p>The low-level agentic API, usable without <code>ProofOfThought</code>.</p>
+<p><strong>Location:</strong> <code>z3adapter.agentic</code></p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">z3adapter.agentic</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgenticSolver</span><span class="p">,</span> <span class="n">AgenticConfig</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">AgenticSolver</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">AgenticConfig</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"gpt-5"</span><span class="p">))</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">answer_format</span><span class="o">=</span><span class="s2">"Answer with one of: Yes, No."</span><span class="p">,</span>
+                      <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># per-call overrides</span>
+</code></pre></div>
+
+<p><code>AgenticConfig</code> fields: <code>model</code>, <code>max_tokens</code>, <code>temperature</code> (None = don't send), <code>max_iterations</code>, <code>max_consecutive_nudges</code>, <code>max_finish_rejections</code>, <code>z3_timeout_ms</code>, <code>lenient_extraction</code>, <code>system_prompt</code>.</p>
+<p><code>AgenticResult</code> fields: <code>question</code>, <code>answer</code>, <code>explanation</code>, <code>verified</code>, <code>proof_status</code>, <code>smt_history</code>, <code>messages</code> (full transcript incl. reasoning channel), <code>iterations</code>, <code>token_usage</code>, <code>error</code>, <code>extraction_method</code> (<code>tool_call_finish</code> / <code>tool_call_finish_unverified</code> / <code>text_pattern_extracted</code> / <code>none</code>).</p>
 <h2 id="evaluationpipeline">EvaluationPipeline<a class="headerlink" href="#evaluationpipeline" title="Permanent link">&para;</a></h2>
 <p>Facilitates batch evaluation of reasoning questions on datasets.</p>
 <p><strong>Location:</strong> <code>z3adapter.reasoning.evaluation.EvaluationPipeline</code></p>
@@ -226,7 +288,7 @@
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">proof_of_thought</span><span class="p">:</span> <span class="n">ProofOfThought</span><span class="p">,</span>
-    <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;evaluation_results&quot;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"evaluation_results"</span><span class="p">,</span>
     <span class="n">num_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
@@ -241,8 +303,8 @@
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">question_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;question&quot;</span><span class="p">,</span>
-    <span class="n">answer_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;answer&quot;</span><span class="p">,</span>
+    <span class="n">question_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"question"</span><span class="p">,</span>
+    <span class="n">answer_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"answer"</span><span class="p">,</span>
     <span class="n">id_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">skip_existing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -259,30 +321,31 @@
 <li><code>skip_existing</code>: Skip cached results (default: <code>True</code>)</li>
 </ul>
 <p><strong>Returns:</strong> <code>EvaluationResult</code></p>
+<p><strong>Scoring:</strong> boolean-like ground truths (bool, 0/1, "true"/"yes"/...) compare via the boolean answer; everything else — multiple choice, free form — compares whitespace/case-normalized <code>answer_text</code>. A sample is <code>failed</code> only when no answer was produced.</p>
 <p><strong>Caching behavior:</strong></p>
-<p>Results are cached by saving <code>{sample_id}_result.json</code> and <code>{sample_id}_program{ext}</code> files to <code>output_dir</code>.</p>
+<p>Results are cached by saving <code>{sample_id}_result.json</code> and <code>{sample_id}_program{ext}</code> files to <code>output_dir</code>. Each result file records <code>answer</code>, <code>answer_text</code>, <code>verified</code>, and <code>proof_status</code>, so verified-accuracy can be computed separately from raw accuracy.</p>
 <h2 id="evaluationmetrics">EvaluationMetrics<a class="headerlink" href="#evaluationmetrics" title="Permanent link">&para;</a></h2>
 <p>Provides comprehensive metrics for evaluation results.</p>
 <div class="codehilite"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationMetrics</span><span class="p">:</span>
-    <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span>                <span class="c1"># sklearn.metrics.accuracy_score</span>
-    <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span>               <span class="c1"># sklearn.metrics.precision_score (zero_division=0)</span>
-    <span class="n">recall</span><span class="p">:</span> <span class="nb">float</span>                  <span class="c1"># sklearn.metrics.recall_score (zero_division=0)</span>
-    <span class="n">f1_score</span><span class="p">:</span> <span class="nb">float</span>                <span class="c1"># 2 * (P * R) / (P + R)</span>
-    <span class="n">specificity</span><span class="p">:</span> <span class="nb">float</span>             <span class="c1"># TN / (TN + FP)</span>
-    <span class="n">false_positive_rate</span><span class="p">:</span> <span class="nb">float</span>     <span class="c1"># FP / (FP + TN)</span>
-    <span class="n">false_negative_rate</span><span class="p">:</span> <span class="nb">float</span>     <span class="c1"># FN / (FN + TP)</span>
-    <span class="n">tp</span><span class="p">:</span> <span class="nb">int</span>                        <span class="c1"># True positives</span>
-    <span class="n">fp</span><span class="p">:</span> <span class="nb">int</span>                        <span class="c1"># False positives</span>
-    <span class="n">tn</span><span class="p">:</span> <span class="nb">int</span>                        <span class="c1"># True negatives</span>
-    <span class="n">fn</span><span class="p">:</span> <span class="nb">int</span>                        <span class="c1"># False negatives</span>
-    <span class="n">total_samples</span><span class="p">:</span> <span class="nb">int</span>             <span class="c1"># Correct + wrong + failed</span>
-    <span class="n">correct_answers</span><span class="p">:</span> <span class="nb">int</span>           <span class="c1"># answer == ground_truth</span>
-    <span class="n">wrong_answers</span><span class="p">:</span> <span class="nb">int</span>             <span class="c1"># answer != ground_truth</span>
-    <span class="n">failed_answers</span><span class="p">:</span> <span class="nb">int</span>            <span class="c1"># success == False</span>
+    <span class="n">accuracy</span><span class="p">:</span> <span class="nb">float</span>                <span class="c1"># correct / (correct + wrong)</span>
+    <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span>               <span class="c1"># binary metrics: boolean-coercible pairs only</span>
+    <span class="n">recall</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">f1_score</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">specificity</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">false_positive_rate</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">false_negative_rate</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">tp</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">fp</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">tn</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">total_samples</span><span class="p">:</span> <span class="nb">int</span>             <span class="c1"># correct + wrong + failed</span>
+    <span class="n">correct_answers</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">wrong_answers</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">failed_answers</span><span class="p">:</span> <span class="nb">int</span>            <span class="c1"># no answer produced</span>
 </code></pre></div>
 
-<p>Metrics are computed using <code>sklearn.metrics.confusion_matrix</code> for binary classification.</p>
+<p>Binary classification metrics (<code>precision</code>/<code>recall</code>/<code>f1_score</code>/the confusion matrix) accumulate <strong>only</strong> for samples where both the answer and the ground truth coerce to booleans; non-boolean datasets still get <code>accuracy</code> via text comparison.</p>
 <h2 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h2>
 <p>Defines the abstract interface for execution backends.</p>
 <p><strong>Location:</strong> <code>z3adapter.backends.abstract.Backend</code></p>
@@ -309,12 +372,17 @@
             <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
 
-<p>Concrete implementations are provided by <code>SMT2Backend</code> and <code>JSONBackend</code>.</p>
+<p>Concrete implementations: <code>AgenticBackend</code>, <code>SMT2Backend</code>, and <code>JSONBackend</code>.</p>
+<h3 id="agenticbackendreverify">AgenticBackend.reverify()<a class="headerlink" href="#agenticbackendreverify" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reverify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">program_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">proof_status</span><span class="p">:</span> <span class="n">ProofStatus</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</code></pre></div>
+
+<p>Re-runs a saved trajectory program and returns True when it still yields the verdict that backed the original answer (<code>unsat</code> for <code>proof_by_contradiction</code>, <code>sat</code> for <code>sat_witness</code>; always False for <code>unverified</code>/None). This encapsulates the negation polarity — <code>execute()</code>'s <code>answer</code> field reports <em>program-level</em> satisfiability (<code>sat → True</code>), which for a contradiction proof is <strong>not</strong> the question's answer.</p>
 <h2 id="verificationresult">VerificationResult<a class="headerlink" href="#verificationresult" title="Permanent link">&para;</a></h2>
 <p>Encapsulates the results of Z3 verification execution.</p>
 <div class="codehilite"><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">VerificationResult</span><span class="p">:</span>
-    <span class="n">answer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># True (SAT), False (UNSAT), None (ambiguous/error)</span>
+    <span class="n">answer</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># Program-level: True (SAT), False (UNSAT), None (ambiguous/error)</span>
     <span class="n">sat_count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">unsat_count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">output</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># Raw execution output</span>
@@ -323,32 +391,24 @@
 </code></pre></div>
 
 <h2 id="z3programgenerator">Z3ProgramGenerator<a class="headerlink" href="#z3programgenerator" title="Permanent link">&para;</a></h2>
-<p>Handles LLM-based program generation with error recovery.</p>
+<p>Handles LLM-based single-shot program generation with error recovery (json/smt2 backends).</p>
 <p><strong>Location:</strong> <code>z3adapter.reasoning.program_generator.Z3ProgramGenerator</code></p>
 <h3 id="generate">generate()<a class="headerlink" href="#generate" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16384</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenerationResult</span>
 </code></pre></div>
 
-<p><strong>LLM API Call:</strong></p>
-<div class="codehilite"><pre><span></span><code><span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm_client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}],</span>
-    <span class="n">max_completion_tokens</span><span class="o">=</span><span class="n">max_tokens</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div>
-
-<p>Note that the <code>temperature</code> parameter is not passed to the API due to GPT-5 constraints.</p>
+<p><code>temperature</code> is only sent to the API when explicitly set; <code>None</code> uses the provider default (GPT-5-safe).</p>
 <h3 id="generate_with_feedback">generate_with_feedback()<a class="headerlink" href="#generate_with_feedback" title="Permanent link">&para;</a></h3>
 <p>Enables multi-turn conversation with error feedback:</p>
 <div class="codehilite"><pre><span></span><code><span class="n">messages</span><span class="o">=</span><span class="p">[</span>
-    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">previous_response</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">feedback_message</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">prompt</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"assistant"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">previous_response</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"user"</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">feedback_message</span><span class="p">},</span>
 <span class="p">]</span>
 </code></pre></div>
 
@@ -357,8 +417,8 @@
 <p><strong>Location:</strong> <code>utils.azure_config.get_client_config()</code></p>
 <p><strong>Returns:</strong></p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
-    <span class="s2">&quot;llm_client&quot;</span><span class="p">:</span> <span class="n">AzureOpenAI</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
-    <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Deployment name from env</span>
+    <span class="s2">"llm_client"</span><span class="p">:</span> <span class="n">AzureOpenAI</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+    <span class="s2">"model"</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Deployment name from env</span>
 <span class="p">}</span>
 </code></pre></div>
 
