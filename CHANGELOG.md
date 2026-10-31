@@ -5,19 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 2026-10-30
+
+Promotes the agentic SMT-LIB backend to the stable mainline release. The default
+backend is `agentic`; pass `backend="smt2"` or `backend="json"` for the previous
+single-shot behavior. This release includes the features from `2.0.0rc1` below.
 
 ### Fixed
 
 - Install the trajectory guardrails as `z3adapter.guardrails`, matching the documented imports.
-- Select the single-shot backend explicitly in postprocessor examples and document how to install the agentic release candidate.
+- Select the single-shot backend explicitly in postprocessor examples and document how to install and upgrade to the stable agentic release.
 
 ### Added
 
+- Trajectory guardrails for policy formalization, recorded trajectory audits, and proposed tool-call checks.
 - CI checks for the test suite, distribution builds, and imports from the installed wheel.
 - A documentation navigation entry for trajectory guardrails.
 
-## [2.0.0] - 2026-06-12 (pre-released as 2.0.0rc1)
+## [2.0.0rc1] - 2026-06-12
 
 ### The agentic release
 

@@ -6,10 +6,10 @@ ProofOfThought requires Python 3.12 or higher (as specified in `pyproject.toml`)
 
 ### Core Dependencies
 
-Install the agentic v2 release candidate from PyPI:
+Install the stable agentic v2 release from PyPI:
 
 ```bash
-pip install --pre proofofthought
+pip install --upgrade proofofthought
 ```
 
 For development, install the package and development dependencies from the repository root:
