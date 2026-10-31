@@ -298,6 +298,18 @@ This will:
 
 Please consider citing our work if you find this useful.
 
+```bibtex
+@misc{ganguly2026sequentprovertrainingagentsformal,
+      title={Sequent-Prover: Training Agents for Formal, Checkable SMT-based Reasoning},
+      author={Debargha Ganguly and Weicong Chen and Mohsen Hariri and Vikash Singh and Sreehari Sankar and Shouren Wang and Wang Yang and Biyao Zhang and Chaoda Song and Alexander Nemecek and Kai Ye and Osama Zafar and Erman Ayday and Joe Stubbs and Srinivasan Iyengar and Vipin Chaudhary},
+      year={2026},
+      eprint={2610.15258},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2610.15258},
+}
+```
+
 ```
 @inproceedings{
 ganguly2024proof,
