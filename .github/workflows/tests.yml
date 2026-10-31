@@ -1,0 +1,39 @@
+name: Tests and package
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install '.[dev]' build
+
+      - name: Run tests
+        run: python -m pytest tests -q
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Verify installed wheel
+        run: |
+          python -m pip install --force-reinstall --no-deps dist/*.whl
+          cd "${RUNNER_TEMP}"
+          python -c "from z3adapter.agentic import AgenticSolver; from z3adapter.guardrails import TrajectoryGuardrail; from z3adapter.reasoning import ProofOfThought"

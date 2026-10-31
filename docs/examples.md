@@ -44,7 +44,7 @@ print(result.answer)  # True
 
 ## Backend Comparison
 
-You can compare how the two backends perform on the same question.
+You can compare how the two single-shot backends perform on the same question. (The agentic backend — the v2.0 default — is covered in [Agentic Reasoning](agentic.md); see `examples/agentic_usage.py`.)
 
 **File:** `examples/backend_comparison.py`
 

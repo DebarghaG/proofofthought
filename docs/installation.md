@@ -6,13 +6,23 @@ ProofOfThought requires Python 3.12 or higher (as specified in `pyproject.toml`)
 
 ### Core Dependencies
 
-Install the core dependencies using:
+Install the agentic v2 release candidate from PyPI:
 
 ```bash
-pip install -r requirements.txt
+pip install --pre proofofthought
+```
+
+For development, install the package and development dependencies from the repository root:
+
+```bash
+pip install -e '.[dev]'
 ```
 
 ## Z3 Verification Setup
+
+### Agentic Backend (Default)
+
+The agentic backend runs SMT-LIB programs in-process through `z3-solver`, which is installed with ProofOfThought. No separate Z3 CLI setup is required. See [Agentic Reasoning](agentic.md) for the tool loop and proof results.
 
 ### JSON Backend
 
@@ -98,7 +108,7 @@ FileNotFoundError: Z3 executable not found: 'z3'
 
 **Solutions:**
 
-1. Switch to JSON backend: `ProofOfThought(backend="json")`
+1. Use the default agentic backend, which executes Z3 in-process.
 2. Specify the Z3 path explicitly: `ProofOfThought(z3_path="/path/to/z3")`
 3. Add Z3 to your PATH: `export PATH=$PATH:/path/to/z3/bin`
 

@@ -7,16 +7,23 @@
 [![Azure](https://img.shields.io/badge/Azure-GPT--4o/GPT--5-0078D4.svg)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-LLM-based reasoning using Z3 theorem proving with multiple backend support (SMT2 and JSON).
+LLM-based reasoning using Z3 theorem proving — now built around an **agentic SMT-LIB scratchpad** (with the classic SMT2 and JSON single-shot backends preserved).
+
+## The agentic paradigm (v2.0)
+
+**Going forward, ProofOfThought is moving to an agentic paradigm**: instead of generating one program and hoping it runs, the model iteratively interacts with an SMT-LIB scratchpad — it calls a `z3_solve` tool, reads Z3's verdict (`sat` / `unsat` / errors), repairs or strengthens its encoding, and terminates with an explicit `finish` tool call. Canonically the answer is established by **proof by contradiction**: assert the negation of the candidate, and a clean UNSAT proves it. Every answer carries a `proof_status` (`proof_by_contradiction` / `sat_witness` / `unverified`) and the machine-checkable trajectory of SMT programs and Z3 verdicts that backs it — a premature `finish` with no decisive verdict is rejected, so `verified=True` is never just the model's say-so. Saved trajectory programs can be independently re-checked with `AgenticBackend.reverify()`.
+
+This loop was developed and battle-tested in our SMT evaluation harness across tens of thousands of agent trajectories, and it is the default backend as of v2.0.0. The previous single-shot backends remain fully supported. See [docs/agentic.md](docs/agentic.md).
 
 ## Features
 
-- **Dual Backend Support**: Choose between SMT2 (default) or JSON execution backends
+- **Agentic SMT-LIB Scratchpad (new default)**: Iterative `z3_solve` ⇄ `finish` tool loop with verdict-aware nudges, in-process Z3 (no CLI binary needed), and robust textual tool-call recovery for vLLM/sglang-served models
+- **Triple Backend Support**: `agentic` (default), `smt2`, or `json` execution backends
 - **Azure OpenAI Integration**: Native support for Azure GPT-4o and GPT-5 models
 - **Comprehensive Benchmarks**: Evaluated on 5 reasoning datasets (ProntoQA, FOLIO, ProofWriter, ConditionalQA, StrategyQA)
 - **High-level API**: Simple Python interface for reasoning tasks
 - **Batch Evaluation Pipeline**: Built-in tools for dataset evaluation and metrics
-- **Postprocessing Techniques**: Self-Refine, Self-Consistency, Decomposed Prompting, and Least-to-Most Prompting for enhanced reasoning quality
+- **Postprocessing Techniques**: Self-Refine, Self-Consistency, Decomposed Prompting, and Least-to-Most Prompting for enhanced reasoning quality (single-shot backends)
 
 ## Installation
 
@@ -26,6 +33,12 @@ Install the latest stable version:
 
 ```bash
 pip install proofofthought
+```
+
+To use the agentic v2 release candidate:
+
+```bash
+pip install --pre proofofthought
 ```
 
 **Note:** Package name is `proofofthought`, but imports use `z3adapter`:
@@ -40,7 +53,7 @@ For contributing or using the latest development version:
 ```bash
 git clone https://github.com/debarghaG/proofofthought.git
 cd proofofthought
-pip install -r requirements.txt
+pip install -e '.[dev]'
 ```
 
 ### Prerequisites
@@ -86,12 +99,24 @@ load_dotenv()
 # Create OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Initialize ProofOfThought
+# Initialize ProofOfThought (agentic SMT-LIB scratchpad by default)
 pot = ProofOfThought(llm_client=client, model="gpt-4o")
 
 # Ask a question
 result = pot.query("Would Nancy Pelosi publicly denounce abortion?")
-print(result.answer)  # False
+print(result.answer_text)   # "No" — canonical answer (any shape: Yes/No, MCQ letter, value)
+print(result.answer)        # False — boolean view; None for non-boolean answers
+print(result.proof_status)  # "proof_by_contradiction" — how the trajectory backs it
+print(result.iterations)    # tool-loop turns the agent needed
+for step in result.smt_history or []:
+    print(step["z3_output"]["sat_result"])  # the full SMT scratchpad trajectory
+```
+
+Local OpenAI-compatible endpoints (vLLM, sglang, ...) work the same way:
+
+```python
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="none")
+pot = ProofOfThought(llm_client=client, model="Qwen/Qwen3.5-9B")
 ```
 
 ### Using Azure OpenAI
@@ -140,17 +165,20 @@ print(f"Accuracy: {result.metrics.accuracy:.2%}")
 
 ## Backend Selection
 
-ProofOfThought supports two execution backends:
+ProofOfThought supports three execution backends:
 
 ```python
-# SMT2 backend (default) - Standard SMT-LIB 2.0 via Z3 CLI
+# Agentic backend (default) - iterative SMT-LIB scratchpad via tool calls
+pot = ProofOfThought(llm_client=client, backend="agentic")
+
+# SMT2 backend - single-shot SMT-LIB 2.0 via Z3 CLI (pre-2.0 default)
 pot = ProofOfThought(llm_client=client, backend="smt2")
 
-# JSON backend - Custom DSL via Python Z3 API
+# JSON backend - single-shot custom DSL via Python Z3 API
 pot = ProofOfThought(llm_client=client, backend="json")
 ```
 
-See [BACKENDS.md](BACKENDS.md) for details on choosing a backend.
+See [docs/agentic.md](docs/agentic.md) and [docs/backends.md](docs/backends.md) for details on choosing a backend.
 
 ## Postprocessing Techniques
 
@@ -160,6 +188,7 @@ Enhance reasoning quality with advanced postprocessing techniques:
 # Enable Self-Refine for iterative refinement
 pot = ProofOfThought(
     llm_client=client,
+    backend="smt2",
     postprocessors=["self_refine"],
     postprocessor_configs={"self_refine": {"num_iterations": 2}}
 )
@@ -167,6 +196,7 @@ pot = ProofOfThought(
 # Use Self-Consistency for improved reliability via majority voting
 pot = ProofOfThought(
     llm_client=client,
+    backend="smt2",
     postprocessors=["self_consistency"],
     postprocessor_configs={"self_consistency": {"num_samples": 5}}
 )
@@ -174,9 +204,12 @@ pot = ProofOfThought(
 # Chain multiple postprocessors
 pot = ProofOfThought(
     llm_client=client,
+    backend="smt2",
     postprocessors=["self_refine", "self_consistency"]
 )
 ```
+
+Postprocessors apply to the single-shot backends (`smt2`/`json`) only — configuring them with the agentic backend raises `ValueError` at construction. Pass `backend="smt2"` when using them.
 
 Available techniques:
 - **Self-Refine**: Iterative refinement through self-critique
@@ -188,10 +221,11 @@ See [POSTPROCESSORS.md](POSTPROCESSORS.md) for complete documentation and usage 
 
 ## Architecture
 
-The system has two layers:
+The system has three layers:
 
 1. **High-level API** (`z3adapter.reasoning`) - Simple Python interface for reasoning tasks
-2. **Low-level execution** (`z3adapter.backends`) - JSON DSL or SMT2 backend for Z3
+2. **Agentic loop** (`z3adapter.agentic`) - the iterative `z3_solve` ⇄ `finish` tool loop, in-process Z3 executor, and tool-call recovery
+3. **Low-level execution** (`z3adapter.backends`) - agentic, JSON DSL, or SMT2 backend for Z3
 
 Most users should use the high-level API.
 
@@ -199,6 +233,7 @@ Most users should use the high-level API.
 
 The `examples/` directory contains complete working examples for various use cases:
 
+- **agentic_usage.py** - The agentic SMT-LIB scratchpad loop (new default)
 - **simple_usage.py** - Basic usage with OpenAI
 - **azure_simple_example.py** - Simple Azure OpenAI integration
 - **backend_comparison.py** - Comparing SMT2 vs JSON backends
